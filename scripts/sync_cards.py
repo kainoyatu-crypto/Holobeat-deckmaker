@@ -2,7 +2,7 @@ import json
 import os
 import re
 from pathlib import Path
-from urllib.parse import urlencode, urljoin, urlparse, parse_qs, urlunparse
+from urllib.parse import parse_qs, urlencode, urljoin, urlparse, urlunparse
 from playwright.sync_api import sync_playwright
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -10,8 +10,10 @@ DATA_JSON = BASE_DIR / "data" / "cards.json"
 
 OFFICIAL_URL = os.environ.get(
     "HOROBEAT_OFFICIAL_URL",
-    "https://www.takaratomy.co.jp/products/horobeat-cardgame/cardlist/",
+    "[https://www.takaratomy.co.jp/products/horobeat-cardgame/cardlist/](https://www.takaratomy.co.jp/products/horobeat-cardgame/cardlist/)",
 )
+
+FETCH_DETAIL_PAGES = os.environ.get("FETCH_DETAIL_PAGES", "0").strip() in ("1", "true", "yes")
 
 EXCLUDE_URL_KEYWORDS = (
     "logo",
@@ -32,6 +34,8 @@ EXCLUDE_URL_KEYWORDS = (
     "btn",
 )
 
+COLOR_CANDIDATES = ("赤", "青", "緑", "黄", "紫", "黒", "白", "無")
+
 
 def load_existing_cards(path: Path) -> list[dict]:
     if not path.exists():
@@ -44,7 +48,6 @@ def load_existing_cards(path: Path) -> list[dict]:
     else:
         cards = []
 
-    # 仮名（Card 103 など）のゴミデータだけを除外し、正式カードは残す
     cleaned = [
         c for c in cards
         if not re.match(r"^Card\s+\d+$", str(c.get("name", "")).strip(), re.IGNORECASE)
@@ -73,6 +76,88 @@ def resolve_image_url(raw_url: str, base_url: str) -> str:
     return full
 
 
+def normalize_token(val: str) -> str:
+    s = str(val or "").strip()
+    s = s.translate(str.maketrans(
+        "０１２３４５６７８９ＡＢＣＤＥＦＧＨＩＪＫＬＭＮＯＰＱＲＳＴＵＶＷＸＹＺａｂｃｄｅｆｇｈｉｊｋｌｍｎｏｐｑｒｓｔｕｖｗｘｙｚ－／",
+        "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-/",
+    ))
+    return re.sub(r"\s+", "", s).upper()
+
+
+def normalize_color(val: str) -> str:
+    s = str(val or "").strip()
+    if not s:
+        return ""
+    m = re.search(r"(?:色|いろ|文明)\s*[:：]?\s*([赤青緑黄紫黒白無])", s)
+    if m:
+        return m.group(1)
+    for c in COLOR_CANDIDATES:
+        if re.fullmatch(rf"\s*{c}\s*", s):
+            return c
+    return ""
+
+
+def parse_labeled_fields(text: str) -> dict:
+    cleaned = re.sub(r"\s+", " ", str(text or "")).strip()
+    info = {
+        "color": "",
+        "type": "",
+        "cost": None,
+        "power": "",
+        "boost": "",
+        "race": "",
+        "keyword": "",
+        "trigger": "",
+        "rarity": "",
+    }
+    if not cleaned:
+        return info
+
+    m_color = re.search(r"(?:色|いろ)\s*[:：]?\s*([赤青緑黄紫黒白無])", cleaned)
+    if m_color:
+        info["color"] = normalize_color(m_color.group(1))
+
+    m_type = re.search(r"カードタイプ\s*[:：]?\s*([^\s]+(?:\s+[^\s]+)?)", cleaned)
+    if m_type:
+        cand_type = m_type.group(1).strip()
+        stop_labels = ("色", "いろ", "コスト", "パワー", "ブースト", "種族", "しゅぞく", "キーワード", "トリガー", "レアリティ")
+        if cand_type not in stop_labels:
+            info["type"] = cand_type
+
+    m_cost = re.search(r"コスト\s*[:：]?\s*([0-9０-９]+)", cleaned)
+    if m_cost:
+        cost_digits = m_cost.group(1).translate(str.maketrans("０１２３４５６７８９", "0123456789"))
+        if cost_digits.isdigit():
+            info["cost"] = int(cost_digits)
+
+    m_power = re.search(r"パワー\s*[:：]?\s*([0-9０-９]+|なし|-)", cleaned)
+    if m_power:
+        info["power"] = m_power.group(1).translate(str.maketrans("０１２３４５６７８９", "0123456789"))
+
+    m_boost = re.search(r"ブースト\s*[:：]?\s*([^\s]+)", cleaned)
+    if m_boost and m_boost.group(1) not in ("種族", "しゅぞく", "キーワード", "トリガー", "レアリティ"):
+        info["boost"] = m_boost.group(1)
+
+    m_race = re.search(r"(?:種族|しゅぞく)\s*[:：]?\s*(.+?)(?=\s+(?:キーワード|のうりょく|トリガー|レアリティ)\b|$)", cleaned)
+    if m_race:
+        info["race"] = m_race.group(1).strip()
+
+    m_kw = re.search(r"(?:キーワード\s*能力|キーワード|のうりょく)\s*[:：]?\s*(.+?)(?=\s+(?:トリガー|レアリティ)\b|$)", cleaned)
+    if m_kw:
+        info["keyword"] = m_kw.group(1).strip()
+
+    m_trg = re.search(r"トリガー\s*[:：]?\s*(.+?)(?=\s+レアリティ\b|$)", cleaned)
+    if m_trg:
+        info["trigger"] = m_trg.group(1).strip()
+
+    m_rar = re.search(r"レアリティ\s*[:：]?\s*([A-Za-z0-9Ａ-Ｚａ-ｚ０-９]+)", cleaned)
+    if m_rar:
+        info["rarity"] = normalize_token(m_rar.group(1))
+
+    return info
+
+
 def extract_rows_from_frame(frame, page_url: str) -> list[dict]:
     raw_rows = frame.evaluate(
         """() => {
@@ -90,6 +175,8 @@ def extract_rows_from_frame(frame, page_url: str) -> list[dict]:
                 const rect = img.getBoundingClientRect();
                 const container = img.closest(containerSelector) || img.parentElement;
                 const text = container ? (container.innerText || '') : '';
+                const linkEl = img.closest('a[href]') || (container ? container.querySelector('a[href]') : null);
+                const href = linkEl ? (linkEl.getAttribute('href') || '') : '';
 
                 const srcset = img.getAttribute('srcset') || '';
                 let srcsetLast = '';
@@ -113,7 +200,8 @@ def extract_rows_from_frame(frame, page_url: str) -> list[dict]:
                     src: candidates[0] || '',
                     alt: (img.getAttribute('alt') || '').trim(),
                     title: (img.getAttribute('title') || '').trim(),
-                    text: text.replace(/\\s+/g, ' ').trim().slice(0, 400),
+                    text: text.replace(/\\s+/g, ' ').trim().slice(0, 800),
+                    href: href.trim(),
                     width: Math.max(rect.width || 0, img.naturalWidth || 0),
                     height: Math.max(rect.height || 0, img.naturalHeight || 0)
                 };
@@ -134,12 +222,17 @@ def extract_rows_from_frame(frame, page_url: str) -> list[dict]:
             continue
         seen_srcs.add(resolved)
 
+        detail_url = urljoin(page_url, r["href"]) if r.get("href") else ""
+        parsed = parse_labeled_fields(r.get("text", ""))
+
         results.append(
             {
                 "src": resolved,
                 "alt": r.get("alt", ""),
                 "title": r.get("title", ""),
-                "text": r.get("text", ""),
+                "text": r.get("text", "")[:400],
+                "detailUrl": detail_url,
+                **parsed,
             }
         )
     return results
@@ -159,6 +252,34 @@ def build_page_url(base_url: str, page_num: int) -> str:
     qs["page"] = [str(page_num)]
     new_query = urlencode(qs, doseq=True)
     return urlunparse(parsed._replace(query=new_query))
+
+
+def enrich_items_from_detail_pages(context, items: list[dict]) -> None:
+    detail_urls = sorted({it["detailUrl"] for it in items if it.get("detailUrl") and not it.get("color")})
+    if not detail_urls:
+        return
+
+    detail_page = context.new_page()
+    fetched_map: dict[str, dict] = {}
+    try:
+        for url in detail_urls:
+            try:
+                detail_page.goto(url, wait_until="domcontentloaded", timeout=30000)
+                detail_page.wait_for_timeout(600)
+                body_text = detail_page.evaluate("() => document.body ? (document.body.innerText || '') : ''")
+                fetched_map[url] = parse_labeled_fields(body_text)
+            except Exception:
+                continue
+    finally:
+        detail_page.close()
+
+    for it in items:
+        d_info = fetched_map.get(it.get("detailUrl", ""))
+        if not d_info:
+            continue
+        for k, v in d_info.items():
+            if v is not None and v != "" and not it.get(k):
+                it[k] = v
 
 
 def scrape_official_items() -> list[dict]:
@@ -207,20 +328,15 @@ def scrape_official_items() -> list[dict]:
                 print(f"PAGE {page_num}: rows={len(frame_rows)}, new={new_count}")
                 if new_count == 0:
                     break
+
+            if FETCH_DETAIL_PAGES:
+                enrich_items_from_detail_pages(context, items)
         finally:
             browser.close()
 
-    print(f"SCRAPED_TOTAL_UNIQUE_IMAGES: {len(items)}")
+    colored_count = sum(1 for it in items if it.get("color"))
+    print(f"SCRAPED_TOTAL_UNIQUE_IMAGES: {len(items)}, WITH_COLOR: {colored_count}")
     return items
-
-
-def normalize_token(val: str) -> str:
-    s = str(val or "").strip()
-    s = s.translate(str.maketrans(
-        "０１２３４５６７８９ＡＢＣＤＥＦＧＨＩＪＫＬＭＮＯＰＱＲＳＴＵＶＷＸＹＺａｂｃｄｅｆｇｈｉｊｋｌｍｎｏｐｑｒｓｔｕｖｗｘｙｚ－／",
-        "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-/",
-    ))
-    return re.sub(r"\s+", "", s).upper()
 
 
 def extract_card_id_from_blob(blob: str) -> str:
@@ -230,7 +346,6 @@ def extract_card_id_from_blob(blob: str) -> str:
 
 def extract_rarity_hint(blob: str) -> str:
     norm = normalize_token(blob)
-    # よくあるレアリティ表記を抽出（必要に応じて追加可能）
     for r in ("SEC", "UR", "HR", "SR", "AR", "RR", "R", "U", "C", "PR", "PAR", "SP"):
         if re.search(rf"(?<![A-Z0-9]){r}(?![A-Z0-9])", norm):
             return r
@@ -252,16 +367,35 @@ def make_unique_id(base_id: str, rarity: str, used_ids: set[str]) -> str:
         n += 1
 
 
+def apply_scraped_fields(card: dict, row: dict, blob: str) -> None:
+    color = normalize_color(row.get("color", "")) or normalize_color(blob)
+    if color and not str(card.get("color") or "").strip():
+        card["color"] = color
+
+    if row.get("type") and not str(card.get("type") or "").strip():
+        card["type"] = row["type"]
+
+    if row.get("cost") is not None and card.get("cost") in (None, "", 0):
+        card["cost"] = row["cost"]
+
+    if row.get("rarity") and not str(card.get("rarity") or "").strip():
+        card["rarity"] = row["rarity"]
+
+    for extra_key in ("power", "boost", "race", "keyword", "trigger"):
+        if row.get(extra_key) and not str(card.get(extra_key) or "").strip():
+            card[extra_key] = row[extra_key]
+
+
 def merge_scraped_into_cards(existing_cards: list[dict], scraped_items: list[dict]) -> tuple[list[dict], int, int]:
     matched_imgs = 0
     added_cards = 0
 
     used_ids: set[str] = {str(c.get("id", "")).strip() for c in existing_cards if str(c.get("id", "")).strip()}
-    known_srcs: set[str] = {
-        str(c.get("imageUrl", "")).strip()
-        for c in existing_cards
-        if str(c.get("imageUrl", "")).strip()
-    }
+    known_srcs: dict[str, int] = {}
+    for idx, c in enumerate(existing_cards):
+        u = str(c.get("imageUrl", "")).strip()
+        if u:
+            known_srcs[u] = idx
 
     indexed_cards = list(enumerate(existing_cards))
     indexed_cards.sort(key=lambda pair: len(normalize_token(pair[1].get("name", ""))), reverse=True)
@@ -271,17 +405,17 @@ def merge_scraped_into_cards(existing_cards: list[dict], scraped_items: list[dic
         if not src:
             continue
 
-        # すでに同じ画像URLが登録済みならスキップ
-        if src in known_srcs:
-            continue
-
         filename_part = Path(urlparse(src).path).stem
         blob = f"{row.get('alt', '')} {row.get('title', '')} {row.get('text', '')} {filename_part}"
         blob_norm = normalize_token(blob)
 
+        if src in known_srcs:
+            existing_idx = known_srcs[src]
+            apply_scraped_fields(existing_cards[existing_idx], row, blob)
+            continue
+
         matched_idx = None
 
-        # 1. 型番（ID）一致
         for idx, card in indexed_cards:
             raw_cid = str(card.get("cardNumber") or card.get("id") or "")
             cid_norm = normalize_token(raw_cid)
@@ -289,7 +423,6 @@ def merge_scraped_into_cards(existing_cards: list[dict], scraped_items: list[dic
                 matched_idx = idx
                 break
 
-        # 2. カード名一致
         if matched_idx is None:
             for idx, card in indexed_cards:
                 cname_norm = normalize_token(card.get("name", ""))
@@ -301,20 +434,19 @@ def merge_scraped_into_cards(existing_cards: list[dict], scraped_items: list[dic
             base_card = existing_cards[matched_idx]
             existing_src = str(base_card.get("imageUrl") or "").strip()
 
-            # まだ画像が空の既存カードにはそのまま設定
             if not existing_src:
                 base_card["imageUrl"] = src
-                known_srcs.add(src)
+                apply_scraped_fields(base_card, row, blob)
+                known_srcs[src] = matched_idx
                 matched_imgs += 1
             else:
-                # すでに別画像を持つカード＝同じ型番・同じ名前のレアリティ違いとして別カード追加
                 base_no = str(
                     base_card.get("cardNumber")
                     or extract_card_id_from_blob(str(base_card.get("id", "")))
                     or base_card.get("id")
                     or "CARD"
                 ).strip()
-                rarity = extract_rarity_hint(blob) or str(base_card.get("rarity") or "").strip()
+                rarity = row.get("rarity") or extract_rarity_hint(blob) or str(base_card.get("rarity") or "").strip()
                 unique_id = make_unique_id(base_no, rarity, used_ids)
 
                 variant_card = {
@@ -324,18 +456,19 @@ def merge_scraped_into_cards(existing_cards: list[dict], scraped_items: list[dic
                     "rarity": rarity,
                     "imageUrl": src,
                 }
+                apply_scraped_fields(variant_card, row, blob)
                 existing_cards.append(variant_card)
-                indexed_cards.append((len(existing_cards) - 1, variant_card))
-                known_srcs.add(src)
+                new_idx = len(existing_cards) - 1
+                indexed_cards.append((new_idx, variant_card))
+                known_srcs[src] = new_idx
                 added_cards += 1
         else:
-            # ちゃんとしたカード名や型番が取れる場合のみ新規追加（仮名 Card xxx は作らない）
             raw_name = (row.get("alt") or row.get("title") or "").strip()
             if not raw_name or re.match(r"^Card\s+\d+$", raw_name, re.IGNORECASE):
                 continue
 
             detected_no = extract_card_id_from_blob(blob)
-            rarity = extract_rarity_hint(blob)
+            rarity = row.get("rarity") or extract_rarity_hint(blob)
             base_id = detected_no or f"OFFICIAL-{len(existing_cards) + added_cards + 1:03d}"
             unique_id = make_unique_id(base_id, rarity, used_ids)
 
@@ -343,15 +476,17 @@ def merge_scraped_into_cards(existing_cards: list[dict], scraped_items: list[dic
                 "id": unique_id,
                 "cardNumber": detected_no,
                 "rarity": rarity,
+                "color": normalize_color(row.get("color", "")) or normalize_color(blob),
                 "name": raw_name[:80],
-                "type": "",
-                "cost": 0,
+                "type": row.get("type") or "",
+                "cost": row.get("cost") if row.get("cost") is not None else 0,
                 "imageUrl": src,
                 "text": row.get("text", "")[:200],
             }
             existing_cards.append(new_card)
-            indexed_cards.append((len(existing_cards) - 1, new_card))
-            known_srcs.add(src)
+            new_idx = len(existing_cards) - 1
+            indexed_cards.append((new_idx, new_card))
+            known_srcs[src] = new_idx
             added_cards += 1
 
     return existing_cards, matched_imgs, added_cards
