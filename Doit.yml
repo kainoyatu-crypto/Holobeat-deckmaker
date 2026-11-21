@@ -1,0 +1,42 @@
+name: Auto Sync Horobeat Cards & Images
+
+on:
+  schedule:
+    - cron: "0 18 * * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies & Playwright Chromium
+        run: |
+          pip install --upgrade pip
+          pip install pandas playwright
+          playwright install --with-deps chromium
+
+      - name: Run card & image sync script
+        run: python scripts/sync_cards.py
+
+      - name: Commit and push updated card data if changed
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add data/cards.json data/cards.csv
+          if ! git diff --staged --quiet; then
+            git commit -m "chore: auto-sync Horobeat card data and image URLs"
+            git push
+          else
+            echo "No card data changes detected."
+          fi
