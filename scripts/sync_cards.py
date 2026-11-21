@@ -19,12 +19,33 @@ def load_existing_cards(path):
     return []
 
 
+def pick_best_image_url(row):
+    for key in ("currentSrc", "dataSrc", "src", "srcset"):
+        val = (row.get(key) or "").strip()
+        if not val:
+            continue
+        if key == "srcset":
+            first_part = val.split(",")[0].strip().split(" ")[0].strip()
+            if first_part:
+                return first_part
+        else:
+            return val
+    return ""
+
+
 def scrape_official_items():
     items = []
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
         page = browser.new_page()
         page.goto(OFFICIAL_URL, wait_until="networkidle", timeout=60000)
+
+        # ページ下部の遅延読み込み画像を発火させるためにスクロール
+        for _ in range(4):
+            page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
+            page.wait_for_timeout(700)
+        page.evaluate("window.scrollTo(0, 0)")
+        page.wait_for_timeout(800)
 
         search_btn = page.locator("button, input[type='submit'], a").filter(
             has_text=re.compile(r"^(検索|一覧を表示|すべて表示)$")
@@ -44,13 +65,31 @@ def scrape_official_items():
                 const imgs = Array.from(document.querySelectorAll('img'));
                 const out = [];
                 for (const img of imgs) {
-                    const src = img.currentSrc || img.getAttribute('src') || '';
-                    if (!src) continue;
-                    if (/logo|banner|icon|sns|footer|header|top_btn|arrow/i.test(src)) continue;
-                    const cardEl = img.closest('li, article, .card, .item, tr, div') || img.parentElement;
+                    const rect = img.getBoundingClientRect();
+                    const dataSrc =
+                        img.getAttribute('data-src') ||
+                        img.getAttribute('data-lazy-src') ||
+                        img.getAttribute('data-original') ||
+                        img.dataset?.src ||
+                        '';
+                    const src = img.getAttribute('src') || '';
+                    const currentSrc = img.currentSrc || '';
+                    const srcset = img.getAttribute('srcset') || '';
+
+                    const combined = `${currentSrc} ${src} ${dataSrc}`;
+                    if (!combined.trim()) continue;
+                    if (/logo|banner|icon|sns|footer|header|top_btn|arrow|sprite|spacer/i.test(combined)) continue;
+
+                    // 極端に小さいアイコンや非表示画像を除外
+                    if ((rect.width > 0 && rect.width < 40) && (rect.height > 0 && rect.height < 40)) continue;
+
+                    const cardEl = img.closest('li, article, [class*="card"], [class*="item"], tr, a') || img.parentElement;
                     const rawText = (cardEl ? cardEl.innerText : '') || img.alt || '';
                     out.push({
-                        src: src,
+                        currentSrc,
+                        src,
+                        dataSrc,
+                        srcset,
                         alt: img.alt || '',
                         text: rawText.trim()
                     });
@@ -59,7 +98,10 @@ def scrape_official_items():
             }''')
 
             for row in extracted:
-                abs_src = urljoin(OFFICIAL_URL, row["src"])
+                raw_url = pick_best_image_url(row)
+                if not raw_url or raw_url.startswith("data:image/svg+xml"):
+                    continue
+                abs_src = urljoin(OFFICIAL_URL, raw_url)
                 if abs_src not in seen_srcs:
                     seen_srcs.add(abs_src)
                     items.append({
@@ -126,10 +168,9 @@ def merge_scraped_into_cards(existing_cards, scraped_items):
             id_match = re.search(r"\b(HB\d{2}[-/][A-Z0-9-]+)\b", blob, re.IGNORECASE)
             lines = [ln.strip() for ln in str(row.get("text", "")).splitlines() if ln.strip()]
             candidate_name = lines[0] if lines else str(row.get("alt", "")).strip()
-            if candidate_name and len(candidate_name) <= 40:
-                new_id = id_match.group(1).upper() if id_match else f"AUTO-{len(existing_cards) + 1:03d}"
-                key_id = new_id.upper()
-                if key_id not in by_id and candidate_name not in by_name:
+            if id_match and candidate_name and len(candidate_name) <= 40:
+                new_id = id_match.group(1).upper()
+                if new_id not in by_id and candidate_name not in by_name:
                     new_card = {
                         "id": new_id,
                         "name": candidate_name,
@@ -145,7 +186,7 @@ def merge_scraped_into_cards(existing_cards, scraped_items):
                         "text": blob[:500],
                     }
                     existing_cards.append(new_card)
-                    by_id[key_id] = len(existing_cards) - 1
+                    by_id[new_id] = len(existing_cards) - 1
                     by_name[candidate_name] = len(existing_cards) - 1
                     added_cards += 1
 
