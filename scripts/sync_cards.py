@@ -2,17 +2,15 @@ import json
 import os
 import re
 from pathlib import Path
-from urllib.parse import urljoin, urlparse
+from urllib.parse import urlencode, urljoin, urlparse, parse_qs, urlunparse
 from playwright.sync_api import sync_playwright
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 DATA_JSON = BASE_DIR / "data" / "cards.json"
-IMAGES_DIR = BASE_DIR / "data" / "images"
 
-# 公式カード一覧ページのURL（必要に応じて実際のカード一覧URLへ変更）
 OFFICIAL_URL = os.environ.get(
     "HOROBEAT_OFFICIAL_URL",
-    "https://www.takaratomy.co.jp/products/horobeat-cardgame/cardlist/?same_name=hide&page=3",
+    "https://www.takaratomy.co.jp/products/horobeat-cardgame/cardlist/?same_name=hide",
 )
 
 EXCLUDE_URL_KEYWORDS = (
@@ -40,10 +38,18 @@ def load_existing_cards(path: Path) -> list[dict]:
         return []
     raw = json.loads(path.read_text(encoding="utf-8"))
     if isinstance(raw, list):
-        return raw
-    if isinstance(raw, dict) and isinstance(raw.get("cards"), list):
-        return raw["cards"]
-    return []
+        cards = raw
+    elif isinstance(raw, dict) and isinstance(raw.get("cards"), list):
+        cards = raw["cards"]
+    else:
+        cards = []
+
+    # 過去のテスト同期で混入した仮レコード（OFFICIAL-xxx）を除去
+    cleaned = [
+        c for c in cards
+        if not str(c.get("id", "")).strip().upper().startswith("OFFICIAL-")
+    ]
+    return cleaned
 
 
 def save_cards(path: Path, cards: list[dict]) -> None:
@@ -67,36 +73,7 @@ def resolve_image_url(raw_url: str, base_url: str) -> str:
     return full
 
 
-def download_image_if_needed(page, img_url: str) -> str:
-    """画像を data/images/ に保存し、ローカル相対パスまたは元URLを返す"""
-    if not img_url:
-        return ""
-    IMAGES_DIR.mkdir(parents=True, exist_ok=True)
-    parsed = urlparse(img_url)
-    ext = Path(parsed.path).suffix.lower()
-    if ext not in {".png", ".jpg", ".jpeg", ".webp", ".gif"}:
-        ext = ".jpg"
-
-    safe_name = re.sub(r"[^a-zA-Z0-9_-]+", "_", parsed.path.strip("/"))[-60:] or "card"
-    filename = f"{safe_name}{ext}"
-    dest = IMAGES_DIR / filename
-
-    if not dest.exists():
-        try:
-            resp = page.request.get(img_url, timeout=20000)
-            if resp.ok:
-                body = resp.body()
-                if len(body) > 512:
-                    dest.write_bytes(body)
-                    return f"data/images/{filename}"
-        except Exception:
-            pass
-
-    return f"data/images/{filename}" if dest.exists() else img_url
-
-
 def extract_rows_from_frame(frame, page_url: str) -> list[dict]:
-    """フレーム（メインページまたはiframe）から画像候補を抽出"""
     raw_rows = frame.evaluate(
         """() => {
             const containerSelector = [
@@ -136,7 +113,7 @@ def extract_rows_from_frame(frame, page_url: str) -> list[dict]:
                     src: candidates[0] || '',
                     alt: (img.getAttribute('alt') || '').trim(),
                     title: (img.getAttribute('title') || '').trim(),
-                    text: text.replace(/\\s+/g, ' ').trim().slice(0, 300),
+                    text: text.replace(/\\s+/g, ' ').trim().slice(0, 400),
                     width: Math.max(rect.width || 0, img.naturalWidth || 0),
                     height: Math.max(rect.height || 0, img.naturalHeight || 0)
                 };
@@ -149,8 +126,7 @@ def extract_rows_from_frame(frame, page_url: str) -> list[dict]:
     for r in raw_rows:
         w = r.get("width", 0)
         h = r.get("height", 0)
-        # 既知サイズがある場合は極小アイコンを除外
-        if w > 0 and h > 0 and w < 36 and h < 36:
+        if w > 0 and h > 0 and w < 40 and h < 40:
             continue
 
         resolved = resolve_image_url(r.get("src", ""), page_url)
@@ -170,12 +146,19 @@ def extract_rows_from_frame(frame, page_url: str) -> list[dict]:
 
 
 def scroll_to_load_lazy_images(page) -> None:
-    """遅延読み込みを発火させるために段階スクロールして先頭へ戻す"""
-    for step in range(1, 8):
-        page.evaluate(f"window.scrollTo(0, document.body.scrollHeight * {step} / 7)")
-        page.wait_for_timeout(450)
+    for step in range(1, 10):
+        page.evaluate(f"window.scrollTo(0, document.body.scrollHeight * {step} / 9)")
+        page.wait_for_timeout(350)
     page.evaluate("window.scrollTo(0, 0)")
-    page.wait_for_timeout(500)
+    page.wait_for_timeout(400)
+
+
+def build_page_url(base_url: str, page_num: int) -> str:
+    parsed = urlparse(base_url)
+    qs = parse_qs(parsed.query)
+    qs["page"] = [str(page_num)]
+    new_query = urlencode(qs, doseq=True)
+    return urlunparse(parsed._replace(query=new_query))
 
 
 def scrape_official_items() -> list[dict]:
@@ -195,176 +178,100 @@ def scrape_official_items() -> list[dict]:
         page = context.new_page()
 
         try:
-            page.goto(OFFICIAL_URL, wait_until="domcontentloaded", timeout=60000)
-            try:
-                page.wait_for_load_state("networkidle", timeout=15000)
-            except Exception:
-                pass
-            page.wait_for_timeout(1500)
+            for page_num in range(1, 25):
+                target_url = build_page_url(OFFICIAL_URL, page_num)
+                page.goto(target_url, wait_until="domcontentloaded", timeout=60000)
+                try:
+                    page.wait_for_load_state("networkidle", timeout=12000)
+                except Exception:
+                    pass
+                page.wait_for_timeout(1200)
 
-            # 絞り込みや検索ボタンが初期表示に必要な場合があれば押す（存在しなければスキップ）
-            for btn_selector in [
-                'button:has-text("検索")',
-                'button:has-text("すべて")',
-                'button:has-text("一覧")',
-                'a:has-text("カード一覧")',
-            ]:
-                loc = page.locator(btn_selector).first
-                if loc.count() > 0:
-                    try:
-                        loc.click(timeout=3000)
-                        page.wait_for_timeout(1500)
-                        break
-                    except Exception:
-                        pass
-
-            body_text = page.inner_text("body") if page.locator("body").count() > 0 else ""
-            img_total = page.locator("img").count()
-            print("URL:", page.url, "| TITLE:", page.title())
-            print("IMG_TOTAL:", img_total, "| BODY_LEN:", len(body_text))
-
-            page_num = 1
-            while True:
                 scroll_to_load_lazy_images(page)
-
                 frame_rows = extract_rows_from_frame(page, page.url)
 
-                # メインページに画像がない場合は iframe 内も確認
                 if not frame_rows and len(page.frames) > 1:
                     for frame in page.frames[1:]:
                         try:
-                            sub_rows = extract_rows_from_frame(frame, frame.url or page.url)
-                            frame_rows.extend(sub_rows)
+                            frame_rows.extend(extract_rows_from_frame(frame, frame.url or page.url))
                         except Exception:
                             continue
 
-                added_this_page = 0
+                new_count = 0
                 for row in frame_rows:
                     if row["src"] not in seen_urls:
                         seen_urls.add(row["src"])
                         items.append(row)
-                        added_this_page += 1
+                        new_count += 1
 
-                print(f"PAGE {page_num}: found {len(frame_rows)} rows, new {added_this_page}")
-
-                # 次ページボタンがあれば遷移（最大20ページまで）
-                if page_num >= 20:
+                print(f"PAGE {page_num}: rows={len(frame_rows)}, new={new_count}")
+                if new_count == 0:
                     break
-
-                next_btn = page.locator(
-                    'a:has-text("次へ"), button:has-text("次へ"), '
-                    '[class*="next"]:not([class*="disabled"]) a, '
-                    '[class*="next"]:not([class*="disabled"]) button'
-                ).first
-
-                if next_btn.count() > 0:
-                    prev_snap = page.content()[:2500]
-                    try:
-                        next_btn.click(timeout=5000)
-                        page.wait_for_timeout(1500)
-                        if page.content()[:2500] == prev_snap:
-                            break
-                        page_num += 1
-                    except Exception:
-                        break
-                else:
-                    break
-
         finally:
             browser.close()
 
-    print("SCRAPED_COUNT:", len(items))
-    for it in items[:5]:
-        print("ITEM:", it.get("src"), "|", it.get("alt"), "|", it.get("text", "")[:50])
-
+    print(f"SCRAPED_TOTAL_UNIQUE_IMAGES: {len(items)}")
     return items
 
 
-def normalize_id(val: str) -> str:
-    return re.sub(r"\s+", "", str(val or "")).upper()
+def normalize_token(val: str) -> str:
+    # 全角英数字・記号のゆれや空白を吸収
+    s = str(val or "").strip()
+    s = s.translate(str.maketrans("０１２３４５６７８９ＡＢＣＤＥＦＧＨＩＪＫＬＭＮＯＰＱＲＳＴＵＶＷＸＹＺａｂｃｄｅｆｇｈｉｊｋｌｍｎｏｐｑｒｓｔｕｖｗｘｙｚ－／",
+                                  "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-/"))
+    return re.sub(r"\s+", "", s).upper()
 
 
-def normalize_name(val: str) -> str:
-    return re.sub(r"\s+", "", str(val or "")).lower()
-
-
-def merge_scraped_into_cards(existing_cards: list[dict], scraped_items: list[dict]) -> tuple[list[dict], int, int]:
-    by_id: dict[str, int] = {}
-    by_name: dict[str, int] = {}
-
-    for idx, c in enumerate(existing_cards):
-        cid = normalize_id(c.get("id", ""))
-        cname = normalize_name(c.get("name", ""))
-        if cid:
-            by_id[cid] = idx
-        if cname:
-            by_name[cname] = idx
-
+def merge_scraped_into_cards(existing_cards: list[dict], scraped_items: list[dict]) -> tuple[list[dict], int]:
     matched_imgs = 0
-    added_cards = 0
+
+    # 長いカード名・型番から優先して誤爆を防ぐ
+    indexed_cards = list(enumerate(existing_cards))
+    indexed_cards.sort(key=lambda pair: len(normalize_token(pair[1].get("name", ""))), reverse=True)
 
     for row in scraped_items:
         src = (row.get("src") or "").strip()
         if not src:
             continue
 
-        blob = f"{row.get('alt', '')} {row.get('title', '')} {row.get('text', '')}".strip()
-        blob_upper = blob.upper()
-        blob_lower = blob.lower()
+        # 画像ファイル名も含めて照合対象にする（URLにHB01-010等が含まれる場合に対応）
+        filename_part = Path(urlparse(src).path).stem
+        blob = f"{row.get('alt', '')} {row.get('title', '')} {row.get('text', '')} {filename_part}"
+        blob_norm = normalize_token(blob)
 
         matched_idx = None
 
-        # 1. 既存カードIDとの照合
-        for cid_norm, idx in by_id.items():
-            if len(cid_norm) >= 2 and cid_norm in blob_upper:
+        # 1. 型番（ID）一致（例: HB01-010, HB01/PR-028）
+        for idx, card in indexed_cards:
+            cid_norm = normalize_token(card.get("id", ""))
+            if len(cid_norm) >= 4 and cid_norm in blob_norm:
                 matched_idx = idx
                 break
 
-        # 2. 既存カード名との照合
+        # 2. カード名一致
         if matched_idx is None:
-            blob_no_space = re.sub(r"\s+", "", blob_lower)
-            for cname_norm, idx in by_name.items():
-                if len(cname_norm) >= 2 and cname_norm in blob_no_space:
+            for idx, card in indexed_cards:
+                cname_norm = normalize_token(card.get("name", ""))
+                if len(cname_norm) >= 2 and cname_norm in blob_norm:
                     matched_idx = idx
                     break
 
         if matched_idx is not None:
             existing_cards[matched_idx]["imageUrl"] = src
             matched_imgs += 1
-        else:
-            # 既存にない新規カード候補として追加
-            new_id = f"OFFICIAL-{len(existing_cards) + added_cards + 1:03d}"
-            fallback_name = row.get("alt") or row.get("title") or f"Card {len(existing_cards) + added_cards + 1}"
-            new_card = {
-                "id": new_id,
-                "name": fallback_name[:80],
-                "type": "",
-                "cost": 0,
-                "imageUrl": src,
-                "text": row.get("text", "")[:200],
-            }
-            existing_cards.append(new_card)
-            by_id[normalize_id(new_id)] = len(existing_cards) - 1
-            by_name[normalize_name(fallback_name)] = len(existing_cards) - 1
-            added_cards += 1
 
-    return existing_cards, matched_imgs, added_cards
+    return existing_cards, matched_imgs
 
 
 def main() -> None:
     existing_cards = load_existing_cards(DATA_JSON)
-    print(f"Loaded {len(existing_cards)} existing cards from {DATA_JSON}")
+    print(f"Loaded {len(existing_cards)} official cards from {DATA_JSON}")
 
     scraped_items = scrape_official_items()
-
-    updated_cards, matched_imgs, added_cards = merge_scraped_into_cards(
-        existing_cards, scraped_items
-    )
+    updated_cards, matched_imgs = merge_scraped_into_cards(existing_cards, scraped_items)
 
     save_cards(DATA_JSON, updated_cards)
-    print(
-        f"Done. total={len(updated_cards)}, matched_imgs={matched_imgs}, added_cards={added_cards}"
-    )
+    print(f"Done. total_cards={len(updated_cards)}, matched_imgs={matched_imgs}")
 
 
 if __name__ == "__main__":
