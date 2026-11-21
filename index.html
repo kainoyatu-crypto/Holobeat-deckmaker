@@ -55,6 +55,13 @@ html, body {
   padding-bottom: env(safe-area-inset-bottom);
   background: var(--bg-surface);
 }
+/* タイトル上側の追加余白（削除した色枠60px分） */
+.title-top-spacer {
+  height: 60px;
+  flex: 0 0 60px;
+  width: 100%;
+  background: var(--bg-surface);
+}
 /* 上部バー */
 .top-bar {
   display: flex;
@@ -244,7 +251,7 @@ html, body {
   text-align: center;
   overflow: hidden;
 }
-/* 余白パネル（白い枠ボックスはカード追加前後でサイズ固定） */
+/* 余白パネル */
 .deck-utility-panel {
   flex: 1 1 auto;
   min-height: 0;
@@ -326,11 +333,11 @@ html, body {
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  font-size: 11px;
-  padding: 6px 8px;
+  font-size: 12px;
+  padding: 6px 10px;
 }
 .focus-name {
-  font-weight: 800;
+  font-weight: 900;
   color: var(--text-primary);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -762,7 +769,7 @@ html, body {
 }
 .toast {
   position: fixed;
-  top: 58px;
+  top: 118px;
   left: 50%;
   transform: translateX(-50%);
   background: #111318;
@@ -781,6 +788,7 @@ html, body {
 </head>
 <body oncontextmenu="return false;">
 <div class="studio">
+  <div class="title-top-spacer" aria-hidden="true"></div>
   <header class="top-bar">
     <div class="logo-area">
       <span class="logo-mark">HOROBEAT STUDIO</span>
@@ -809,17 +817,13 @@ html, body {
     </div>
     <!-- 10×5 枠グリッド -->
     <div class="deck-grid" id="deckGrid"></div>
-    <!-- 余白エリアの便利ウィジェット（色・文明行分け＆白枠ボックス） -->
+    <!-- 余白エリアの便利ウィジェット（文明枠＆文明下のカード名バー） -->
     <div class="deck-utility-panel">
-      <div class="util-box" id="colorBox">
-        <div class="util-row-label">色</div>
-        <div class="mini-chips-row" id="colorQuickChips"></div>
-      </div>
       <div class="util-box" id="civBox">
         <div class="util-row-label">文明</div>
         <div class="mini-chips-row" id="civQuickChips"></div>
       </div>
-      <div class="util-box focus-card-bar">
+      <div class="util-box focus-card-bar" id="cardNameBar" aria-live="polite">
         <span class="focus-name" id="focusCardLabel">カード未選択</span>
         <div class="focus-controls">
           <button class="step-btn" id="btnFocusMinus" title="1枚減らす">-</button>
@@ -1017,36 +1021,95 @@ function pickCardImage(raw) {
   return "";
 }
 
-function pickCardColor(raw) {
-  const c =
-    raw?.color ??
-    raw?.colors ??
-    raw?.attribute ??
-    raw?.element ??
-    "";
-  if (Array.isArray(c)) {
-    const joined = c.map(x => String(x || "").trim()).filter(Boolean).join("/");
-    return joined || "無";
+function normalizeLabelValue(val, allowZero = false) {
+  if (val === null || val === undefined) return "";
+  if (typeof val === "boolean") return "";
+  if (typeof val === "number") {
+    if (!Number.isFinite(val)) return "";
+    if (val === 0 && !allowZero) return "";
+    return String(val);
   }
-  const s = String(c || "").trim();
-  return s || "無";
+  if (Array.isArray(val)) {
+    const items = val
+      .map(item => normalizeLabelValue(item, allowZero))
+      .filter(Boolean);
+    return Array.from(new Set(items)).join("/");
+  }
+  if (typeof val === "object") {
+    for (const k of ["name", "label", "value", "title", "ja", "jp", "color", "civilization", "civ"]) {
+      if (k in val) {
+        const extracted = normalizeLabelValue(val[k], allowZero);
+        if (extracted) return extracted;
+      }
+    }
+    return "";
+  }
+  const s = String(val)
+    .replace(/[【】\[\]（）()]/g, "")
+    .trim();
+  if (!s) return "";
+  if (["undefined", "null", "nan", "none", "unknown", "不明", "未設定", "-"].includes(s.toLowerCase())) {
+    return "";
+  }
+  return s;
+}
+
+function inferFromBracketPrefix(raw, kind) {
+  const nameStr = String(raw?.name ?? raw?.title ?? raw?.cardName ?? "").trim();
+  const match = nameStr.match(/^[\[【]([^\]】]{1,20})[\]】]/);
+  if (!match) return "";
+  const token = match[1].trim();
+  if (kind === "color" && /^(赤|青|緑|黄|紫|白|黒|無|多色|虹|火|水|自然|光|闇)/.test(token)) {
+    return token;
+  }
+  if (kind === "civ" && /(文明|国|軍|族|帝国|連合|無)/.test(token)) {
+    return token;
+  }
+  return "";
+}
+
+function pickCardColor(raw) {
+  const candidates = [
+    raw?.color,
+    raw?.colors,
+    raw?.cardColor,
+    raw?.card_color,
+    raw?.colorName,
+    raw?.color_name,
+    raw?.attribute,
+    raw?.element,
+    raw?.meta?.color,
+    raw?.meta?.colors,
+    inferFromBracketPrefix(raw, "color")
+  ];
+  for (const cand of candidates) {
+    const normalized = normalizeLabelValue(cand);
+    if (normalized) return normalized;
+  }
+  return "無";
 }
 
 function pickCardCivilization(raw) {
-  const v =
-    raw?.civilization ??
-    raw?.civilizations ??
-    raw?.civ ??
-    raw?.faction ??
-    raw?.tribe ??
-    raw?.race ??
-    "";
-  if (Array.isArray(v)) {
-    const joined = v.map(x => String(x || "").trim()).filter(Boolean).join("/");
-    return joined || "無";
+  const candidates = [
+    raw?.civilization,
+    raw?.civilizations,
+    raw?.civ,
+    raw?.civs,
+    raw?.cardCivilization,
+    raw?.card_civilization,
+    raw?.faction,
+    raw?.nation,
+    raw?.tribe,
+    raw?.race,
+    raw?.meta?.civilization,
+    raw?.meta?.civ,
+    inferFromBracketPrefix(raw, "civ")
+  ];
+  for (const cand of candidates) {
+    const normalized = normalizeLabelValue(cand);
+    if (normalized) return normalized;
   }
-  const s = String(v || "").trim();
-  return s || "無";
+  return "無";
 }
 
 function normalizeCardItem(raw, fallbackIndex = 0) {
@@ -1458,40 +1521,14 @@ function renderDeck() {
 }
 
 function renderUtilityPanel() {
-  const total = zoneTotal(zone);
   const map = new Map(cards.map(c => [c.id, c]));
-  const colorCounts = {};
   const civCounts = {};
   Object.entries(deckData[zone] || {}).forEach(([id, n]) => {
     const qty = Number(n || 0);
     if (qty <= 0) return;
     const c = map.get(id) || { id };
-    const col = c.color || "無";
     const civ = c.civilization || "無";
-    colorCounts[col] = (colorCounts[col] || 0) + qty;
     civCounts[civ] = (civCounts[civ] || 0) + qty;
-  });
-  const colorRow = document.getElementById("colorQuickChips");
-  colorRow.innerHTML = "";
-  const allColorChip = document.createElement("button");
-  allColorChip.type = "button";
-  allColorChip.className = "mini-tag" + (state.color === "ALL" ? " active" : "");
-  allColorChip.textContent = `全色 (${total})`;
-  allColorChip.onclick = () => {
-    state.color = "ALL";
-    render();
-  };
-  colorRow.appendChild(allColorChip);
-  Object.entries(colorCounts).forEach(([col, cnt]) => {
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.className = "mini-tag" + (state.color === col ? " active" : "");
-    btn.textContent = `${col}: ${cnt}`;
-    btn.onclick = () => {
-      state.color = state.color === col ? "ALL" : col;
-      render();
-    };
-    colorRow.appendChild(btn);
   });
 
   const civRow = document.getElementById("civQuickChips");
@@ -1522,11 +1559,13 @@ function renderUtilityPanel() {
   const focusLabel = document.getElementById("focusCardLabel");
   const focusCount = document.getElementById("focusCountLabel");
   if (focusCard) {
-    const civSuffix = focusCard.civilization ? ` [${focusCard.civilization}]` : "";
-    focusLabel.textContent = `${focusCard.name || displayCardNumber(focusCard)}${civSuffix}`;
+    const cardName = focusCard.name || displayCardNumber(focusCard) || "名称未設定";
+    focusLabel.textContent = cardName;
+    focusLabel.title = cardName;
     focusCount.textContent = `${cardTotal(focusCard.id)}/${MAX_PER_CARD}`;
   } else {
     focusLabel.textContent = "カード未選択";
+    focusLabel.title = "カード未選択";
     focusCount.textContent = `0/${MAX_PER_CARD}`;
   }
 }
@@ -1587,6 +1626,8 @@ function renderDock() {
       startX = e.touches[0].clientX;
       startY = e.touches[0].clientY;
       didLong = false;
+      focusedCardId = card.id;
+      renderUtilityPanel();
       timer = setTimeout(() => {
         didLong = true;
         focusedCardId = card.id;
