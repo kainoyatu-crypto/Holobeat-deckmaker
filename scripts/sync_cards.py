@@ -228,9 +228,40 @@ def extract_card_id_from_blob(blob: str) -> str:
     return m.group(1) if m else ""
 
 
+def extract_rarity_hint(blob: str) -> str:
+    norm = normalize_token(blob)
+    # よくあるレアリティ表記を抽出（必要に応じて追加可能）
+    for r in ("SEC", "UR", "HR", "SR", "AR", "RR", "R", "U", "C", "PR", "PAR", "SP"):
+        if re.search(rf"(?<![A-Z0-9]){r}(?![A-Z0-9])", norm):
+            return r
+    return ""
+
+
+def make_unique_id(base_id: str, rarity: str, used_ids: set[str]) -> str:
+    candidate = f"{base_id}_{rarity}" if rarity else base_id
+    if candidate not in used_ids:
+        used_ids.add(candidate)
+        return candidate
+
+    n = 2
+    while True:
+        alt_id = f"{candidate}__{n}"
+        if alt_id not in used_ids:
+            used_ids.add(alt_id)
+            return alt_id
+        n += 1
+
+
 def merge_scraped_into_cards(existing_cards: list[dict], scraped_items: list[dict]) -> tuple[list[dict], int, int]:
     matched_imgs = 0
     added_cards = 0
+
+    used_ids: set[str] = {str(c.get("id", "")).strip() for c in existing_cards if str(c.get("id", "")).strip()}
+    known_srcs: set[str] = {
+        str(c.get("imageUrl", "")).strip()
+        for c in existing_cards
+        if str(c.get("imageUrl", "")).strip()
+    }
 
     indexed_cards = list(enumerate(existing_cards))
     indexed_cards.sort(key=lambda pair: len(normalize_token(pair[1].get("name", ""))), reverse=True)
@@ -238,6 +269,10 @@ def merge_scraped_into_cards(existing_cards: list[dict], scraped_items: list[dic
     for row in scraped_items:
         src = (row.get("src") or "").strip()
         if not src:
+            continue
+
+        # すでに同じ画像URLが登録済みならスキップ
+        if src in known_srcs:
             continue
 
         filename_part = Path(urlparse(src).path).stem
@@ -248,7 +283,8 @@ def merge_scraped_into_cards(existing_cards: list[dict], scraped_items: list[dic
 
         # 1. 型番（ID）一致
         for idx, card in indexed_cards:
-            cid_norm = normalize_token(card.get("id", ""))
+            raw_cid = str(card.get("cardNumber") or card.get("id") or "")
+            cid_norm = normalize_token(raw_cid)
             if len(cid_norm) >= 4 and not cid_norm.startswith("OFFICIAL-") and cid_norm in blob_norm:
                 matched_idx = idx
                 break
@@ -262,17 +298,51 @@ def merge_scraped_into_cards(existing_cards: list[dict], scraped_items: list[dic
                     break
 
         if matched_idx is not None:
-            existing_cards[matched_idx]["imageUrl"] = src
-            matched_imgs += 1
+            base_card = existing_cards[matched_idx]
+            existing_src = str(base_card.get("imageUrl") or "").strip()
+
+            # まだ画像が空の既存カードにはそのまま設定
+            if not existing_src:
+                base_card["imageUrl"] = src
+                known_srcs.add(src)
+                matched_imgs += 1
+            else:
+                # すでに別画像を持つカード＝同じ型番・同じ名前のレアリティ違いとして別カード追加
+                base_no = str(
+                    base_card.get("cardNumber")
+                    or extract_card_id_from_blob(str(base_card.get("id", "")))
+                    or base_card.get("id")
+                    or "CARD"
+                ).strip()
+                rarity = extract_rarity_hint(blob) or str(base_card.get("rarity") or "").strip()
+                unique_id = make_unique_id(base_no, rarity, used_ids)
+
+                variant_card = {
+                    **base_card,
+                    "id": unique_id,
+                    "cardNumber": base_no,
+                    "rarity": rarity,
+                    "imageUrl": src,
+                }
+                existing_cards.append(variant_card)
+                indexed_cards.append((len(existing_cards) - 1, variant_card))
+                known_srcs.add(src)
+                added_cards += 1
         else:
             # ちゃんとしたカード名や型番が取れる場合のみ新規追加（仮名 Card xxx は作らない）
             raw_name = (row.get("alt") or row.get("title") or "").strip()
             if not raw_name or re.match(r"^Card\s+\d+$", raw_name, re.IGNORECASE):
                 continue
 
-            detected_id = extract_card_id_from_blob(blob) or f"OFFICIAL-{len(existing_cards) + added_cards + 1:03d}"
+            detected_no = extract_card_id_from_blob(blob)
+            rarity = extract_rarity_hint(blob)
+            base_id = detected_no or f"OFFICIAL-{len(existing_cards) + added_cards + 1:03d}"
+            unique_id = make_unique_id(base_id, rarity, used_ids)
+
             new_card = {
-                "id": detected_id,
+                "id": unique_id,
+                "cardNumber": detected_no,
+                "rarity": rarity,
                 "name": raw_name[:80],
                 "type": "",
                 "cost": 0,
@@ -281,6 +351,7 @@ def merge_scraped_into_cards(existing_cards: list[dict], scraped_items: list[dic
             }
             existing_cards.append(new_card)
             indexed_cards.append((len(existing_cards) - 1, new_card))
+            known_srcs.add(src)
             added_cards += 1
 
     return existing_cards, matched_imgs, added_cards
