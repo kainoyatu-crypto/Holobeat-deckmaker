@@ -1,7 +1,7 @@
 name: Auto Sync Horobeat Cards & Images
 
 on:
-push:
+  push:
   schedule:
     - cron: "0 18 * * *"
   workflow_dispatch: {}
