@@ -682,5 +682,181 @@
     "cost": 0,
     "imageUrl": "https://www.takaratomy.co.jp/products/horobeat-cardgame/img/night/hb_character_22.webp",
     "text": ""
+  },
+  {
+    "id": "OFFICIAL-079",
+    "name": "Card 79",
+    "type": "",
+    "cost": 0,
+    "imageUrl": "https://www.takaratomy.co.jp/products/horobeat-cardgame/img/night/hb_character_01.webp",
+    "text": ""
+  },
+  {
+    "id": "OFFICIAL-081",
+    "name": "Card 81",
+    "type": "",
+    "cost": 0,
+    "imageUrl": "https://www.takaratomy.co.jp/products/horobeat-cardgame/img/night/hb_character_02.webp",
+    "text": ""
+  },
+  {
+    "id": "OFFICIAL-083",
+    "name": "Card 83",
+    "type": "",
+    "cost": 0,
+    "imageUrl": "https://www.takaratomy.co.jp/products/horobeat-cardgame/img/night/hb_character_03.webp",
+    "text": ""
+  },
+  {
+    "id": "OFFICIAL-085",
+    "name": "Card 85",
+    "type": "",
+    "cost": 0,
+    "imageUrl": "https://www.takaratomy.co.jp/products/horobeat-cardgame/img/night/hb_character_04.webp",
+    "text": ""
+  },
+  {
+    "id": "OFFICIAL-087",
+    "name": "Card 87",
+    "type": "",
+    "cost": 0,
+    "imageUrl": "https://www.takaratomy.co.jp/products/horobeat-cardgame/img/night/hb_character_05.webp",
+    "text": ""
+  },
+  {
+    "id": "OFFICIAL-089",
+    "name": "Card 89",
+    "type": "",
+    "cost": 0,
+    "imageUrl": "https://www.takaratomy.co.jp/products/horobeat-cardgame/img/night/hb_character_06.webp",
+    "text": ""
+  },
+  {
+    "id": "OFFICIAL-091",
+    "name": "Card 91",
+    "type": "",
+    "cost": 0,
+    "imageUrl": "https://www.takaratomy.co.jp/products/horobeat-cardgame/img/night/hb_character_07.webp",
+    "text": ""
+  },
+  {
+    "id": "OFFICIAL-093",
+    "name": "Card 93",
+    "type": "",
+    "cost": 0,
+    "imageUrl": "https://www.takaratomy.co.jp/products/horobeat-cardgame/img/night/hb_character_08.webp",
+    "text": ""
+  },
+  {
+    "id": "OFFICIAL-095",
+    "name": "Card 95",
+    "type": "",
+    "cost": 0,
+    "imageUrl": "https://www.takaratomy.co.jp/products/horobeat-cardgame/img/night/hb_character_09.webp",
+    "text": ""
+  },
+  {
+    "id": "OFFICIAL-097",
+    "name": "Card 97",
+    "type": "",
+    "cost": 0,
+    "imageUrl": "https://www.takaratomy.co.jp/products/horobeat-cardgame/img/night/hb_character_10.webp",
+    "text": ""
+  },
+  {
+    "id": "OFFICIAL-099",
+    "name": "Card 99",
+    "type": "",
+    "cost": 0,
+    "imageUrl": "https://www.takaratomy.co.jp/products/horobeat-cardgame/img/night/hb_character_11.webp",
+    "text": ""
+  },
+  {
+    "id": "OFFICIAL-101",
+    "name": "Card 101",
+    "type": "",
+    "cost": 0,
+    "imageUrl": "https://www.takaratomy.co.jp/products/horobeat-cardgame/img/night/hb_character_12.webp",
+    "text": ""
+  },
+  {
+    "id": "OFFICIAL-103",
+    "name": "Card 103",
+    "type": "",
+    "cost": 0,
+    "imageUrl": "https://www.takaratomy.co.jp/products/horobeat-cardgame/img/night/hb_character_13.webp",
+    "text": ""
+  },
+  {
+    "id": "OFFICIAL-105",
+    "name": "Card 105",
+    "type": "",
+    "cost": 0,
+    "imageUrl": "https://www.takaratomy.co.jp/products/horobeat-cardgame/img/night/hb_character_14.webp",
+    "text": ""
+  },
+  {
+    "id": "OFFICIAL-107",
+    "name": "Card 107",
+    "type": "",
+    "cost": 0,
+    "imageUrl": "https://www.takaratomy.co.jp/products/horobeat-cardgame/img/night/hb_character_15.webp",
+    "text": ""
+  },
+  {
+    "id": "OFFICIAL-109",
+    "name": "Card 109",
+    "type": "",
+    "cost": 0,
+    "imageUrl": "https://www.takaratomy.co.jp/products/horobeat-cardgame/img/night/hb_character_16.webp",
+    "text": ""
+  },
+  {
+    "id": "OFFICIAL-111",
+    "name": "Card 111",
+    "type": "",
+    "cost": 0,
+    "imageUrl": "https://www.takaratomy.co.jp/products/horobeat-cardgame/img/night/hb_character_17.webp",
+    "text": ""
+  },
+  {
+    "id": "OFFICIAL-113",
+    "name": "Card 113",
+    "type": "",
+    "cost": 0,
+    "imageUrl": "https://www.takaratomy.co.jp/products/horobeat-cardgame/img/night/hb_character_18.webp",
+    "text": ""
+  },
+  {
+    "id": "OFFICIAL-115",
+    "name": "Card 115",
+    "type": "",
+    "cost": 0,
+    "imageUrl": "https://www.takaratomy.co.jp/products/horobeat-cardgame/img/night/hb_character_19.webp",
+    "text": ""
+  },
+  {
+    "id": "OFFICIAL-117",
+    "name": "Card 117",
+    "type": "",
+    "cost": 0,
+    "imageUrl": "https://www.takaratomy.co.jp/products/horobeat-cardgame/img/night/hb_character_20.webp",
+    "text": ""
+  },
+  {
+    "id": "OFFICIAL-119",
+    "name": "Card 119",
+    "type": "",
+    "cost": 0,
+    "imageUrl": "https://www.takaratomy.co.jp/products/horobeat-cardgame/img/night/hb_character_21.webp",
+    "text": ""
+  },
+  {
+    "id": "OFFICIAL-121",
+    "name": "Card 121",
+    "type": "",
+    "cost": 0,
+    "imageUrl": "https://www.takaratomy.co.jp/products/horobeat-cardgame/img/night/hb_character_22.webp",
+    "text": ""
   }
 ]
