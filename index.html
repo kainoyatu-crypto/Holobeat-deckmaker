@@ -46,19 +46,19 @@
       display: flex;
       flex-direction: column;
       height: 100dvh;
-      max-width: 680px;
+      max-width: 700px;
       margin: 0 auto;
       padding-top: env(safe-area-inset-top);
       padding-bottom: env(safe-area-inset-bottom);
       background: var(--bg-surface);
     }
 
-    /* 1. スッキリさせた上部バー */
+    /* 上部バー */
     .top-bar {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 9px 12px;
+      padding: 8px 12px;
       background: var(--bg-surface);
       border-bottom: 1px solid var(--border-hairline);
       flex-shrink: 0;
@@ -126,12 +126,12 @@
       border-color: rgba(225, 29, 72, 0.3);
     }
 
-    /* 2. タブ＆枚数バー */
+    /* タブ＆枚数バー */
     .deck-meta-bar {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 7px 12px;
+      padding: 6px 12px;
       background: var(--bg-base);
       border-bottom: 1px solid var(--border-hairline);
       gap: 8px;
@@ -150,7 +150,7 @@
       border: none;
       background: transparent;
       color: var(--text-secondary);
-      padding: 6px 12px;
+      padding: 5px 11px;
       border-radius: 8px;
       font-size: 12px;
       font-weight: 800;
@@ -164,7 +164,7 @@
     }
 
     .counter-readout {
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 800;
       color: var(--text-secondary);
       display: flex;
@@ -174,61 +174,51 @@
 
     .counter-readout strong {
       color: var(--accent-emerald);
-      font-size: 17px;
+      font-size: 16px;
     }
 
     .counter-readout.over strong {
       color: var(--accent-rose);
     }
 
-    /* 3. 中央デッキ表示エリア（10列・空枠を大きく表示） */
+    /* 中央デッキ表示エリア（10×5枠 + 余白の便利ウィジェット群） */
     .deck-viewport {
       flex: 1 1 auto;
       min-height: 0;
       background: var(--bg-base);
-      padding: 6px;
+      padding: 6px 10px;
       overflow-y: auto;
       display: flex;
       flex-direction: column;
+      gap: 6px;
     }
 
     .deck-grid {
-      flex: 1 1 auto;
       display: grid;
       grid-template-columns: repeat(10, 1fr);
       gap: 3px;
       align-content: start;
-      min-height: 100%;
-    }
-
-    .deck-empty {
-      grid-column: 1 / -1;
-      height: 100%;
-      min-height: 220px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      color: var(--text-secondary);
-      font-size: 13px;
-      font-weight: 700;
-      line-height: 1.8;
-      padding: 24px 16px;
       background: var(--bg-surface);
-      border: 2px dashed rgba(17, 19, 24, 0.25);
-      border-radius: 14px;
+      padding: 5px;
+      border-radius: 10px;
+      border: 1px solid var(--border-hairline);
     }
 
     .slot-tile {
       aspect-ratio: var(--card-ratio);
-      border-radius: 4px;
+      border-radius: 3px;
       overflow: hidden;
-      background: #e5e7eb;
+      background: #f4f5f7;
       position: relative;
       cursor: pointer;
       border: 1px solid rgba(17, 19, 24, 0.16);
       touch-action: pan-y;
+    }
+
+    .slot-tile.ghost {
+      border: 1px dashed rgba(17, 19, 24, 0.16);
+      background: #f8f9fb;
+      cursor: default;
     }
 
     .slot-tile img {
@@ -246,27 +236,136 @@
       flex-direction: column;
       justify-content: space-between;
       padding: 2px;
-      font-size: 7px;
-      line-height: 1.15;
+      font-size: 6px;
+      line-height: 1.1;
       color: #111318;
       background: linear-gradient(160deg, #ffffff, #e2e6ec);
       text-align: center;
       overflow: hidden;
     }
 
-    /* 4. 下部カードドック（横スクロール） */
+    /* 余白に詰め込む便利ウィジェットパネル */
+    .deck-utility-panel {
+      flex: 1 1 auto;
+      min-height: 0;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-hairline);
+      border-radius: 10px;
+      padding: 8px 10px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 6px;
+    }
+
+    .progress-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    .progress-track {
+      flex: 1;
+      height: 8px;
+      background: var(--bg-elevated);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: #111318;
+      border-radius: 999px;
+      transition: width 0.2s ease;
+    }
+
+    .progress-fill.done {
+      background: var(--accent-emerald);
+    }
+
+    .progress-fill.over {
+      background: var(--accent-rose);
+    }
+
+    .mini-chips-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      align-items: center;
+    }
+
+    .mini-tag {
+      background: var(--bg-base);
+      border: 1px solid var(--border-hairline);
+      color: var(--text-primary);
+      border-radius: 7px;
+      padding: 3px 8px;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .mini-tag.active {
+      background: #111318;
+      color: #ffffff;
+      border-color: #111318;
+    }
+
+    .focus-card-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--bg-base);
+      border: 1px solid var(--border-hairline);
+      border-radius: 8px;
+      padding: 5px 8px;
+      gap: 8px;
+      font-size: 11px;
+    }
+
+    .focus-name {
+      font-weight: 800;
+      color: var(--text-primary);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      flex: 1;
+    }
+
+    .focus-controls {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      flex-shrink: 0;
+    }
+
+    .step-btn {
+      width: 24px;
+      height: 24px;
+      border-radius: 6px;
+      border: 1px solid var(--border-hairline);
+      background: var(--bg-surface);
+      color: #111318;
+      font-size: 13px;
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    /* 下部カードドック */
     .dock-section {
       flex-shrink: 0;
       background: var(--bg-elevated);
       border-top: 1px solid var(--border-hairline);
-      padding: 8px 0;
+      padding: 7px 0;
     }
 
     .dock-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 0 12px 6px;
+      padding: 0 12px 5px;
       font-size: 11px;
       font-weight: 700;
       color: var(--text-secondary);
@@ -283,7 +382,7 @@
 
     .dock-card {
       flex: 0 0 auto;
-      width: 80px;
+      width: 76px;
       aspect-ratio: var(--card-ratio);
       border-radius: 7px;
       overflow: hidden;
@@ -341,12 +440,12 @@
       cursor: pointer;
     }
 
-    /* 5. 下部検索・ツールバー */
+    /* 下部検索・ツールバー */
     .control-bar {
       display: flex;
       align-items: center;
       gap: 8px;
-      padding: 9px 12px 10px;
+      padding: 8px 12px 9px;
       background: var(--bg-surface);
       border-top: 1px solid var(--border-hairline);
       flex-shrink: 0;
@@ -360,7 +459,7 @@
       border: 1.5px solid var(--border-hairline);
       border-radius: 12px;
       padding: 0 12px;
-      height: 44px;
+      height: 42px;
       gap: 8px;
     }
 
@@ -370,7 +469,7 @@
       outline: none;
       background: transparent;
       color: var(--text-primary);
-      font-size: 15px;
+      font-size: 14px;
       font-weight: 600;
     }
 
@@ -383,13 +482,13 @@
     }
 
     .sub-btn {
-      height: 44px;
-      padding: 0 13px;
+      height: 42px;
+      padding: 0 12px;
       border-radius: 12px;
       border: 1.5px solid var(--border-hairline);
       background: var(--bg-elevated);
       color: var(--text-primary);
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 800;
       cursor: pointer;
       white-space: nowrap;
@@ -443,7 +542,7 @@
 
     .sheet {
       width: 100%;
-      max-width: 680px;
+      max-width: 700px;
       background: var(--bg-surface);
       color: var(--text-primary);
       border-top: 1px solid var(--border-hairline);
@@ -635,7 +734,31 @@
     </div>
 
     <main class="deck-viewport">
+      <!-- 10×5 枠グリッド -->
       <div class="deck-grid" id="deckGrid"></div>
+
+      <!-- 余白エリアの便利ウィジェット -->
+      <div class="deck-utility-panel">
+        <div class="progress-row">
+          <span id="deckStatusLabel">あと 50 枚</span>
+          <div class="progress-track">
+            <div class="progress-fill" id="deckProgressFill" style="width:0%"></div>
+          </div>
+          <span id="deckPctLabel">0%</span>
+        </div>
+
+        <div class="mini-chips-row" id="colorQuickChips"></div>
+
+        <div class="focus-card-bar">
+          <span class="focus-name" id="focusCardLabel">カード未選択</span>
+          <div class="focus-controls">
+            <button class="step-btn" id="btnFocusMinus" title="1枚減らす">-</button>
+            <span id="focusCountLabel" style="font-weight:900;min-width:34px;text-align:center;">0/4</span>
+            <button class="step-btn" id="btnFocusPlus" title="1枚増やす">+</button>
+            <button class="mini-tag" id="btnFocusDetail">詳細</button>
+          </div>
+        </div>
+      </div>
     </main>
 
     <section class="dock-section">
@@ -767,7 +890,7 @@
         <p style="margin-top:0;color:var(--text-primary);"><strong>基本操作：</strong><br>
         ・下部のカードをタップまたは上スワイプで追加（50枚基準）<br>
         ・下部カードをちょい長押し（約0.26秒）または「詳細」で拡大表示<br>
-        ・デッキ内のカードをタップまたは下スワイプで削除</p>
+        ・10×5のカードをタップまたは下スワイプで1枚削除</p>
         <p style="margin-bottom:0;">※ 本サイトは『ホロビートカードゲーム』の非公式ファンメイド・デッキ構築支援ツールです。掲載されているカード情報・画像の権利は各権利者に帰属します。</p>
       </div>
     </div>
@@ -776,6 +899,7 @@
   <script>
     const MAX_PER_CARD = 4;
     const TARGET_COUNTS = { main: 50, sub: 10 };
+    const GRID_SLOTS_10X5 = 50;
     const LONG_PRESS_MS = 260;
     const SAVE_KEY = "horobeat_studio_deck_v1";
     const SLOTS_KEY = "horobeat_studio_slots_v1";
@@ -783,6 +907,7 @@
     let cards = [];
     let zone = "main";
     let deckData = { main: {}, sub: {} };
+    let focusedCardId = null;
     let state = { q: "", rarity: "ALL", color: "ALL", type: "ALL", img: "ALL", sort: "id" };
 
     function detectRarity(card) {
@@ -845,8 +970,10 @@
     }
 
     function addToDeck(id) {
+      focusedCardId = id;
       if (cardTotal(id) >= MAX_PER_CARD) {
         toast(`同名カードは最大${MAX_PER_CARD}枚までです`);
+        renderUtilityPanel();
         return;
       }
       deckData[zone][id] = (deckData[zone][id] || 0) + 1;
@@ -855,7 +982,11 @@
     }
 
     function removeFromDeck(id) {
-      if (!deckData[zone][id]) return;
+      focusedCardId = id;
+      if (!deckData[zone][id]) {
+        renderUtilityPanel();
+        return;
+      }
       deckData[zone][id] -= 1;
       if (deckData[zone][id] <= 0) delete deckData[zone][id];
       persist();
@@ -901,30 +1032,106 @@
       const grid = document.getElementById("deckGrid");
       grid.innerHTML = "";
       const items = getSortedZoneEntries(zone);
+      const expanded = [];
+      items.forEach(({ card, n }) => {
+        for (let i = 0; i < n; i++) expanded.push(card);
+      });
 
-      if (!items.length) {
-        grid.innerHTML = `<div class="deck-empty">下のカードをタップ（または上スワイプ）で追加（50枚基準）<br>デッキ内のカードをタップ（または下スワイプ）で削除</div>`;
-        return;
+      const totalTiles = Math.max(GRID_SLOTS_10X5, Math.ceil(expanded.length / 10) * 10);
+
+      for (let i = 0; i < totalTiles; i++) {
+        const card = expanded[i];
+        const tile = document.createElement("div");
+        if (!card) {
+          tile.className = "slot-tile ghost";
+          grid.appendChild(tile);
+          continue;
+        }
+
+        tile.className = "slot-tile";
+        tile.appendChild(makeArt(card));
+
+        let startY = 0;
+        tile.addEventListener("touchstart", e => { startY = e.touches[0].clientY; }, { passive: true });
+        tile.addEventListener("touchend", e => {
+          if (e.changedTouches[0].clientY - startY > 24) {
+            e.preventDefault();
+            removeFromDeck(card.id);
+          }
+        });
+        tile.addEventListener("click", () => removeFromDeck(card.id));
+        grid.appendChild(tile);
+      }
+    }
+
+    function renderUtilityPanel() {
+      const total = zoneTotal(zone);
+      const target = TARGET_COUNTS[zone];
+      const diff = target - total;
+      const pct = Math.min(100, Math.round((total / target) * 100));
+
+      const statusEl = document.getElementById("deckStatusLabel");
+      const fillEl = document.getElementById("deckProgressFill");
+      const pctEl = document.getElementById("deckPctLabel");
+
+      pctEl.textContent = `${pct}%`;
+      fillEl.style.width = `${pct}%`;
+      fillEl.classList.remove("done", "over");
+
+      if (diff > 0) {
+        statusEl.textContent = `あと ${diff} 枚`;
+      } else if (diff === 0) {
+        statusEl.textContent = `基準達成（${target}枚）`;
+        fillEl.classList.add("done");
+      } else {
+        statusEl.textContent = `超過 +${Math.abs(diff)} 枚`;
+        fillEl.classList.add("over");
       }
 
-      items.forEach(({ card, n }) => {
-        for (let i = 0; i < n; i++) {
-          const tile = document.createElement("div");
-          tile.className = "slot-tile";
-          tile.appendChild(makeArt(card));
-
-          let startY = 0;
-          tile.addEventListener("touchstart", e => { startY = e.touches[0].clientY; }, { passive: true });
-          tile.addEventListener("touchend", e => {
-            if (e.changedTouches[0].clientY - startY > 24) {
-              e.preventDefault();
-              removeFromDeck(card.id);
-            }
-          });
-          tile.addEventListener("click", () => removeFromDeck(card.id));
-          grid.appendChild(tile);
-        }
+      // 色別クイック絞り込みチップ
+      const map = new Map(cards.map(c => [c.id, c]));
+      const colorCounts = {};
+      Object.entries(deckData[zone]).forEach(([id, n]) => {
+        const col = (map.get(id)?.color) || "無";
+        colorCounts[col] = (colorCounts[col] || 0) + n;
       });
+
+      const chipRow = document.getElementById("colorQuickChips");
+      chipRow.innerHTML = "";
+
+      const allChip = document.createElement("button");
+      allChip.type = "button";
+      allChip.className = "mini-tag" + (state.color === "ALL" ? " active" : "");
+      allChip.textContent = `全色 (${total})`;
+      allChip.onclick = () => {
+        state.color = "ALL";
+        render();
+      };
+      chipRow.appendChild(allChip);
+
+      Object.entries(colorCounts).forEach(([col, cnt]) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "mini-tag" + (state.color === col ? " active" : "");
+        btn.textContent = `${col}: ${cnt}`;
+        btn.onclick = () => {
+          state.color = state.color === col ? "ALL" : col;
+          render();
+        };
+        chipRow.appendChild(btn);
+      });
+
+      // 直近/選択中カードのクイック枚数操作
+      const focusCard = focusedCardId ? map.get(focusedCardId) : null;
+      const focusLabel = document.getElementById("focusCardLabel");
+      const focusCount = document.getElementById("focusCountLabel");
+      if (focusCard) {
+        focusLabel.textContent = `${focusCard.name || focusCard.id}`;
+        focusCount.textContent = `${cardTotal(focusCard.id)}/${MAX_PER_CARD}`;
+      } else {
+        focusLabel.textContent = "カード未選択";
+        focusCount.textContent = `0/${MAX_PER_CARD}`;
+      }
     }
 
     function filteredPool() {
@@ -975,6 +1182,7 @@
         infoBtn.textContent = "詳細";
         infoBtn.addEventListener("click", e => {
           e.stopPropagation();
+          focusedCardId = card.id;
           openDetail(card);
         });
         el.appendChild(infoBtn);
@@ -986,6 +1194,7 @@
           didLong = false;
           timer = setTimeout(() => {
             didLong = true;
+            focusedCardId = card.id;
             openDetail(card);
           }, LONG_PRESS_MS);
         }, { passive: true });
@@ -1030,6 +1239,7 @@
     function render() {
       renderMeta();
       renderDeck();
+      renderUtilityPanel();
       renderDock();
     }
 
@@ -1368,7 +1578,6 @@
         }
 
         if (corsTainted || !dataUrl) {
-          // 外部画像がCORS制限でCanvasを書き出せない場合、全カードをカード名枠で確実にPNG化
           ctx.fillStyle = "#ffffff";
           ctx.fillRect(0, headerH + pad, canvas.width, canvas.height - headerH - pad);
           for (let idx = 0; idx < cols * rows; idx++) {
@@ -1425,6 +1634,20 @@
         persist();
         render();
         showCenterNotice("クリアしました");
+      };
+
+      document.getElementById("btnFocusMinus").onclick = () => {
+        if (focusedCardId) removeFromDeck(focusedCardId);
+      };
+
+      document.getElementById("btnFocusPlus").onclick = () => {
+        if (focusedCardId) addToDeck(focusedCardId);
+      };
+
+      document.getElementById("btnFocusDetail").onclick = () => {
+        if (!focusedCardId) return;
+        const c = cards.find(item => item.id === focusedCardId);
+        if (c) openDetail(c);
       };
 
       document.getElementById("btnAbout").onclick = () => document.getElementById("aboutOverlay").classList.add("open");
