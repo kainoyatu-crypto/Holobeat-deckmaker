@@ -2,1332 +2,1939 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>HOROBEAT STUDIO</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+<title>HOROBEAT STUDIO | デッキビルダー</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,700;1,500&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet" />
 <style>
-  :root {
-    --bg: #f4f4f6;
-    --surface: #ffffff;
-    --surface-2: #ececef;
-    --border: rgba(15, 15, 18, 0.14);
-    --text: #111114;
-    --muted: #666670;
-    --accent: #111114;
-    --accent-text: #ffffff;
-    --danger: #dc2626;
-    --ok: #16a34a;
-  }
-
-  * {
-    box-sizing: border-box;
-    -webkit-tap-highlight-color: transparent;
-  }
-
-  body {
-    margin: 0;
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, sans-serif;
-    line-height: 1.5;
-    min-height: 100vh;
-  }
-
-  .app-header {
-    position: sticky;
-    top: 0;
-    z-index: 30;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-    padding: 10px 12px;
-    background: rgba(255, 255, 255, 0.96);
-    backdrop-filter: blur(12px);
-    border-bottom: 1px solid var(--border);
-  }
-
-  .brand-logo {
-    font-family: 'Playfair Display', Georgia, serif;
-    font-size: 1rem;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    color: var(--text);
-    text-transform: uppercase;
-    user-select: none;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .header-actions {
-    display: flex;
-    gap: 6px;
-    flex-shrink: 0;
-  }
-
-  button {
-    font-family: inherit;
-    color: var(--text);
-    background: var(--surface-2);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 6px 10px;
-    font-size: 0.8rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background 0.15s ease, transform 0.1s ease;
-    white-space: nowrap;
-  }
-
-  button:hover {
-    background: #e2e2e7;
-  }
-
-  button:active {
-    transform: scale(0.98);
-  }
-
-  button.primary {
-    background: var(--accent);
-    color: var(--accent-text);
-    border-color: var(--accent);
-    font-weight: 700;
-  }
-
-  button.danger {
-    background: #fef2f2;
-    border-color: rgba(220, 38, 38, 0.35);
-    color: var(--danger);
-  }
-
-  .container {
-    max-width: 1080px;
-    margin: 0 auto;
-    padding: 10px 12px 20px;
-    display: grid;
-    gap: 12px;
-  }
-
-  .zone-bar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-    flex-wrap: wrap;
-  }
-
-  .zone-tabs {
-    display: inline-flex;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 3px;
-    gap: 2px;
-  }
-
-  .zone-tab {
-    background: transparent;
-    border: none;
-    border-radius: 7px;
-    padding: 6px 12px;
-    color: var(--muted);
-    font-weight: 700;
-  }
-
-  .zone-tab.active {
-    background: var(--surface-2);
-    color: var(--text);
-  }
-
-  .zone-count {
-    font-size: 0.85rem;
-    font-weight: 700;
-    color: var(--muted);
-  }
-
-  .zone-count .num {
-    color: var(--ok);
-    font-size: 1rem;
-  }
-
-  .panel {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 12px;
-  }
-
-  .empty-guide {
-    border: 1px dashed var(--border);
-    border-radius: 10px;
-    padding: 20px 14px;
-    text-align: center;
-    color: var(--muted);
-    font-size: 0.85rem;
-    line-height: 1.75;
-    background: #fafafa;
-  }
-
-  .deck-grid {
-    display: grid;
-    grid-template-columns: repeat(10, minmax(0, 1fr));
-    gap: 6px;
-  }
-
-  @media (max-width: 720px) {
-    .deck-grid {
-      grid-template-columns: repeat(5, minmax(0, 1fr));
-    }
-  }
-
-  .deck-slot {
-    position: relative;
-    aspect-ratio: 5 / 7;
-    background: var(--surface-2);
-    border: 1px solid rgba(17, 17, 20, 0.2);
-    border-radius: 6px;
-    overflow: hidden;
-    cursor: pointer;
-    touch-action: pan-x;
-  }
-
-  .deck-slot img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-  }
-
-  .rarity-badge {
-    position: absolute;
-    left: 4px;
-    bottom: 4px;
-    background: rgba(17, 17, 20, 0.86);
-    color: #ffffff;
-    border-radius: 4px;
-    padding: 1px 4px;
-    font-size: 0.62rem;
-    font-weight: 700;
-    pointer-events: none;
-  }
-
-  .dock-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-    margin-bottom: 10px;
-    font-size: 0.78rem;
-    font-weight: 700;
-    color: var(--muted);
-  }
-
-  .dock-scroll {
-    display: flex;
-    gap: 8px;
-    overflow-x: auto;
-    padding-bottom: 4px;
-    scrollbar-width: thin;
-  }
-
-  .dock-card {
-    flex: 0 0 96px;
-    background: var(--surface-2);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    overflow: hidden;
-    cursor: pointer;
-    user-select: none;
-  }
-
-  .dock-card img {
-    width: 100%;
-    aspect-ratio: 5 / 7;
-    object-fit: cover;
-    display: block;
-    background: #e2e2e7;
-  }
-
-  .dock-card-sub {
-    padding: 4px 6px;
-    font-size: 0.66rem;
-    color: var(--muted);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .search-row {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-  }
-
-  .search-box {
-    flex: 1 1 auto;
-    display: flex;
-    align-items: center;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 0 10px;
-    height: 40px;
-    gap: 6px;
-  }
-
-  .search-box input {
-    flex: 1;
-    border: none;
-    outline: none;
-    background: transparent;
-    color: var(--text);
-    font-size: 0.9rem;
-  }
-
-  .icon-clear {
-    background: transparent;
-    border: none;
-    color: var(--muted);
-    padding: 2px 6px;
-    font-size: 1rem;
-  }
-
-  .filter-btn {
-    height: 40px;
-    padding: 0 14px;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    font-weight: 700;
-  }
-
-  .modal-backdrop {
-    position: fixed;
-    inset: 0;
-    z-index: 60;
-    background: rgba(17, 17, 20, 0.56);
-    display: none;
-    align-items: center;
-    justify-content: center;
-    padding: 16px;
-  }
-
-  .modal-backdrop.open {
-    display: flex;
-  }
-
-  .modal-box {
-    width: 100%;
-    max-width: 520px;
-    max-height: 90vh;
-    overflow-y: auto;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 18px;
-  }
-
-  .modal-head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-    margin-bottom: 12px;
-  }
-
-  .modal-title {
-    margin: 0;
-    font-size: 1rem;
-    font-weight: 700;
-  }
-
-  .detail-preview {
-    width: 176px;
-    aspect-ratio: 5 / 7;
-    margin: 0 auto 12px;
-    border-radius: 8px;
-    overflow: hidden;
-    border: 1px solid var(--border);
-    background: var(--surface-2);
-  }
-
-  .detail-preview img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-  }
-
-  .copy-tabs {
-    display: flex;
-    gap: 6px;
-    flex-wrap: wrap;
-    margin-bottom: 10px;
-  }
-
-  .copy-tab.active {
-    background: var(--accent);
-    color: var(--accent-text);
-    border-color: var(--accent);
-  }
-
-  .variant-strip {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(74px, 1fr));
-    gap: 8px;
-    margin-bottom: 12px;
-  }
-
-  .variant-item {
-    background: var(--surface-2);
-    border: 2px solid transparent;
-    border-radius: 8px;
-    padding: 4px;
-    cursor: pointer;
-    text-align: center;
-  }
-
-  .variant-item.selected {
-    border-color: var(--accent);
-  }
-
-  .variant-item img {
-    width: 100%;
-    aspect-ratio: 5 / 7;
-    object-fit: cover;
-    border-radius: 4px;
-    display: block;
-  }
-
-  .variant-label {
-    font-size: 0.68rem;
-    font-weight: 700;
-    margin-top: 4px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .chip-row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    margin-bottom: 12px;
-  }
-
-  .chip.active {
-    background: var(--accent);
-    color: var(--accent-text);
-    border-color: var(--accent);
-  }
-
-  .modal-footer {
-    display: flex;
-    justify-content: flex-end;
-    gap: 8px;
-    margin-top: 14px;
-    flex-wrap: wrap;
-  }
-
-  .toast-msg {
-    position: fixed;
-    left: 50%;
-    bottom: 24px;
-    transform: translateX(-50%);
-    z-index: 90;
-    background: #111114;
-    color: #ffffff;
-    padding: 9px 16px;
-    border-radius: 999px;
-    font-size: 0.82rem;
-    display: none;
-  }
-
-  .toast-msg.show {
-    display: block;
-  }
+:root {
+--bg-base: #f4f5f7;
+--bg-surface: #ffffff;
+--bg-elevated: #eceef2;
+--accent-emerald: #059669;
+--accent-rose: #e11d48;
+--text-primary: #111318;
+--text-secondary: #4b5563;
+--border-hairline: rgba(17, 19, 24, 0.15);
+--card-ratio: 63 / 88;
+}
+￼ {
+box-sizing: border-box;
+-webkit-tap-highlight-color: transparent;
+-webkit-touch-callout: none;
+user-select: none;
+-webkit-user-select: none;
+}
+input, textarea {
+user-select: text;
+-webkit-user-select: text;
+-webkit-touch-callout: default;
+}
+html, body {
+margin: 0;
+padding: 0;
+width: 100%;
+height: 100dvh;
+overflow: hidden;
+background: var(--bg-base);
+color: var(--text-primary);
+font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Noto Sans JP", sans-serif;
+}
+.studio {
+display: flex;
+flex-direction: column;
+height: 100dvh;
+max-width: 700px;
+margin: 0 auto;
+padding-top: env(safe-area-inset-top);
+padding-bottom: env(safe-area-inset-bottom);
+background: var(--bg-surface);
+}
+/* 上部バー /
+.top-bar {
+display: flex;
+align-items: center;
+justify-content: space-between;
+padding: 8px 12px;
+background: var(--bg-surface);
+border-bottom: 1px solid var(--border-hairline);
+flex-shrink: 0;
+gap: 6px;
+}
+.logo-area {
+display: flex;
+align-items: center;
+gap: 6px;
+min-width: 0;
+flex: 1 1 auto;
+}
+.logo-mark {
+font-family: "Playfair Display", Georgia, serif;
+font-size: 18px;
+font-weight: 700;
+letter-spacing: 0.08em;
+color: #000000;
+white-space: nowrap;
+}
+.help-dot {
+width: 20px;
+height: 20px;
+border-radius: 999px;
+border: 1px solid var(--border-hairline);
+background: var(--bg-elevated);
+color: var(--text-primary);
+font-size: 11px;
+font-weight: 900;
+display: grid;
+place-items: center;
+cursor: pointer;
+flex-shrink: 0;
+}
+.top-actions {
+display: flex;
+gap: 5px;
+flex-shrink: 0;
+}
+.pill-btn {
+background: var(--bg-elevated);
+color: var(--text-primary);
+border: 1px solid var(--border-hairline);
+border-radius: 8px;
+padding: 6px 8px;
+font-size: 11px;
+font-weight: 800;
+cursor: pointer;
+white-space: nowrap;
+}
+.pill-btn.primary {
+background: #111318;
+color: #ffffff;
+border-color: #111318;
+}
+.pill-btn.danger {
+background: #fff1f2;
+color: var(--accent-rose);
+border-color: rgba(225, 29, 72, 0.3);
+}
+/ タブ＆枚数バー /
+.deck-meta-bar {
+display: flex;
+align-items: center;
+justify-content: space-between;
+padding: 6px 12px;
+background: var(--bg-base);
+border-bottom: 1px solid var(--border-hairline);
+gap: 8px;
+flex-shrink: 0;
+}
+.seg-tabs {
+display: inline-flex;
+background: var(--bg-elevated);
+padding: 2px;
+border-radius: 10px;
+border: 1px solid var(--border-hairline);
+}
+.seg-tab {
+border: none;
+background: transparent;
+color: var(--text-secondary);
+padding: 5px 11px;
+border-radius: 8px;
+font-size: 12px;
+font-weight: 800;
+cursor: pointer;
+}
+.seg-tab.active {
+background: var(--bg-surface);
+color: #000000;
+box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+.counter-readout {
+font-size: 12px;
+font-weight: 800;
+color: var(--text-secondary);
+display: flex;
+align-items: center;
+gap: 4px;
+}
+.counter-readout strong {
+color: var(--accent-emerald);
+font-size: 16px;
+}
+.counter-readout.over strong {
+color: var(--accent-rose);
+}
+/ 中央デッキ表示エリア /
+.deck-viewport {
+flex: 1 1 auto;
+min-height: 0;
+background: var(--bg-base);
+padding: 6px 10px;
+overflow-y: auto;
+display: flex;
+flex-direction: column;
+gap: 6px;
+}
+.deck-grid {
+display: grid;
+grid-template-columns: repeat(10, 1fr);
+gap: 3px;
+align-content: start;
+background: var(--bg-surface);
+padding: 5px;
+border-radius: 10px;
+border: 1px solid var(--border-hairline);
+}
+.slot-tile {
+aspect-ratio: var(--card-ratio);
+border-radius: 3px;
+overflow: hidden;
+background: #f4f5f7;
+position: relative;
+cursor: pointer;
+border: 1px solid rgba(17, 19, 24, 0.16);
+touch-action: pan-y;
+}
+.slot-tile.ghost {
+border: 1px dashed rgba(17, 19, 24, 0.16);
+background: #f8f9fb;
+cursor: default;
+}
+.slot-tile img {
+width: 100%;
+height: 100%;
+object-fit: cover;
+display: block;
+pointer-events: none;
+}
+.fallback-card {
+width: 100%;
+height: 100%;
+display: flex;
+flex-direction: column;
+justify-content: space-between;
+padding: 2px;
+font-size: 6px;
+line-height: 1.1;
+color: #111318;
+background: linear-gradient(160deg, #ffffff, #e2e6ec);
+text-align: center;
+overflow: hidden;
+}
+/ 余白パネル /
+.deck-utility-panel {
+flex: 1 1 auto;
+min-height: 0;
+background: var(--bg-surface);
+border: 1px solid var(--border-hairline);
+border-radius: 10px;
+padding: 8px 10px;
+display: flex;
+flex-direction: column;
+justify-content: space-between;
+gap: 6px;
+}
+.progress-row {
+display: flex;
+align-items: center;
+gap: 8px;
+font-size: 11px;
+font-weight: 800;
+}
+.progress-track {
+flex: 1;
+height: 8px;
+background: var(--bg-elevated);
+border-radius: 999px;
+overflow: hidden;
+}
+.progress-fill {
+height: 100%;
+background: #111318;
+border-radius: 999px;
+transition: width 0.2s ease;
+}
+.progress-fill.done {
+background: var(--accent-emerald);
+}
+.progress-fill.over {
+background: var(--accent-rose);
+}
+.mini-chips-row {
+display: flex;
+flex-wrap: wrap;
+gap: 5px;
+align-items: center;
+}
+.mini-tag {
+background: var(--bg-base);
+border: 1px solid var(--border-hairline);
+color: var(--text-primary);
+border-radius: 7px;
+padding: 3px 8px;
+font-size: 11px;
+font-weight: 700;
+cursor: pointer;
+}
+.mini-tag.active {
+background: #111318;
+color: #ffffff;
+border-color: #111318;
+}
+.focus-card-bar {
+display: flex;
+align-items: center;
+justify-content: space-between;
+background: var(--bg-base);
+border: 1px solid var(--border-hairline);
+border-radius: 8px;
+padding: 5px 8px;
+gap: 8px;
+font-size: 11px;
+}
+.focus-name {
+font-weight: 800;
+color: var(--text-primary);
+overflow: hidden;
+text-overflow: ellipsis;
+white-space: nowrap;
+flex: 1;
+}
+.focus-controls {
+display: flex;
+align-items: center;
+gap: 5px;
+flex-shrink: 0;
+}
+.step-btn {
+width: 24px;
+height: 24px;
+border-radius: 6px;
+border: 1px solid var(--border-hairline);
+background: var(--bg-surface);
+color: #111318;
+font-size: 13px;
+font-weight: 900;
+cursor: pointer;
+}
+/ 下部カードドック /
+.dock-section {
+flex-shrink: 0;
+background: var(--bg-elevated);
+border-top: 1px solid var(--border-hairline);
+padding: 7px 0;
+}
+.dock-header {
+display: flex;
+justify-content: space-between;
+align-items: center;
+padding: 0 12px 5px;
+font-size: 11px;
+font-weight: 700;
+color: var(--text-secondary);
+gap: 8px;
+}
+.dock-scroll {
+display: flex;
+gap: 8px;
+overflow-x: auto;
+padding: 0 12px;
+scrollbar-width: none;
+}
+.dock-scroll::-webkit-scrollbar { display: none; }
+.dock-card {
+flex: 0 0 auto;
+width: 76px;
+aspect-ratio: var(--card-ratio);
+border-radius: 7px;
+overflow: hidden;
+background: #ffffff;
+border: 1px solid rgba(17, 19, 24, 0.22);
+box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+position: relative;
+cursor: pointer;
+transition: transform 0.1s ease;
+}
+.dock-card:active {
+transform: scale(0.95);
+}
+.dock-card img {
+width: 100%;
+height: 100%;
+object-fit: cover;
+display: block;
+pointer-events: none;
+}
+.dock-badge {
+position: absolute;
+top: 3px;
+right: 3px;
+background: rgba(17, 19, 24, 0.9);
+color: #ffffff;
+border-radius: 6px;
+font-size: 11px;
+font-weight: 900;
+padding: 0 5px;
+line-height: 18px;
+pointer-events: none;
+}
+.dock-badge.max {
+background: var(--accent-rose);
+color: #ffffff;
+}
+.dock-info-btn {
+position: absolute;
+bottom: 3px;
+right: 3px;
+background: rgba(255, 255, 255, 0.92);
+color: #111318;
+border: 1px solid rgba(17, 19, 24, 0.25);
+border-radius: 5px;
+font-size: 9px;
+font-weight: 800;
+padding: 1px 4px;
+line-height: 13px;
+cursor: pointer;
+}
+/ 下部検索・ツールバー /
+.control-bar {
+display: flex;
+align-items: center;
+gap: 8px;
+padding: 8px 12px 9px;
+background: var(--bg-surface);
+border-top: 1px solid var(--border-hairline);
+flex-shrink: 0;
+}
+.search-wrap {
+flex: 1 1 auto;
+display: flex;
+align-items: center;
+background: var(--bg-base);
+border: 1.5px solid var(--border-hairline);
+border-radius: 12px;
+padding: 0 12px;
+height: 42px;
+gap: 8px;
+}
+.search-wrap input {
+flex: 1;
+border: none;
+outline: none;
+background: transparent;
+color: var(--text-primary);
+font-size: 14px;
+font-weight: 600;
+}
+.clear-btn {
+border: none;
+background: none;
+color: var(--text-secondary);
+font-size: 18px;
+cursor: pointer;
+}
+.sub-btn {
+height: 42px;
+padding: 0 12px;
+border-radius: 12px;
+border: 1.5px solid var(--border-hairline);
+background: var(--bg-elevated);
+color: var(--text-primary);
+font-size: 12px;
+font-weight: 800;
+cursor: pointer;
+white-space: nowrap;
+}
+.sub-btn.active-filter {
+background: #111318;
+color: #ffffff;
+border-color: #111318;
+}
+/ クリア確認中央ポップアップダイアログ /
+.dialog-overlay {
+position: fixed;
+inset: 0;
+background: rgba(17, 19, 24, 0.56);
+display: none;
+align-items: center;
+justify-content: center;
+padding: 20px;
+z-index: 250;
+}
+.dialog-overlay.open {
+display: flex;
+}
+.dialog-card {
+width: 100%;
+max-width: 420px;
+background: #ffffff;
+color: #111318;
+border-radius: 10px;
+padding: 18px 20px 20px;
+box-shadow: 0 16px 40px rgba(0, 0, 0, 0.25);
+}
+.dialog-head {
+display: flex;
+align-items: center;
+justify-content: space-between;
+font-size: 16px;
+font-weight: 800;
+margin-bottom: 14px;
+}
+.dialog-close {
+border: none;
+background: transparent;
+color: #2563eb;
+font-size: 22px;
+line-height: 1;
+padding: 2px 6px;
+cursor: pointer;
+}
+.dialog-body {
+margin: 0 0 20px;
+font-size: 14px;
+line-height: 1.65;
+color: #1f2937;
+}
+.dialog-actions {
+display: grid;
+grid-template-columns: 1fr 1fr;
+gap: 12px;
+}
+.dialog-btn {
+height: 42px;
+border-radius: 8px;
+font-size: 14px;
+font-weight: 700;
+cursor: pointer;
+}
+.dialog-btn.cancel {
+background: #ffffff;
+color: #111318;
+border: 1px solid #d1d5db;
+}
+.dialog-btn.danger {
+background: #be344b;
+color: #ffffff;
+border: none;
+}
+/ モーダル /
+.overlay {
+position: fixed;
+inset: 0;
+background: rgba(17, 19, 24, 0.52);
+display: none;
+align-items: flex-end;
+justify-content: center;
+z-index: 100;
+}
+.overlay.open { display: flex; }
+.sheet {
+width: 100%;
+max-width: 700px;
+background: var(--bg-surface);
+color: var(--text-primary);
+border-top: 1px solid var(--border-hairline);
+border-radius: 18px 18px 0 0;
+padding: 16px 16px calc(18px + env(safe-area-inset-bottom));
+max-height: 86dvh;
+overflow-y: auto;
+}
+.sheet-head {
+display: flex;
+justify-content: space-between;
+align-items: center;
+font-weight: 900;
+font-size: 15px;
+margin-bottom: 12px;
+}
+.sheet-close {
+width: 30px;
+height: 30px;
+border-radius: 999px;
+border: none;
+background: var(--bg-elevated);
+color: var(--text-primary);
+font-size: 17px;
+font-weight: 800;
+cursor: pointer;
+}
+.chips {
+display: flex;
+flex-wrap: wrap;
+gap: 7px;
+margin-bottom: 14px;
+}
+.chip {
+padding: 7px 13px;
+border-radius: 999px;
+border: 1px solid var(--border-hairline);
+background: var(--bg-base);
+color: var(--text-primary);
+font-size: 12px;
+font-weight: 700;
+cursor: pointer;
+}
+.chip.selected {
+background: #111318;
+color: #ffffff;
+border-color: #111318;
+}
+.sheet-btn {
+width: 100%;
+padding: 12px;
+border-radius: 11px;
+border: none;
+background: #111318;
+color: #ffffff;
+font-size: 14px;
+font-weight: 800;
+cursor: pointer;
+margin-top: 7px;
+}
+.sheet-btn.secondary {
+background: var(--bg-elevated);
+color: var(--text-primary);
+border: 1px solid var(--border-hairline);
+}
+.text-input {
+width: 100%;
+background: var(--bg-base);
+color: var(--text-primary);
+border: 1px solid var(--border-hairline);
+border-radius: 10px;
+padding: 10px 12px;
+font-size: 13px;
+margin-bottom: 8px;
+}
+.recipe-box {
+width: 100%;
+height: 115px;
+border-radius: 10px;
+background: var(--bg-base);
+color: var(--text-primary);
+border: 1px solid var(--border-hairline);
+padding: 10px;
+font-size: 12px;
+font-family: monospace;
+}
+.saved-slot-item {
+display: flex;
+align-items: center;
+justify-content: space-between;
+background: var(--bg-base);
+border: 1px solid var(--border-hairline);
+border-radius: 10px;
+padding: 9px 11px;
+margin-bottom: 6px;
+gap: 8px;
+}
+.bar-row {
+display: flex;
+align-items: center;
+gap: 8px;
+margin-bottom: 6px;
+font-size: 12px;
+}
+.bar-track {
+flex: 1;
+height: 9px;
+background: var(--bg-elevated);
+border-radius: 999px;
+overflow: hidden;
+}
+.bar-fill {
+height: 100%;
+background: #111318;
+border-radius: 999px;
+}
+.preview-img {
+width: 210px;
+max-width: 60vw;
+border-radius: 10px;
+display: block;
+margin: 0 auto 12px;
+}
+/ 詳細モーダル内のレアリティ/イラスト個別選択UI */
+.copy-tabs-row {
+display: flex;
+gap: 6px;
+flex-wrap: wrap;
+margin-bottom: 10px;
+}
+.copy-tab {
+padding: 5px 10px;
+border-radius: 8px;
+border: 1px solid var(--border-hairline);
+background: var(--bg-base);
+color: var(--text-primary);
+font-size: 12px;
+font-weight: 800;
+cursor: pointer;
+}
+.copy-tab.active {
+background: #111318;
+color: #ffffff;
+border-color: #111318;
+}
+.variant-strip {
+display: flex;
+gap: 8px;
+overflow-x: auto;
+padding: 4px 2px 10px;
+scrollbar-width: none;
+}
+.variant-strip::-webkit-scrollbar { display: none; }
+.variant-thumb {
+flex: 0 0 66px;
+border-radius: 7px;
+overflow: hidden;
+border: 2px solid transparent;
+background: var(--bg-base);
+cursor: pointer;
+display: flex;
+flex-direction: column;
+align-items: center;
+padding: 2px;
+}
+.variant-thumb.selected {
+border-color: #111318;
+background: var(--bg-elevated);
+}
+.variant-thumb img {
+width: 100%;
+aspect-ratio: var(--card-ratio);
+object-fit: cover;
+border-radius: 5px;
+display: block;
+}
+.variant-label {
+font-size: 10px;
+font-weight: 800;
+margin-top: 3px;
+color: var(--text-primary);
+white-space: nowrap;
+}
+.generated-img {
+width: 100%;
+border-radius: 10px;
+margin-top: 8px;
+border: 1px solid var(--border-hairline);
+background: #ffffff;
+}
+.toast {
+position: fixed;
+top: 58px;
+left: 50%;
+transform: translateX(-50%);
+background: #111318;
+color: #ffffff;
+padding: 7px 15px;
+border-radius: 999px;
+font-size: 12px;
+font-weight: 700;
+opacity: 0;
+pointer-events: none;
+transition: opacity 0.2s;
+z-index: 200;
+}
+.toast.show { opacity: 1; }
 </style>
 </head>
-<body>
-  <header class="app-header">
-    <div class="brand-logo">HOROBEAT STUDIO</div>
-    <div class="header-actions">
-      <button type="button" id="btnSavedList">保存一覧</button>
-      <button type="button" id="btnStats">分布</button>
-      <button type="button" id="btnExport" class="primary">出力</button>
-      <button type="button" id="btnOpenClear" class="danger">クリア</button>
-    </div>
-  </header>
-
-  <main class="container">
-    <div class="zone-bar">
-      <div class="zone-tabs">
-        <button type="button" class="zone-tab active" data-zone="main">メインデッキ</button>
-        <button type="button" class="zone-tab" data-zone="sub">サブ / 調整枠</button>
-      </div>
-      <div class="zone-count" id="zoneCountLabel">
-        MAIN <span class="num">0</span> / 50 枚
-      </div>
-    </div>
-
-    <section class="panel" id="deckPanel">
-      <div id="emptyGuide" class="empty-guide">
-        下のカードをタップ（または上スワイプ）で追加（50枚基準）<br />
-        デッキ内のカードをタップ（または下スワイプ）で削除・詳細
-      </div>
-      <div class="deck-grid" id="deckGrid" style="display:none;"></div>
-    </section>
-
-    <section class="panel">
-      <div class="dock-header">
-        <span>CARD DOCK（タップ・上スワイプで追加 / 長押しで詳細）</span>
-        <span id="catalogCountLabel">0件</span>
-      </div>
-      <div class="dock-scroll" id="dockScroll"></div>
-    </section>
-
-    <div class="search-row">
-      <div class="search-box">
-        <span>🔍</span>
-        <input type="search" id="searchInput" placeholder="カード名・型番で検索" />
-        <button type="button" class="icon-clear" id="btnClearSearch" aria-label="検索クリア">×</button>
-      </div>
-      <button type="button" class="filter-btn" id="btnOpenFilter">絞り込み</button>
-    </div>
-  </main>
-
-  <div class="modal-backdrop" id="detailModal" aria-hidden="true">
-    <div class="modal-box">
-      <div class="modal-head">
-        <h2 class="modal-title" id="detailTitle">カード詳細</h2>
-        <button type="button" id="closeDetailModal">閉じる</button>
-      </div>
-      <div class="detail-preview">
-        <img id="detailPreviewImg" alt="" />
-      </div>
-      <div id="detailMeta" style="font-size:0.8rem;color:var(--muted);margin-bottom:10px;"></div>
-
-      <div id="copySelectorWrap" style="display:none;">
-        <div style="font-size:0.8rem;font-weight:700;margin-bottom:6px;">デッキ内の各枚数ごとのレアリティ選択</div>
-        <div class="copy-tabs" id="copyTabs"></div>
-      </div>
-
-      <div style="font-size:0.8rem;font-weight:700;margin-bottom:6px;">レアリティ / イラスト候補</div>
-      <div class="variant-strip" id="variantStrip"></div>
-
-      <div class="modal-footer">
-        <button type="button" id="btnRemoveOneCopy" class="danger">1枚減らす</button>
-        <button type="button" id="btnAddOneCopy" class="primary">1枚追加</button>
-      </div>
-    </div>
-  </div>
-
-  <div class="modal-backdrop" id="filterModal" aria-hidden="true">
-    <div class="modal-box">
-      <div class="modal-head">
-        <h2 class="modal-title">絞り込み</h2>
-        <button type="button" id="closeFilterModal">閉じる</button>
-      </div>
-      <div style="font-size:0.8rem;font-weight:700;margin-bottom:6px;">レアリティ</div>
-      <div class="chip-row" id="rarityChips"></div>
-      <div style="font-size:0.8rem;font-weight:700;margin-bottom:6px;">文明 / 色</div>
-      <div class="chip-row" id="colorChips"></div>
-      <div class="modal-footer">
-        <button type="button" id="btnResetFilter">リセット</button>
-      </div>
-    </div>
-  </div>
-
-  <div class="modal-backdrop" id="statsModal" aria-hidden="true">
-    <div class="modal-box" style="max-width:420px;">
-      <div class="modal-head">
-        <h2 class="modal-title">デッキ分布</h2>
-        <button type="button" id="closeStatsModal">閉じる</button>
-      </div>
-      <div id="statsBody" style="font-size:0.85rem;"></div>
-    </div>
-  </div>
-
-  <div class="modal-backdrop" id="savedModal" aria-hidden="true">
-    <div class="modal-box" style="max-width:440px;">
-      <div class="modal-head">
-        <h2 class="modal-title">保存済みデッキ</h2>
-        <button type="button" id="closeSavedModal">閉じる</button>
-      </div>
-      <div style="display:flex;gap:6px;margin-bottom:10px;">
-        <input type="text" id="saveNameInput" placeholder="デッキ名を入力" style="flex:1;padding:7px 10px;border:1px solid var(--border);border-radius:8px;" />
-        <button type="button" id="btnSaveCurrent" class="primary">保存</button>
-      </div>
-      <div id="savedListBody" style="font-size:0.82rem;"></div>
-    </div>
-  </div>
-
-  <div class="modal-backdrop" id="exportModal" aria-hidden="true">
-    <div class="modal-box">
-      <div class="modal-head">
-        <h2 class="modal-title">出力・画像生成</h2>
-        <button type="button" id="closeExportModal">閉じる</button>
-      </div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
-        <button type="button" id="btnGenerateImage" class="primary">デッキ画像を生成 (PNG)</button>
-        <button type="button" id="btnCopyText">テキストをコピー</button>
-      </div>
-      <textarea id="exportText" rows="8" readonly style="width:100%;background:var(--surface-2);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:8px;font-size:0.8rem;"></textarea>
-      <div id="generatedImgWrap" style="margin-top:12px;"></div>
-    </div>
-  </div>
-
-  <div class="modal-backdrop" id="clearModal" aria-hidden="true">
-    <div class="modal-box" style="max-width:380px;">
-      <div class="modal-head">
-        <h2 class="modal-title">デッキをクリアしますか？</h2>
-      </div>
-      <p style="margin:0 0 14px;font-size:0.86rem;color:var(--muted);">現在のゾーンのカードをすべて外します。</p>
-      <div class="modal-footer">
-        <button type="button" id="btnCancelClear">キャンセル</button>
-        <button type="button" id="btnConfirmClear" class="danger">クリアする</button>
-      </div>
-    </div>
-  </div>
-
-  <div class="toast-msg" id="toastMsg"></div>
-
-  <script>
-    const MAX_MAIN = 50;
-    const MAX_SUB = 10;
-    const STORAGE_KEY = "horobeat_studio_zones_v1";
-    const SAVED_KEY = "horobeat_studio_saved_v1";
-
-    let allCards = [];
-    let variantGroups = new Map();
-    let currentZone = "main";
-    let deckZones = { main: [], sub: [] };
-    let selectedRarity = "ALL";
-    let selectedColor = "ALL";
-    let activeCopyIndex = 0;
-
-    const toastEl = document.getElementById("toastMsg");
-    function showToast(msg) {
-      toastEl.textContent = msg;
-      toastEl.classList.add("show");
-      clearTimeout(toastEl._t);
-      toastEl._t = setTimeout(() => toastEl.classList.remove("show"), 2000);
-    }
-
-    function normalizeCardsPayload(raw) {
-      if (Array.isArray(raw)) return raw;
-      if (raw && typeof raw === "object") {
-        if (Array.isArray(raw.cards)) return raw.cards;
-        if (Array.isArray(raw.items)) return raw.items;
-        if (Array.isArray(raw.data)) return raw.data;
-        const vals = Object.values(raw);
-        if (vals.length > 0 && vals.every((v) => v && typeof v === "object" && !Array.isArray(v))) {
-          return vals;
-        }
-      }
-      return [];
-    }
-
-    async function fetchCardsWithFallback() {
-      const candidates = ["./data/cards.json", "data/cards.json", "../data/cards.json", "./cards.json"];
-      let lastErr = "";
-      for (const url of candidates) {
-        try {
-          const res = await fetch(url, { cache: "no-store" });
-          if (!res.ok) {
-            lastErr = `${url} (HTTP ${res.status})`;
-            continue;
-          }
-          const json = await res.json();
-          const list = normalizeCardsPayload(json);
-          if (list.length > 0) return { cards: list, error: "" };
-          lastErr = `${url} (0件)`;
-        } catch (err) {
-          lastErr = `${url} (${String(err && err.message || err)})`;
-        }
-      }
-      return { cards: [], error: lastErr || "カードデータが見つかりません" };
-    }
-
-    function getBaseCardKey(card) {
-      const no = String(card.cardNumber || card.card_no || card.number || "").trim();
-      if (no) return `NO:${no.toUpperCase()}`;
-      const id = String(card.id || card.cardId || "").trim();
-      const stripped = id.replace(/(_[A-Z0-9]+)?(__\d+)?$/i, "");
-      if (stripped) return `ID:${stripped.toUpperCase()}`;
-      return `NAME:${String(card.name || card.title || "").trim()}`;
-    }
-
-    function getVariantKey(card) {
-      const id = String(card.id || card.cardId || "").trim();
-      const rarity = String(card.rarity || "").trim();
-      const img = String(card.imageUrl || card.image || card.img || card.src || "").trim();
-      return id || `${getBaseCardKey(card)}::${rarity}::${img}`;
-    }
-
-    function detectColor(card) {
-      const raw = String(
-        card.color || card.civilization || card.civ || card.attribute || card.element || ""
-      ).trim();
-      if (raw) return raw;
-      return "無色";
-    }
-
-    function buildVariantGroups(cards) {
-      const map = new Map();
-      for (const c of cards) {
-        if (!c || typeof c !== "object") continue;
-        const baseKey = getBaseCardKey(c);
-        const variantKey = getVariantKey(c);
-        const entry = {
-          variantKey,
-          baseKey,
-          cardId: String(c.id || c.cardId || ""),
-          cardNumber: String(c.cardNumber || c.card_no || c.number || c.id || ""),
-          name: String(c.name || c.title || "名称未設定"),
-          rarity: String(c.rarity || "STD"),
-          color: detectColor(c),
-          imageUrl: String(c.imageUrl || c.image || c.img || c.src || "").trim(),
-        };
-        if (!map.has(baseKey)) map.set(baseKey, []);
-        const list = map.get(baseKey);
-        if (!list.some((x) => x.variantKey === variantKey)) {
-          list.push(entry);
-        }
-      }
-      return map;
-    }
-
-    function findEntryByVariantKey(variantKey) {
-      for (const list of variantGroups.values()) {
-        const hit = list.find((x) => x.variantKey === variantKey);
-        if (hit) return hit;
-      }
-      return null;
-    }
-
-    function saveZones() {
-      try {
-        localStorage.setItem(
-          STORAGE_KEY,
-          JSON.stringify({
-            main: deckZones.main.map((x) => x.variantKey),
-            sub: deckZones.sub.map((x) => x.variantKey),
-          })
-        );
-      } catch (_) {}
-    }
-
-    function loadZones() {
-      try {
-        const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
-        deckZones.main = Array.isArray(parsed.main)
-          ? parsed.main.slice(0, MAX_MAIN).map(findEntryByVariantKey).filter(Boolean).map((x) => ({ ...x }))
-          : [];
-        deckZones.sub = Array.isArray(parsed.sub)
-          ? parsed.sub.slice(0, MAX_SUB).map(findEntryByVariantKey).filter(Boolean).map((x) => ({ ...x }))
-          : [];
-      } catch (_) {
-        deckZones = { main: [], sub: [] };
-      }
-    }
-
-    function zoneLimit(z = currentZone) {
-      return z === "main" ? MAX_MAIN : MAX_SUB;
-    }
-
-    function addToZone(entry, z = currentZone) {
-      if (!entry) return;
-      const list = deckZones[z];
-      const cap = zoneLimit(z);
-      if (list.length >= cap) {
-        showToast(`${z === "main" ? "メイン" : "サブ"}上限（${cap}枚）です`);
-        return;
-      }
-      list.push({ ...entry });
-      saveZones();
-      renderDeckZone();
-      showToast(`${entry.name}（${entry.rarity}）を追加`);
-    }
-
-    function removeFromZoneAt(index, z = currentZone) {
-      const list = deckZones[z];
-      if (index < 0 || index >= list.length) return;
-      const removed = list.splice(index, 1)[0];
-      saveZones();
-      renderDeckZone();
-      if (removed) showToast(`${removed.name} を1枚削除`);
-    }
-
-    function renderDeckZone() {
-      const list = deckZones[currentZone];
-      const cap = zoneLimit(currentZone);
-      const labelPrefix = currentZone === "main" ? "MAIN" : "SUB";
-      document.getElementById("zoneCountLabel").innerHTML =
-        `${labelPrefix} <span class="num">${list.length}</span> / ${cap} 枚`;
-
-      const guide = document.getElementById("emptyGuide");
-      const grid = document.getElementById("deckGrid");
-
-      if (!list.length) {
-        guide.style.display = "block";
-        grid.style.display = "none";
-        grid.innerHTML = "";
-        return;
-      }
-
-      guide.style.display = "none";
-      grid.style.display = "grid";
-      grid.innerHTML = "";
-
-      list.forEach((slot, idx) => {
-        const el = document.createElement("div");
-        el.className = "deck-slot";
-
-        const img = document.createElement("img");
-        img.src = slot.imageUrl || "";
-        img.alt = slot.name;
-        img.loading = "lazy";
-        el.appendChild(img);
-
-        const badge = document.createElement("span");
-        badge.className = "rarity-badge";
-        badge.textContent = slot.rarity || "STD";
-        el.appendChild(badge);
-
-        let startY = null;
-        let swipedDown = false;
-
-        el.addEventListener("pointerdown", (e) => {
-          startY = e.clientY;
-          swipedDown = false;
-        });
-
-        el.addEventListener("pointermove", (e) => {
-          if (startY !== null && e.clientY - startY > 36) {
-            swipedDown = true;
-          }
-        });
-
-        el.addEventListener("pointerup", () => {
-          if (swipedDown) {
-            removeFromZoneAt(idx, currentZone);
-          } else if (startY !== null) {
-            openDetailModal(slot.baseKey, slot.variantKey);
-          }
-          startY = null;
-          swipedDown = false;
-        });
-
-        grid.appendChild(el);
-      });
-    }
-
-    function renderCatalog(loadError = "") {
-      const q = document.getElementById("searchInput").value.trim().toLowerCase();
-      const scroll = document.getElementById("dockScroll");
-      scroll.innerHTML = "";
-
-      const entries = [];
-      for (const list of variantGroups.values()) {
-        const primary = list[0];
-        if (!primary) continue;
-        if (selectedRarity !== "ALL" && !list.some((v) => v.rarity === selectedRarity)) continue;
-        if (selectedColor !== "ALL" && !list.some((v) => v.color === selectedColor)) continue;
-        const rarText = list.map((v) => v.rarity).join(" ");
-        const hay = `${primary.name} ${primary.cardNumber} ${primary.cardId} ${primary.color} ${rarText}`.toLowerCase();
-        if (!q || hay.includes(q)) {
-          entries.push({ primary, variants: list });
-        }
-      }
-
-      document.getElementById("catalogCountLabel").textContent = `${entries.length}件`;
-
-      if (!entries.length) {
-        const empty = document.createElement("div");
-        empty.style.fontSize = "0.82rem";
-        empty.style.color = "var(--muted)";
-        empty.style.padding = "10px 4px";
-        empty.textContent = loadError
-          ? `カードデータを読み込めませんでした（${loadError}）`
-          : "該当するカードがありません。";
-        scroll.appendChild(empty);
-        return;
-      }
-
-      for (const { primary, variants } of entries) {
-        const cardEl = document.createElement("div");
-        cardEl.className = "dock-card";
-
-        const img = document.createElement("img");
-        img.src = primary.imageUrl || "";
-        img.alt = primary.name;
-        img.loading = "lazy";
-
-        const sub = document.createElement("div");
-        sub.className = "dock-card-sub";
-        sub.textContent = variants.length > 1 ? `${primary.name} (${variants.length}種)` : primary.name;
-
-        cardEl.appendChild(img);
-        cardEl.appendChild(sub);
-
-        let startY = null;
-        let longPressTimer = null;
-        let longPressed = false;
-        let swipedUp = false;
-
-        cardEl.addEventListener("pointerdown", (e) => {
-          startY = e.clientY;
-          longPressed = false;
-          swipedUp = false;
-          longPressTimer = setTimeout(() => {
-            longPressed = true;
-            openDetailModal(primary.baseKey, primary.variantKey);
-          }, 420);
-        });
-
-        cardEl.addEventListener("pointermove", (e) => {
-          if (startY !== null && startY - e.clientY > 32) {
-            swipedUp = true;
-            clearTimeout(longPressTimer);
-          }
-        });
-
-        cardEl.addEventListener("pointerup", () => {
-          clearTimeout(longPressTimer);
-          if (longPressed) return;
-          if (swipedUp) {
-            addToZone(primary, currentZone);
-          } else if (startY !== null) {
-            addToZone(primary, currentZone);
-          }
-          startY = null;
-        });
-
-        cardEl.addEventListener("pointercancel", () => {
-          clearTimeout(longPressTimer);
-          startY = null;
-        });
-
-        scroll.appendChild(cardEl);
-      }
-    }
-
-    function getZoneIndicesForBaseKey(baseKey, z = currentZone) {
-      const out = [];
-      deckZones[z].forEach((slot, idx) => {
-        if (slot.baseKey === baseKey) out.push(idx);
-      });
-      return out;
-    }
-
-    function openDetailModal(baseKey, preferredVariantKey = null) {
-      const variants = variantGroups.get(baseKey) || [];
-      if (!variants.length) return;
-
-      const indices = getZoneIndicesForBaseKey(baseKey, currentZone);
-      if (indices.length > 0) {
-        activeCopyIndex = Math.max(0, Math.min(activeCopyIndex, indices.length - 1));
-      } else {
-        activeCopyIndex = 0;
-      }
-
-      const activeSlot = indices.length > 0 ? deckZones[currentZone][indices[activeCopyIndex]] : null;
-      const selected =
-        variants.find((v) => v.variantKey === (activeSlot ? activeSlot.variantKey : preferredVariantKey)) ||
-        variants[0];
-
-      document.getElementById("detailTitle").textContent = selected.name;
-      document.getElementById("detailPreviewImg").src = selected.imageUrl || "";
-      document.getElementById("detailMeta").textContent =
-        `型番: ${selected.cardNumber || "-"} / 文明・色: ${selected.color} / 現在の枠内枚数: ${indices.length}枚`;
-
-      const copyWrap = document.getElementById("copySelectorWrap");
-      const copyTabs = document.getElementById("copyTabs");
-      copyTabs.innerHTML = "";
-
-      if (indices.length > 0) {
-        copyWrap.style.display = "block";
-        indices.forEach((slotIdx, i) => {
-          const btn = document.createElement("button");
-          btn.type = "button";
-          btn.className = "copy-tab" + (i === activeCopyIndex ? " active" : "");
-          btn.textContent = `${i + 1}枚目 (${deckZones[currentZone][slotIdx].rarity})`;
-          btn.addEventListener("click", () => {
-            activeCopyIndex = i;
-            openDetailModal(baseKey, deckZones[currentZone][slotIdx].variantKey);
-          });
-          copyTabs.appendChild(btn);
-        });
-      } else {
-        copyWrap.style.display = "none";
-      }
-
-      const strip = document.getElementById("variantStrip");
-      strip.innerHTML = "";
-      variants.forEach((v) => {
-        const item = document.createElement("div");
-        item.className = "variant-item" + (v.variantKey === selected.variantKey ? " selected" : "");
-
-        const img = document.createElement("img");
-        img.src = v.imageUrl || "";
-        img.alt = v.rarity;
-
-        const lbl = document.createElement("div");
-        lbl.className = "variant-label";
-        lbl.textContent = v.rarity;
-
-        item.appendChild(img);
-        item.appendChild(lbl);
-
-        item.addEventListener("click", () => {
-          if (indices.length > 0) {
-            const targetIdx = indices[activeCopyIndex];
-            deckZones[currentZone][targetIdx] = { ...v };
-            saveZones();
-            renderDeckZone();
-            showToast(`${activeCopyIndex + 1}枚目を ${v.rarity} に変更`);
-          }
-          openDetailModal(baseKey, v.variantKey);
-        });
-
-        strip.appendChild(item);
-      });
-
-      document.getElementById("btnAddOneCopy").onclick = () => {
-        addToZone(selected, currentZone);
-        const updated = getZoneIndicesForBaseKey(baseKey, currentZone);
-        activeCopyIndex = Math.max(0, updated.length - 1);
-        openDetailModal(baseKey, selected.variantKey);
-      };
-
-      document.getElementById("btnRemoveOneCopy").onclick = () => {
-        const updated = getZoneIndicesForBaseKey(baseKey, currentZone);
-        if (!updated.length) return;
-        const targetIdx = updated[Math.min(activeCopyIndex, updated.length - 1)];
-        removeFromZoneAt(targetIdx, currentZone);
-        openDetailModal(baseKey, selected.variantKey);
-      };
-
-      const modal = document.getElementById("detailModal");
-      modal.classList.add("open");
-      modal.setAttribute("aria-hidden", "false");
-    }
-
-    function closeModal(id) {
-      const m = document.getElementById(id);
-      m.classList.remove("open");
-      m.setAttribute("aria-hidden", "true");
-    }
-
-    document.getElementById("closeDetailModal").addEventListener("click", () => closeModal("detailModal"));
-    document.getElementById("detailModal").addEventListener("click", (e) => {
-      if (e.target.id === "detailModal") closeModal("detailModal");
-    });
-
-    document.querySelectorAll(".zone-tab").forEach((tab) => {
-      tab.addEventListener("click", () => {
-        document.querySelectorAll(".zone-tab").forEach((t) => t.classList.remove("active"));
-        tab.classList.add("active");
-        currentZone = tab.dataset.zone;
-        renderDeckZone();
-      });
-    });
-
-    function buildFilterChips() {
-      const rarSet = new Set(["ALL"]);
-      const colSet = new Set(["ALL"]);
-      for (const list of variantGroups.values()) {
-        for (const v of list) {
-          if (v.rarity) rarSet.add(v.rarity);
-          if (v.color) colSet.add(v.color);
-        }
-      }
-      const rBox = document.getElementById("rarityChips");
-      rBox.innerHTML = "";
-      rarSet.forEach((r) => {
-        const b = document.createElement("button");
-        b.type = "button";
-        b.className = "chip" + (selectedRarity === r ? " active" : "");
-        b.textContent = r === "ALL" ? "すべて" : r;
-        b.onclick = () => {
-          selectedRarity = r;
-          buildFilterChips();
-          renderCatalog();
-        };
-        rBox.appendChild(b);
-      });
-
-      const cBox = document.getElementById("colorChips");
-      cBox.innerHTML = "";
-      colSet.forEach((c) => {
-        const b = document.createElement("button");
-        b.type = "button";
-        b.className = "chip" + (selectedColor === c ? " active" : "");
-        b.textContent = c === "ALL" ? "すべて" : c;
-        b.onclick = () => {
-          selectedColor = c;
-          buildFilterChips();
-          renderCatalog();
-        };
-        cBox.appendChild(b);
-      });
-    }
-
-    document.getElementById("btnOpenFilter").addEventListener("click", () => {
-      buildFilterChips();
-      document.getElementById("filterModal").classList.add("open");
-    });
-    document.getElementById("closeFilterModal").addEventListener("click", () => closeModal("filterModal"));
-    document.getElementById("btnResetFilter").addEventListener("click", () => {
-      selectedRarity = "ALL";
-      selectedColor = "ALL";
-      buildFilterChips();
-      renderCatalog();
-    });
-
-    document.getElementById("btnStats").addEventListener("click", () => {
-      const list = deckZones[currentZone];
-      const byColor = {};
-      const byRarity = {};
-      for (const s of list) {
-        byColor[s.color || "無色"] = (byColor[s.color || "無色"] || 0) + 1;
-        byRarity[s.rarity || "STD"] = (byRarity[s.rarity || "STD"] || 0) + 1;
-      }
-      document.getElementById("statsBody").innerHTML = `
-        <div><strong>枚数:</strong> ${list.length} / ${zoneLimit(currentZone)}枚</div>
-        <div style="margin-top:8px;"><strong>文明・色別:</strong> ${Object.entries(byColor).map(([k, v]) => `${k} ${v}枚`).join(" / ") || "なし"}</div>
-        <div style="margin-top:8px;"><strong>レアリティ別:</strong> ${Object.entries(byRarity).map(([k, v]) => `${k} ${v}枚`).join(" / ") || "なし"}</div>
-      `;
-      document.getElementById("statsModal").classList.add("open");
-    });
-    document.getElementById("closeStatsModal").addEventListener("click", () => closeModal("statsModal"));
-
-    function getSavedDecks() {
-      try {
-        return JSON.parse(localStorage.getItem(SAVED_KEY) || "[]");
-      } catch (_) {
-        return [];
-      }
-    }
-    function renderSavedDecks() {
-      const box = document.getElementById("savedListBody");
-      const list = getSavedDecks();
-      if (!list.length) {
-        box.innerHTML = `<div style="color:var(--muted);">保存されたデッキはありません。</div>`;
-        return;
-      }
-      box.innerHTML = "";
-      list.forEach((item, idx) => {
-        const row = document.createElement("div");
-        row.style.cssText = "display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);";
-        row.innerHTML = `<span><strong>${item.name}</strong> (${(item.main || []).length}枚)</span>`;
-        const act = document.createElement("div");
-        act.style.display = "flex";
-        act.style.gap = "6px";
-
-        const loadBtn = document.createElement("button");
-        loadBtn.type = "button";
-        loadBtn.textContent = "読込";
-        loadBtn.onclick = () => {
-          deckZones.main = (item.main || []).map(findEntryByVariantKey).filter(Boolean).map((x) => ({ ...x }));
-          deckZones.sub = (item.sub || []).map(findEntryByVariantKey).filter(Boolean).map((x) => ({ ...x }));
-          saveZones();
-          renderDeckZone();
-          closeModal("savedModal");
-          showToast(`「${item.name}」を読み込みました`);
-        };
-
-        const delBtn = document.createElement("button");
-        delBtn.type = "button";
-        delBtn.className = "danger";
-        delBtn.textContent = "削除";
-        delBtn.onclick = () => {
-          const next = getSavedDecks();
-          next.splice(idx, 1);
-          localStorage.setItem(SAVED_KEY, JSON.stringify(next));
-          renderSavedDecks();
-        };
-
-        act.appendChild(loadBtn);
-        act.appendChild(delBtn);
-        row.appendChild(act);
-        box.appendChild(row);
-      });
-    }
-
-    document.getElementById("btnSavedList").addEventListener("click", () => {
-      renderSavedDecks();
-      document.getElementById("savedModal").classList.add("open");
-    });
-    document.getElementById("closeSavedModal").addEventListener("click", () => closeModal("savedModal"));
-    document.getElementById("btnSaveCurrent").addEventListener("click", () => {
-      const name = document.getElementById("saveNameInput").value.trim() || `デッキ ${getSavedDecks().length + 1}`;
-      const list = getSavedDecks();
-      list.unshift({
-        name,
-        main: deckZones.main.map((x) => x.variantKey),
-        sub: deckZones.sub.map((x) => x.variantKey),
-      });
-      localStorage.setItem(SAVED_KEY, JSON.stringify(list.slice(0, 30)));
-      document.getElementById("saveNameInput").value = "";
-      renderSavedDecks();
-      showToast("デッキを保存しました");
-    });
-
-    document.getElementById("btnOpenClear").addEventListener("click", () => {
-      document.getElementById("clearModal").classList.add("open");
-    });
-    document.getElementById("btnCancelClear").addEventListener("click", () => closeModal("clearModal"));
-    document.getElementById("btnConfirmClear").addEventListener("click", () => {
-      deckZones[currentZone] = [];
-      saveZones();
-      renderDeckZone();
-      closeModal("clearModal");
-      showToast("クリアしました");
-    });
-
-    function buildExportText() {
-      const list = deckZones[currentZone];
-      const map = new Map();
-      for (const s of list) {
-        const key = `${s.name}__${s.rarity}`;
-        if (!map.has(key)) map.set(key, { name: s.name, rarity: s.rarity, cardNumber: s.cardNumber, count: 0 });
-        map.get(key).count += 1;
-      }
-      const lines = [`【HOROBEAT ${currentZone.toUpperCase()} (${list.length}/${zoneLimit(currentZone)})】`];
-      for (const item of map.values()) {
-        lines.push(`${item.count} x ${item.name} [${item.rarity}] ${item.cardNumber ? `(${item.cardNumber})` : ""}`.trim());
-      }
-      return lines.join("\n");
-    }
-
-    document.getElementById("btnExport").addEventListener("click", () => {
-      document.getElementById("exportText").value = buildExportText();
-      document.getElementById("generatedImgWrap").innerHTML = "";
-      document.getElementById("exportModal").classList.add("open");
-    });
-    document.getElementById("closeExportModal").addEventListener("click", () => closeModal("exportModal"));
-    document.getElementById("btnCopyText").addEventListener("click", async () => {
-      try {
-        await navigator.clipboard.writeText(document.getElementById("exportText").value);
-        showToast("コピーしました");
-      } catch (_) {
-        showToast("コピーに失敗しました");
-      }
-    });
-
-    async function loadImageSafe(url) {
-      if (!url) return null;
-      return new Promise((resolve) => {
-        const img = new Image();
-        img.crossOrigin = "anonymous";
-        const t = setTimeout(() => resolve(null), 6000);
-        img.onload = () => {
-          clearTimeout(t);
-          resolve(img);
-        };
-        img.onerror = () => {
-          clearTimeout(t);
-          resolve(null);
-        };
-        img.src = url;
-      });
-    }
-
-    document.getElementById("btnGenerateImage").addEventListener("click", async () => {
-      const list = deckZones[currentZone];
-      if (!list.length) {
-        showToast("カードがありません");
-        return;
-      }
-      const wrap = document.getElementById("generatedImgWrap");
-      wrap.innerHTML = `<div style="font-size:0.82rem;color:var(--muted);">画像を生成中...</div>`;
-      try {
-        const cols = 10;
-        const rows = Math.max(1, Math.ceil(list.length / cols));
-        const cardW = 140;
-        const cardH = 196;
-        const gap = 10;
-        const pad = 20;
-        const headerH = 44;
-
-        const canvas = document.createElement("canvas");
-        canvas.width = pad * 2 + cols * cardW + (cols - 1) * gap;
-        canvas.height = pad * 2 + headerH + rows * cardH + (rows - 1) * gap;
-
-        const ctx = canvas.getContext("2d");
-        ctx.fillStyle = "#f4f4f6";
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-        ctx.fillStyle = "#111114";
-        ctx.font = "700 22px 'Playfair Display', Georgia, serif";
-        ctx.fillText(`HOROBEAT STUDIO (${list.length}/${zoneLimit(currentZone)})`, pad, pad + 24);
-
-        const imgs = await Promise.all(list.map((s) => loadImageSafe(s.imageUrl)));
-        list.forEach((slot, idx) => {
-          const c = idx % cols;
-          const r = Math.floor(idx / cols);
-          const x = pad + c * (cardW + gap);
-          const y = pad + headerH + r * (cardH + gap);
-
-          ctx.fillStyle = "#e2e2e7";
-          ctx.fillRect(x, y, cardW, cardH);
-
-          const img = imgs[idx];
-          if (img) {
-            try {
-              ctx.drawImage(img, x, y, cardW, cardH);
-            } catch (_) {
-              ctx.fillStyle = "#52525b";
-              ctx.font = "12px sans-serif";
-              ctx.fillText(slot.name.slice(0, 10), x + 8, y + 24);
-            }
-          } else {
-            ctx.fillStyle = "#52525b";
-            ctx.font = "12px sans-serif";
-            ctx.fillText(slot.name.slice(0, 10), x + 8, y + 24);
-          }
-
-          ctx.fillStyle = "rgba(17, 17, 20, 0.86)";
-          ctx.fillRect(x + 6, y + cardH - 24, 46, 18);
-          ctx.fillStyle = "#ffffff";
-          ctx.font = "700 11px sans-serif";
-          ctx.fillText(slot.rarity || "STD", x + 11, y + cardH - 11);
-        });
-
-        const dataUrl = canvas.toDataURL("image/png");
-        wrap.innerHTML = "";
-        const outImg = document.createElement("img");
-        outImg.src = dataUrl;
-        outImg.alt = "デッキ画像";
-        outImg.style.cssText = "width:100%;border-radius:8px;border:1px solid var(--border);";
-        wrap.appendChild(outImg);
-        showToast("デッキ画像を生成しました");
-      } catch (err) {
-        wrap.innerHTML = `<div style="font-size:0.82rem;color:var(--danger);">画像生成エラー: ${String(err && err.message || err)}</div>`;
-      }
-    });
-
-    document.getElementById("searchInput").addEventListener("input", () => renderCatalog());
-    document.getElementById("btnClearSearch").addEventListener("click", () => {
-      document.getElementById("searchInput").value = "";
-      renderCatalog();
-    });
-
-    async function init() {
-      const res = await fetchCardsWithFallback();
-      allCards = res.cards;
-      variantGroups = buildVariantGroups(allCards);
-      loadZones();
-      renderDeckZone();
-      renderCatalog(res.error);
-    }
-
-    init();
-  </script>
+<body oncontextmenu="return false;">
+<div class="studio">
+<header class="top-bar">
+<div class="logo-area">
+<span class="logo-mark">HOROBEAT STUDIO</span>
+<button class="help-dot" id="btnAbout" title="使い方・免責">?</button>
+</div>
+<div class="top-actions">
+<button class="pill-btn" id="btnDecks">保存</button>
+<button class="pill-btn" id="btnStats">分布</button>
+<button class="pill-btn primary" id="btnShare">出力</button>
+<button class="pill-btn danger" id="btnClear">クリア</button>
+</div>
+</header>
+<div class="deck-meta-bar">
+<div class="seg-tabs">
+<button class="seg-tab active" data-zone="main">メインデッキ</button>
+<button class="seg-tab" data-zone="sub">サブ / 調整枠</button>
+</div>
+<div class="counter-readout" id="counterReadout">
+<span id="zoneLabel">MAIN</span> <strong id="zoneCount">0</strong> / <span id="zoneTarget">50</span> 枚
+</div>
+</div>
+<main class="deck-viewport">
+<!-- 10×5 枠グリッド -->
+<div class="deck-grid" id="deckGrid"></div>
+<!-- 余白エリアの便利ウィジェット -->
+<div class="deck-utility-panel">
+<div class="progress-row">
+<span id="deckStatusLabel">あと 50 枚</span>
+<div class="progress-track">
+<div class="progress-fill" id="deckProgressFill" style="width:0%"></div>
+</div>
+<span id="deckPctLabel">0%</span>
+</div>
+<div class="mini-chips-row" id="colorQuickChips"></div>
+<div class="focus-card-bar">
+<span class="focus-name" id="focusCardLabel">カード未選択</span>
+<div class="focus-controls">
+<button class="step-btn" id="btnFocusMinus" title="1枚減らす">-</button>
+<span id="focusCountLabel" style="font-weight:900;min-width:34px;text-align:center;">0/4</span>
+<button class="step-btn" id="btnFocusPlus" title="1枚増やす">+</button>
+<button class="mini-tag" id="btnFocusDetail">詳細</button>
+</div>
+</div>
+</div>
+</main>
+<section class="dock-section">
+<div class="dock-header">
+<span>タップ・上スワイプで追加 / 長押し・詳細で拡大表示 / 下スワイプで1枚削除</span>
+<span id="poolCountLabel">0件</span>
+</div>
+<div class="dock-scroll" id="dockScroll"></div>
+</section>
+<footer class="control-bar">
+<div class="search-wrap">
+<span style="font-size:15px;">🔍</span>
+<input type="search" id="searchInput" placeholder="カード名・型番で検索" />
+<button class="clear-btn" id="btnClearSearch">×</button>
+</div>
+<button class="sub-btn" id="btnOpenFilter">絞り込み</button>
+<button class="sub-btn" id="btnOpenSort">並替</button>
+</footer>
+</div>
+<!-- デッキ削除確認ポップアップ中央ダイアログ -->
+<div class="dialog-overlay" id="clearOverlay">
+<div class="dialog-card" role="dialog" aria-modal="true" aria-labelledby="clearDialogTitle">
+<div class="dialog-head">
+<span id="clearDialogTitle">デッキ削除</span>
+<button type="button" class="dialog-close" id="btnCancelClearX" aria-label="閉じる">×</button>
+</div>
+<p class="dialog-body">
+現在デッキに採用されているカードを全て削除しますか？
+</p>
+<div class="dialog-actions">
+<button type="button" class="dialog-btn cancel" id="btnCancelClear">キャンセル</button>
+<button type="button" class="dialog-btn danger" id="btnConfirmClear">削除</button>
+</div>
+</div>
+</div>
+<div class="toast" id="toast"></div>
+<!-- 絞り込み -->
+<div class="overlay" id="filterOverlay">
+<div class="sheet">
+<div class="sheet-head">
+<span>カード絞り込み</span>
+<button class="sheet-close" data-close="filterOverlay">×</button>
+</div>
+<div style="font-size:12px;color:var(--text-secondary);margin-bottom:6px;font-weight:700;">レアリティ</div>
+<div class="chips" id="rarityChipList"></div>
+<div style="font-size:12px;color:var(--text-secondary);margin-bottom:6px;font-weight:700;">色</div>
+<div class="chips" id="colorChipList"></div>
+<div style="font-size:12px;color:var(--text-secondary);margin-bottom:6px;font-weight:700;">種類</div>
+<div class="chips" id="typeChipList"></div>
+<div style="font-size:12px;color:var(--text-secondary);margin-bottom:6px;font-weight:700;">画像状態</div>
+<div class="chips" id="imgChipList">
+<button class="chip selected" data-img="ALL">すべて</button>
+<button class="chip" data-img="HAS">画像ありのみ</button>
+<button class="chip" data-img="NONE">画像未設定のみ</button>
+</div>
+<button class="sheet-btn secondary" id="btnResetFilters">フィルタ解除</button>
+</div>
+</div>
+<!-- 並べ替え -->
+<div class="overlay" id="sortOverlay">
+<div class="sheet">
+<div class="sheet-head">
+<span>並べ替え順</span>
+<button class="sheet-close" data-close="sortOverlay">×</button>
+</div>
+<div class="chips" id="sortChipList">
+<button class="chip selected" data-sort="id">型番順</button>
+<button class="chip" data-sort="cost_asc">コスト低い順</button>
+<button class="chip" data-sort="cost_desc">コスト高い順</button>
+<button class="chip" data-sort="name">名前順</button>
+</div>
+</div>
+</div>
+<!-- 分布・内訳 -->
+<div class="overlay" id="statsOverlay">
+<div class="sheet">
+<div class="sheet-head">
+<span>デッキ内訳・コスト分布</span>
+<button class="sheet-close" data-close="statsOverlay">×</button>
+</div>
+<div id="statsContent" style="font-size:13px;line-height:1.7;"></div>
+</div>
+</div>
+<!-- 複数デッキ管理 -->
+<div class="overlay" id="decksOverlay">
+<div class="sheet">
+<div class="sheet-head">
+<span>保存済みデッキ一覧</span>
+<button class="sheet-close" data-close="decksOverlay">×</button>
+</div>
+<div style="display:flex;gap:6px;margin-bottom:12px;">
+<input type="text" class="text-input" id="deckNameInput" placeholder="デッキ名（例：赤単ビート）" style="margin:0;" />
+<button class="sheet-btn" id="btnSaveSlot" style="width:auto;margin:0;padding:0 14px;white-space:nowrap;">デッキを保存</button>
+</div>
+<div id="savedSlotList"></div>
+</div>
+</div>
+<!-- 出力・共有・画像生成・インポート -->
+<div class="overlay" id="shareOverlay">
+<div class="sheet">
+<div class="sheet-head">
+<span>レシピ出力・共有・読込</span>
+<button class="sheet-close" data-close="shareOverlay">×</button>
+</div>
+<input type="text" class="text-input" id="exportTitleInput" placeholder="デッキタイトル（画像書き出し用）" value="HOROBEAT DECK" />
+<textarea class="recipe-box" id="recipeText"></textarea>
+<button class="sheet-btn" id="btnRenderImage">デッキ画像を生成（10×5 / PNG保存用）</button>
+<div id="generatedImgWrap"></div>
+<button class="sheet-btn secondary" id="btnCopyText">テキストをコピー</button>
+<button class="sheet-btn secondary" id="btnCopyLink">共有URLをコピー</button>
+<button class="sheet-btn secondary" id="btnImportText">テキストからデッキを読み込む</button>
+</div>
+</div>
+<!-- カード詳細（1枚ごとのレアリティ・イラスト選択対応） -->
+<div class="overlay" id="detailOverlay">
+<div class="sheet">
+<div class="sheet-head">
+<span id="detailTitle">カード詳細</span>
+<button class="sheet-close" data-close="detailOverlay">×</button>
+</div>
+<div id="detailBody"></div>
+</div>
+</div>
+<!-- サイト情報・免責 -->
+<div class="overlay" id="aboutOverlay">
+<div class="sheet">
+<div class="sheet-head">
+<span>HOROBEAT STUDIO について</span>
+<button class="sheet-close" data-close="aboutOverlay">×</button>
+</div>
+<div style="font-size:13px;color:var(--text-secondary);line-height:1.7;">
+<p style="margin-top:0;color:var(--text-primary);"><strong>操作方法：</strong>
+
+・タップ・上スワイプで追加
+
+・長押し・詳細で拡大表示
+
+・下スワイプで1枚削除（デッキ内のカードはタップでも拡大表示）</p>
+<p style="margin-bottom:0;">※ 本サイトは『ホロビートカードゲーム』の非公式ファンメイド・デッキ構築支援ツールです。掲載されているカード情報・画像の権利は各権利者に帰属します。</p>
+</div>
+</div>
+</div>
+<script>
+const MAX_PER_CARD = 4;
+const TARGET_COUNTS = { main: 50, sub: 10 };
+const GRID_SLOTS_10X5 = 50;
+const LONG_PRESS_MS = 260;
+const SAVE_KEY = "horobeat_studio_deck_v1";
+const SLOTS_KEY = "horobeat_studio_slots_v1";
+let cards = [];
+let zone = "main";
+// variants: { main: { [baseId]: [variantId0, variantId1, ...] }, sub: { ... } }
+let deckData = { main: {}, sub: {}, variants: { main: {}, sub: {} } };
+let focusedCardId = null;
+let detailCopyIndex = 0;
+let state = { q: "", rarity: "ALL", color: "ALL", type: "ALL", img: "ALL", sort: "id" };
+function pickCardId(raw) {
+return String(
+raw?.id ??
+raw?.cardId ??
+raw?.card_id ??
+raw?.cardNumber ??
+raw?.card_no ??
+raw?.number ??
+raw?.code ??
+raw?.name ??
+raw?.title ??
+""
+).trim();
+}
+function pickCardImage(raw) {
+const val =
+raw?.imageUrl ??
+raw?.image_url ??
+raw?.image ??
+raw?.img ??
+raw?.src ??
+raw?.thumbnail ??
+raw?.thumb ??
+raw?.url ??
+"";
+if (typeof val === "string") return val.trim();
+if (val && typeof val === "object") {
+return String(val.url || val.src || val.imageUrl || "").trim();
+}
+return "";
+}
+function pickCardColor(raw) {
+const c =
+raw?.color ??
+raw?.colors ??
+raw?.civilization ??
+raw?.civilizations ??
+raw?.attribute ??
+raw?.element ??
+"";
+if (Array.isArray(c)) {
+const joined = c.map(x => String(x || "").trim()).filter(Boolean).join("/");
+return joined || "無";
+}
+const s = String(c || "").trim();
+return s || "無";
+}
+function normalizeCardItem(raw, fallbackIndex = 0) {
+if (!raw || typeof raw !== "object") return null;
+const id = pickCardId(raw) || ⁠CARD_${fallbackIndex + 1}⁠;
+const cardNumber = String(
+raw.cardNumber ?? raw.card_no ?? raw.number ?? raw.no ?? raw.code ?? raw.id ?? id
+).trim();
+const name = String(raw.name ?? raw.title ?? raw.cardName ?? cardNumber ?? id).trim();
+const costVal = raw.cost ?? raw.mana ?? raw.level ?? null;
+const cost = costVal === null || costVal === undefined || costVal === "" ? null : Number(costVal);
+const imageUrl = pickCardImage(raw);
+const color = pickCardColor(raw);
+const type = String(raw.type ?? raw.cardType ?? raw.category ?? raw.kind ?? "その他").trim() || "その他";
+const rarity = raw.rarity ? String(raw.rarity).trim() : "";
+const text = String(raw.text ?? raw.effect ?? raw.description ?? raw.ability ?? "").trim();
+return {
+...raw,
+id,
+cardNumber,
+name,
+cost: Number.isNaN(cost) ? null : cost,
+imageUrl,
+color,
+type,
+rarity,
+text
+};
+}
+function extractCardsFromPayload(payload) {
+let list = [];
+if (Array.isArray(payload)) {
+list = payload;
+} else if (payload && typeof payload === "object") {
+if (Array.isArray(payload.cards)) list = payload.cards;
+else if (Array.isArray(payload.items)) list = payload.items;
+else if (Array.isArray(payload.data)) list = payload.data;
+else if (Array.isArray(payload.list)) list = payload.list;
+else if (payload.data && Array.isArray(payload.data.cards)) list = payload.data.cards;
+else {
+const vals = Object.values(payload);
+if (vals.length > 0 && vals.every(v => v && typeof v === "object" && !Array.isArray(v))) {
+list = vals;
+}
+}
+}
+const seenIds = new Map();
+return list
+.map((item, idx) => normalizeCardItem(item, idx))
+.filter(Boolean)
+.map(card => {
+const base = card.id;
+const n = (seenIds.get(base) || 0) + 1;
+seenIds.set(base, n);
+if (n > 1) {
+return { ...card, id: ⁠${base}__${n}⁠ };
+}
+return card;
+});
+}
+async function loadCardsOnly() {
+const urls = [
+"./data/cards.json",
+"data/cards.json",
+"./cards.json",
+"cards.json",
+"../data/cards.json"
+];
+let lastErr = null;
+for (const url of urls) {
+try {
+const res = await fetch(url, { cache: "no-store" });
+if (!res.ok) {
+lastErr = new Error(⁠${url} (HTTP ${res.status})⁠);
+continue;
+}
+const text = await res.text();
+const json = JSON.parse(text);
+const parsed = extractCardsFromPayload(json);
+if (parsed.length > 0) {
+return parsed;
+}
+lastErr = new Error(⁠${url} (0件)⁠);
+} catch (err) {
+lastErr = err;
+}
+}
+throw lastErr || new Error("カードデータが見つかりません");
+}
+function detectRarity(card) {
+if (card.rarity) return String(card.rarity).trim().toUpperCase();
+const hay = ⁠${card.id || ""} ${card.cardNumber || ""} ${card.type || ""} ${card.text || ""}⁠.toUpperCase();
+for (const r of ["SEC", "DR", "SR", "RR", "R", "UC", "C", "PR"]) {
+const re = new RegExp(⁠(^|[^A-Z])${r}([^A-Z]|$)⁠);
+if (re.test(hay)) return r;
+}
+return "その他";
+}
+function displayCardNumber(card) {
+return card.cardNumber || card.id || "";
+}
+function getBaseCardKey(card) {
+const no = String(card.cardNumber || "").trim().toUpperCase();
+if (no) return ⁠NO:${no}⁠;
+const rawId = String(card.id || "").trim().toUpperCase();
+const stripped = rawId.replace(/([A-Z0-9]+)?(__\d+)?￼
+￼
+￼
+}
+function getCardVariants(card) {
+￼
+￼
+￼
+￼
+}
+function ensureVariantsArray(z, baseId, count) {
+￼
+￼
+￼
+while (current.length < count) {
+￼
+}
+if (current.length > count) {
+￼
+}
+￼
+￼
+}
+function getDeckCopyIds(z, baseId) {
+￼
+￼
+￼
+}
+function setDeckCopyVariant(z, baseId, copyIdx, chosenId) {
+￼
+￼
+￼
+￼
+￼
+￼
+￼
+}
+function toast(msg) {
+￼
+￼
+￼
+￼
+￼
+}
+function zoneTotal(z) {
+￼
+}
+function cardTotal(id) {
+￼
+}
+function persist() {
+￼
+}
+function restore() {
+const normalizeLoaded = parsed => {
+￼
+￼
+const variants = {
+￼
+￼
+};
+￼
+["main", "sub"].forEach(z => {
+Object.entries(deckData[z]).forEach(([id, n]) => {
+￼
+if (qty > 0) {
+￼
+} else {
+￼
+￼
+}
+});
+});
+};
+￼
+if (urlParam) {
+try {
+￼
+if (decoded && typeof decoded === "object") {
+￼
+￼
+}
+} catch (e) {}
+}
+try {
+￼
+if (saved) {
+￼
+￼
+}
+} catch (e) {}
+}
+function addToDeck(id, preferredVariantId = null) {
+￼
+if (cardTotal(id) >= MAX_PER_CARD) {
+￼
+￼
+￼
+}
+￼
+￼
+￼
+￼
+￼
+￼
+}
+function removeFromDeck(id) {
+￼
+if (!deckData[zone][id]) {
+￼
+￼
+}
+￼
+if (deckData[zone][id] <= 0) {
+￼
+￼
+} else {
+￼
+}
+￼
+￼
+}
+function makeFallback(card) {
+￼
+￼
+￼
+￼
+}
+function makeArt(card) {
+if (card.imageUrl) {
+￼
+￼
+￼
+￼
+￼
+￼
+}
+￼
+}
+function getSortedZoneEntries(z) {
+￼
+￼
+￼
+￼
+.sort((a, b) => {
+￼
+￼
+￼
+});
+}
+function getExpandedZoneCards(z) {
+￼
+￼
+￼
+items.forEach(({ card, n }) => {
+￼
+for (let i = 0; i < n; i++) {
+￼
+expanded.push({
+￼
+￼
+￼
+});
+}
+});
+￼
+}
+function renderDeck() {
+￼
+￼
+￼
+￼
+for (let i = 0; i < totalTiles; i++) {
+￼
+￼
+if (!entry) {
+￼
+￼
+￼
+}
+￼
+￼
+￼
+￼
+￼
+tile.addEventListener("touchstart", e => {
+￼
+￼
+}, { passive: true });
+tile.addEventListener("touchend", e => {
+if (e.changedTouches[0].clientY - startY > 24) {
+￼
+￼
+￼
+}
+});
+tile.addEventListener("click", () => {
+if (swipedDown) {
+￼
+￼
+}
+￼
+￼
+});
+￼
+}
+}
+function renderUtilityPanel() {
+￼
+￼
+￼
+￼
+￼
+￼
+￼
+￼
+￼
+￼
+if (diff > 0) {
+￼
+} else if (diff === 0) {
+￼
+￼
+} else {
+￼
+￼
+}
+￼
+￼
+Object.entries(deckData[zone] || {}).forEach(([id, n]) => {
+￼
+￼
+});
+￼
+￼
+￼
+￼
+￼
+￼
+allChip.onclick = () => {
+￼
+￼
+};
+￼
+Object.entries(colorCounts).forEach(([col, cnt]) => {
+￼
+￼
+￼
+￼
+btn.onclick = () => {
+￼
+￼
+};
+￼
+});
+￼
+￼
+￼
+if (focusCard) {
+￼
+￼
+} else {
+￼
+￼
+}
+}
+function filteredPool() {
+￼
+￼
+.filter(c => {
+￼
+￼
+￼
+￼
+￼
+if (q) {
+￼
+￼
+}
+￼
+})
+.sort((a, b) => {
+￼
+￼
+￼
+￼
+});
+}
+function renderDock() {
+￼
+￼
+￼
+￼
+pool.forEach(card => {
+￼
+￼
+￼
+￼
+if (count > 0) {
+￼
+￼
+￼
+￼
+}
+￼
+￼
+￼
+￼
+infoBtn.addEventListener("click", e => {
+￼
+￼
+￼
+});
+￼
+￼
+el.addEventListener("touchstart", e => {
+￼
+￼
+￼
+timer = setTimeout(() => {
+￼
+￼
+￼
+}, LONG_PRESS_MS);
+}, { passive: true });
+el.addEventListener("touchmove", e => {
+￼
+￼
+￼
+}, { passive: true });
+el.addEventListener("touchend", e => {
+￼
+￼
+￼
+￼
+if (dy < -24 && dx < 30) {
+￼
+￼
+}
+});
+el.addEventListener("click", () => {
+￼
+});
+￼
+});
+}
+function renderMeta() {
+￼
+￼
+￼
+￼
+￼
+￼
+￼
+￼
+}
+function render() {
+￼
+￼
+￼
+￼
+}
+function buildFilterOptions() {
+￼
+￼
+￼
+￼
+￼
+rarities.forEach(rar => {
+￼
+￼
+￼
+￼
+￼
+});
+￼
+￼
+colors.forEach(col => {
+￼
+￼
+￼
+￼
+￼
+});
+￼
+￼
+types.forEach(tp => {
+￼
+￼
+￼
+￼
+￼
+});
+document.querySelectorAll("#imgChipList .chip").forEach(chip => {
+￼
+});
+}
+function openDetail(card, initialCopyIdx = 0) {
+￼
+￼
+￼
+￼
+￼
+￼
+￼
+￼
+￼
+if (inZone > 0) {
+copySelectorHtml = `<div style="font-size:12px;font-weight:800;margin-bottom:5px;">デッキ内の枚数ごとにレアリティを選択</div><div class="copy-tabs-row">${copyIds.map((vid, idx) => { const vCard = map.get(vid) || card; const vRarity = detectRarity(vCard); return `<button type="button" class="copy-tab ${idx === detailCopyIndex ? "active" : ""}" data-copy-idx="${idx}">{idx + 1}枚目 ({vRarity})</button>`; }).join("")}</div>`;
+}
+const variantStripHtml = `<div style="font-size:12px;font-weight:800;margin-bottom:4px;">表示レアリティ / イラスト候補（${variants.length}種）</div><div class="variant-strip">${variants.map((v, vIdx) => { const isSelected = v.id === activeCard.id; const rLabel = detectRarity(v); return `<button type="button" class="variant-thumb ${isSelected ? "selected" : ""}" data-variant-id="${v.id}">{v.imageUrl ? ⁠<img src="${v.imageUrl}" alt="${v.name || ""}" />⁠ : ""}<span class="variant-label">￼{variants.length > 1 ? ⁠ #${vIdx + 1}⁠ : ""}</span></button>⁠; }).join("")}</div>⁠;
+document.getElementById("detailBody").innerHTML = ⁠${activeCard.imageUrl ? ⁠<img class="preview-img" src="￼{activeCard.name || ""}" />⁠: ""}${copySelectorHtml}${variantStripHtml}<div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px;">レア: ${detectRarity(activeCard)} / 色: ${activeCard.color || "-"} / 種類: ${activeCard.type || "-"} / コスト: ${activeCard.cost ?? "-"}</div><p style="font-size:13px;line-height:1.6;margin:0 0 12px;">${activeCard.text || ""}</p><button class="sheet-btn" id="detailAdd">1枚追加（合計 ${cardTotal(card.id)} / ${MAX_PER_CARD}）</button>${inZone > 0 ?⁠<button class="sheet-btn secondary" id="detailRemove">現在の枠から1枚減らす（{inZone}枚中）</button>` : ""}`;
+document.querySelectorAll("#detailBody [data-copy-idx]").forEach(btn => {
+btn.onclick = () => {
+￼
+};
+});
+document.querySelectorAll("#detailBody [data-variant-id]").forEach(btn => {
+btn.onclick = () => {
+￼
+if (inZone > 0) {
+￼
+￼
+} else {
+￼
+￼
+}
+};
+});
+document.getElementById("detailAdd").onclick = () => {
+￼
+￼
+￼
+};
+￼
+if (remBtn) {
+remBtn.onclick = () => {
+￼
+￼
+￼
+};
+}
+￼
+}
+function openStats() {
+￼
+￼
+￼
+￼
+Object.entries(deckData[zone] || {}).forEach(([id, n]) => {
+￼
+￼
+￼
+￼
+￼
+});
+￼
+const costBars = Object.keys(costMap).sort((a, b) => Number(a) - Number(b)).map(k => {
+￼
+￼
+}).join("") || "<div style='color:var(--text-secondary);'>カードがありません</div>";
+￼
+￼
+￼
+}
+function getSlots() {
+￼
+}
+function setSlots(list) {
+￼
+}
+function renderSavedSlots() {
+￼
+￼
+if (!list.length) {
+￼
+￼
+}
+￼
+list.forEach((slot, idx) => {
+￼
+￼
+￼
+row.innerHTML = `<div style="min-width:0;"><div style="font-size:13px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${slot.name}</div><div style="font-size:11px;color:var(--text-secondary);">メイン ${mCount}枚 / ${slot.updatedAt || ""}</div></div><div style="display:flex;gap:5px;flex-shrink:0;"><button class="pill-btn primary" data-load="${idx}">読込</button><button class="pill-btn danger" data-del="${idx}">削除</button></div>`;
+￼
+});
+box.querySelectorAll("[data-load]").forEach(btn => {
+btn.onclick = () => {
+￼
+￼
+￼
+￼
+￼
+￼
+￼
+￼
+};
+});
+box.querySelectorAll("[data-del]").forEach(btn => {
+btn.onclick = () => {
+￼
+￼
+￼
+￼
+￼
+};
+});
+}
+function openShare() {
+￼
+￼
+￼
+["main", "sub"].forEach(z => {
+￼
+if (entries.length) {
+out.push(z === "main" ? `\n■ メイン (${zoneTotal("main")}枚)` : `\n■ サブ (${zoneTotal("sub")}枚)`);
+entries.forEach(([id, n]) => {
+￼
+￼
+￼
+￼
+￼
+￼
+});
+}
+});
+document.getElementById("recipeText").value = out.join("\n");
+￼
+￼
+}
+function importFromRecipeText(text) {
+￼
+￼
+￼
+cards.forEach(c => {
+￼
+if (c.cardNumber && !byId.has(String(c.cardNumber).toUpperCase())) {
+￼
+}
+});
+￼
+￼
+text.split(/\r?\n/).forEach(rawLine => {
+￼
+￼
+￼
+￼
+const m = line.match(/^(\d+)\s*[x×]\s*(.+?)(?:\s*[(（[]([^)\）\]]+)[)\）\]])?/i);
+if (!m) return;
+const qty = Number(m[1]);
+if (!qty || qty <= 0) return;
+const namePart = m[2].replace(/\s*[[^]]+]\s*/, "").trim();
+const idPart = (m[3] || "").trim().toUpperCase();
+const resolvedId = (idPart && byId.get(idPart)) || byName.get(namePart);
+if (resolvedId) {
+newDeck[currentTarget][resolvedId] = qty;
+newDeck.variants[currentTarget][resolvedId] = Array.from({ length: qty }, () => resolvedId);
+importedCount += qty;
+}
+});
+if (importedCount === 0) {
+toast("読み込めるカード行が見つかりませんでした");
+return;
+}
+deckData = newDeck;
+persist();
+render();
+document.getElementById("shareOverlay").classList.remove("open");
+toast(⁠合計 ${importedCount}枚 を読み込みました⁠);
+}
+function loadCardImageSafe(url, timeoutMs = 2500) {
+return new Promise(resolve => {
+if (!url) return resolve(null);
+let settled = false;
+const done = val => {
+if (!settled) {
+settled = true;
+resolve(val);
+}
+};
+const timer = setTimeout(() => done(null), timeoutMs);
+const img = new Image();
+img.crossOrigin = "anonymous";
+img.onload = async () => {
+try {
+if (typeof img.decode === "function") await img.decode();
+} catch () {}
+clearTimeout(timer);
+done((img.naturalWidth || img.width) > 0 ? img : null);
+};
+img.onerror = () => {
+clearTimeout(timer);
+done(null);
+};
+img.src = url;
+});
+}
+function drawCardPlaceholder(ctx, card, x, y, w, h) {
+ctx.save();
+ctx.fillStyle = "#f4f5f7";
+ctx.fillRect(x, y, w, h);
+ctx.strokeStyle = "rgba(17, 19, 24, 0.25)";
+ctx.lineWidth = 1;
+ctx.strokeRect(x + 0.5, y + 0.5, w - 1, h - 1);
+ctx.fillStyle = "#4b5563";
+ctx.font = "bold 10px sans-serif";
+ctx.fillText(String((card && displayCardNumber(card)) || "").slice(0, 14), x + 6, y + 18);
+ctx.fillStyle = "#111318";
+ctx.font = "bold 12px sans-serif";
+const name = String((card && card.name) || "");
+ctx.fillText(name.slice(0, 8), x + 6, y + Math.round(h * 0.52));
+if (name.length > 8) {
+ctx.fillText(name.slice(8, 16), x + 6, y + Math.round(h * 0.52) + 18);
+}
+ctx.restore();
+}
+async function generateDeckImage() {
+const btn = document.getElementById("btnRenderImage");
+const wrap = document.getElementById("generatedImgWrap");
+if (!btn || !wrap) return;
+btn.disabled = true;
+const prevLabel = btn.textContent;
+btn.textContent = "画像を生成中...";
+try {
+const expandedEntries = getExpandedZoneCards("main");
+const expanded = expandedEntries.map(e => e.displayCard);
+const cols = 10;
+const minRows = 5;
+const rows = Math.max(minRows, Math.ceil(expanded.length / cols));
+const cardW = 128;
+const cardH = Math.round(cardW * (88 / 63));
+const gap = 8;
+const pad = 22;
+const headerH = 64;
+const canvas = document.createElement("canvas");
+canvas.width = pad * 2 + cols * cardW + (cols - 1) * gap;
+canvas.height = headerH + pad + rows * cardH + (rows - 1) * gap + pad;
+const ctx = canvas.getContext("2d");
+if (!ctx) throw new Error("Canvas context unavailable");
+ctx.fillStyle = "#ffffff";
+ctx.fillRect(0, 0, canvas.width, canvas.height);
+const titleInput = document.getElementById("exportTitleInput");
+const title = (titleInput && titleInput.value.trim()) || "HOROBEAT DECK";
+ctx.fillStyle = "#000000";
+ctx.font = "bold 24px sans-serif";
+ctx.fillText(title, pad, 41);
+ctx.fillStyle = "#4b5563";
+ctx.font = "bold 16px sans-serif";
+ctx.textAlign = "right";
+ctx.fillText(⁠MAIN ${zoneTotal("main")} / 50枚（10×5）⁠, canvas.width - pad, 41);
+ctx.textAlign = "left";
+const loadedImgs = await Promise.all(
+expanded.map(card => loadCardImageSafe(card && card.imageUrl, 2500))
+);
+let usedFallback = false;
+for (let idx = 0; idx < cols * rows; idx++) {
+const r = Math.floor(idx / cols);
+const c = idx % cols;
+const x = pad + c * (cardW + gap);
+const y = headerH + r * (cardH + gap);
+const card = expanded[idx];
+if (!card) {
+drawCardPlaceholder(ctx, { name: "", id: "" }, x, y, cardW, cardH);
+continue;
+}
+const img = loadedImgs[idx];
+let drewPhoto = false;
+if (img) {
+try {
+ctx.drawImage(img, x, y, cardW, cardH);
+drewPhoto = true;
+} catch () {
+drewPhoto = false;
+}
+}
+if (!drewPhoto) {
+usedFallback = true;
+drawCardPlaceholder(ctx, card, x, y, cardW, cardH);
+}
+}
+let dataUrl = "";
+try {
+dataUrl = canvas.toDataURL("image/png");
+} catch () {
+usedFallback = true;
+ctx.fillStyle = "#ffffff";
+ctx.fillRect(0, headerH + pad, canvas.width, canvas.height - headerH - pad);
+for (let idx = 0; idx < cols * rows; idx++) {
+const r = Math.floor(idx / cols);
+const c = idx % cols;
+const x = pad + c * (cardW + gap);
+const y = headerH + r * (cardH + gap);
+drawCardPlaceholder(ctx, expanded[idx] || { name: "", id: "" }, x, y, cardW, cardH);
+}
+dataUrl = canvas.toDataURL("image/png");
+}
+const safeFileBase = (title.replace(/[^\w-一-龠ぁ-んァ-ヶ]/g, "_") || "deck").slice(0, 40);
+const noteText = usedFallback
+? "外部画像が読み込めなかった枠はカード枠で生成しました（長押し、またはボタンから保存）"
+: "画像を生成しました（長押し、またはボタンから保存）";
+wrap.innerHTML = ⁠<p style="font-size:12px;color:var(--text-secondary);margin:8px 0 4px;font-weight:700;">${noteText}</p><img class="generated-img" src="${dataUrl}" alt="デッキレシピ画像" /><a class="sheet-btn" href="${dataUrl}" download="${safeFileBase}_10x5.png" style="display:block;text-align:center;text-decoration:none;">PNG画像をダウンロード</a>⁠;
+wrap.scrollIntoView({ behavior: "smooth", block: "nearest" });
+toast("デッキ画像を生成しました");
+} catch (err) {
+const reason = (err && err.message) ? err.message : String(err);
+console.error("generateDeckImage error:", err);
+toast(⁠エラー: ${reason}⁠);
+} finally {
+btn.disabled = false;
+btn.textContent = prevLabel || "デッキ画像を生成（10×5 / PNG保存用）";
+}
+}
+function bind() {
+document.querySelectorAll(".seg-tab").forEach(btn => {
+btn.onclick = () => {
+document.querySelectorAll(".seg-tab").forEach(b => b.classList.remove("active"));
+btn.classList.add("active");
+zone = btn.dataset.zone;
+render();
+};
+});
+const clearOverlay = document.getElementById("clearOverlay");
+function closeClearDialog() {
+clearOverlay.classList.remove("open");
+}
+document.getElementById("btnClear").onclick = () => {
+clearOverlay.classList.add("open");
+};
+document.getElementById("btnCancelClearX").onclick = closeClearDialog;
+document.getElementById("btnCancelClear").onclick = closeClearDialog;
+clearOverlay.addEventListener("click", e => {
+if (e.target === clearOverlay) closeClearDialog();
+});
+document.getElementById("btnConfirmClear").onclick = () => {
+deckData[zone] = {};
+if (deckData.variants) deckData.variants[zone] = {};
+persist();
+render();
+closeClearDialog();
+};
+document.getElementById("btnFocusMinus").onclick = () => {
+if (focusedCardId) removeFromDeck(focusedCardId);
+};
+document.getElementById("btnFocusPlus").onclick = () => {
+if (focusedCardId) addToDeck(focusedCardId);
+};
+document.getElementById("btnFocusDetail").onclick = () => {
+if (!focusedCardId) return;
+const c = cards.find(item => item.id === focusedCardId);
+if (c) openDetail(c, 0);
+};
+document.getElementById("btnAbout").onclick = () => document.getElementById("aboutOverlay").classList.add("open");
+document.getElementById("btnStats").onclick = openStats;
+document.getElementById("btnShare").onclick = openShare;
+document.getElementById("btnDecks").onclick = () => {
+renderSavedSlots();
+document.getElementById("decksOverlay").classList.add("open");
+};
+document.getElementById("btnSaveSlot").onclick = () => {
+const name = document.getElementById("deckNameInput").value.trim() || ⁠デッキ ${getSlots().length + 1}⁠;
+const list = getSlots();
+const now = new Date();
+const stamp = ⁠${now.getMonth() + 1}/${now.getDate()} ${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}⁠;
+list.unshift({ name, updatedAt: stamp, deck: JSON.parse(JSON.stringify(deckData)) });
+setSlots(list.slice(0, 20));
+document.getElementById("deckNameInput").value = "";
+renderSavedSlots();
+toast("デッキを保存しました");
+};
+document.getElementById("searchInput").addEventListener("input", e => {
+state.q = e.target.value;
+renderDock();
+});
+document.getElementById("btnClearSearch").onclick = () => {
+state.q = "";
+document.getElementById("searchInput").value = "";
+renderDock();
+};
+document.getElementById("btnOpenFilter").onclick = () => {
+buildFilterOptions();
+document.getElementById("filterOverlay").classList.add("open");
+};
+document.querySelectorAll("#imgChipList .chip").forEach(chip => {
+chip.onclick = () => {
+state.img = chip.dataset.img;
+buildFilterOptions();
+render();
+};
+});
+document.getElementById("btnResetFilters").onclick = () => {
+state.rarity = "ALL";
+state.color = "ALL";
+state.type = "ALL";
+state.img = "ALL";
+buildFilterOptions();
+render();
+};
+document.getElementById("btnOpenSort").onclick = () => {
+document.getElementById("sortOverlay").classList.add("open");
+};
+document.querySelectorAll("#sortChipList .chip").forEach(chip => {
+chip.onclick = () => {
+document.querySelectorAll("#sortChipList .chip").forEach(c => c.classList.remove("selected"));
+chip.classList.add("selected");
+state.sort = chip.dataset.sort;
+renderDock();
+document.getElementById("sortOverlay").classList.remove("open");
+};
+});
+document.getElementById("btnRenderImage").onclick = generateDeckImage;
+document.getElementById("btnCopyText").onclick = async () => {
+await navigator.clipboard.writeText(document.getElementById("recipeText").value);
+toast("レシピをコピーしました");
+};
+document.getElementById("btnCopyLink").onclick = async () => {
+const b64 = btoa(unescape(encodeURIComponent(JSON.stringify(deckData))));
+const link = ⁠${location.origin}${location.pathname}?deck=${encodeURIComponent(b64)}⁠;
+await navigator.clipboard.writeText(link);
+toast("共有URLをコピーしました");
+};
+document.getElementById("btnImportText").onclick = () => {
+importFromRecipeText(document.getElementById("recipeText").value);
+};
+document.querySelectorAll("[data-close]").forEach(btn => {
+btn.onclick = () => document.getElementById(btn.dataset.close).classList.remove("open");
+});
+document.querySelectorAll(".overlay").forEach(ov => {
+ov.addEventListener("click", e => { if (e.target === ov) ov.classList.remove("open"); });
+});
+}
+async function boot() {
+bind();
+restore();
+try {
+cards = await loadCardsOnly();
+} catch (e) {
+cards = [];
+toast("カードデータの読み込みに失敗しました");
+}
+render();
+}
+boot();
+</script>
 </body>
 </html>
