@@ -6,15 +6,15 @@
   <title>HOROBEAT STUDIO | デッキビルダー</title>
   <style>
     :root {
-      --bg-base: #121316;
-      --bg-elevated: #1c1e24;
-      --bg-canvas: #242730;
-      --accent-amber: #f59e0b;
-      --accent-emerald: #10b981;
-      --accent-rose: #f43f5e;
-      --text-primary: #f8fafc;
-      --text-secondary: #94a3b8;
-      --border-hairline: rgba(255, 255, 255, 0.09);
+      --bg-base: #f4f5f7;
+      --bg-surface: #ffffff;
+      --bg-elevated: #eceef2;
+      --accent-amber: #e59400;
+      --accent-emerald: #059669;
+      --accent-rose: #e11d48;
+      --text-primary: #111318;
+      --text-secondary: #4b5563;
+      --border-hairline: rgba(17, 19, 24, 0.14);
       --card-ratio: 63 / 88;
     }
 
@@ -39,48 +39,49 @@
       display: flex;
       flex-direction: column;
       height: 100dvh;
-      max-width: 640px;
+      max-width: 680px;
       margin: 0 auto;
       padding-top: env(safe-area-inset-top);
       padding-bottom: env(safe-area-inset-bottom);
-      background: radial-gradient(circle at top right, rgba(245, 158, 11, 0.08), transparent 45%), var(--bg-base);
+      background: var(--bg-surface);
     }
 
-    /* 上部バー */
+    /* 上部バー（大きめロゴ＆操作ボタン） */
     .top-bar {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 8px 12px;
+      padding: 10px 12px;
+      background: var(--bg-surface);
       border-bottom: 1px solid var(--border-hairline);
       flex-shrink: 0;
-      gap: 6px;
+      gap: 8px;
     }
 
     .logo-area {
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 8px;
       min-width: 0;
     }
 
     .logo-mark {
-      font-size: 14px;
+      font-size: 19px;
       font-weight: 900;
-      letter-spacing: 0.06em;
-      color: var(--accent-amber);
+      letter-spacing: 0.04em;
+      color: #000000;
       white-space: nowrap;
     }
 
     .help-dot {
-      width: 18px;
-      height: 18px;
+      width: 24px;
+      height: 24px;
       border-radius: 999px;
-      border: 1px solid var(--border-hairline);
+      border: 1.5px solid var(--border-hairline);
       background: var(--bg-elevated);
-      color: var(--text-secondary);
-      font-size: 11px;
-      font-weight: 800;
+      color: var(--text-primary);
+      font-size: 13px;
+      font-weight: 900;
       display: grid;
       place-items: center;
       cursor: pointer;
@@ -89,7 +90,7 @@
 
     .top-actions {
       display: flex;
-      gap: 5px;
+      gap: 6px;
       flex-shrink: 0;
     }
 
@@ -97,23 +98,24 @@
       background: var(--bg-elevated);
       color: var(--text-primary);
       border: 1px solid var(--border-hairline);
-      border-radius: 999px;
-      padding: 5px 9px;
-      font-size: 11px;
-      font-weight: 700;
+      border-radius: 10px;
+      padding: 7px 11px;
+      font-size: 12px;
+      font-weight: 800;
       cursor: pointer;
       white-space: nowrap;
     }
 
     .pill-btn.primary {
-      background: var(--accent-amber);
-      color: #121316;
-      border-color: transparent;
+      background: #111318;
+      color: #ffffff;
+      border-color: #111318;
     }
 
-    .pill-btn.danger:active {
-      border-color: var(--accent-rose);
-      color: #fda4af;
+    .pill-btn.danger {
+      background: #fff1f2;
+      color: var(--accent-rose);
+      border-color: rgba(225, 29, 72, 0.28);
     }
 
     /* デッキタブ＆枚数ストリップ */
@@ -121,7 +123,9 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 6px 12px;
+      padding: 8px 12px;
+      background: var(--bg-base);
+      border-bottom: 1px solid var(--border-hairline);
       gap: 8px;
       flex-shrink: 0;
     }
@@ -129,8 +133,8 @@
     .seg-tabs {
       display: inline-flex;
       background: var(--bg-elevated);
-      padding: 2px;
-      border-radius: 10px;
+      padding: 3px;
+      border-radius: 11px;
       border: 1px solid var(--border-hairline);
     }
 
@@ -138,46 +142,44 @@
       border: none;
       background: transparent;
       color: var(--text-secondary);
-      padding: 5px 10px;
+      padding: 6px 13px;
       border-radius: 8px;
-      font-size: 12px;
-      font-weight: 700;
+      font-size: 13px;
+      font-weight: 800;
       cursor: pointer;
     }
 
     .seg-tab.active {
-      background: var(--bg-canvas);
-      color: var(--text-primary);
-      box-shadow: 0 1px 3px rgba(0,0,0,0.35);
+      background: var(--bg-surface);
+      color: #000000;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
     }
 
     .counter-readout {
-      font-size: 12px;
+      font-size: 13px;
       font-weight: 800;
       color: var(--text-secondary);
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 4px;
     }
 
     .counter-readout strong {
       color: var(--accent-emerald);
-      font-size: 14px;
+      font-size: 17px;
     }
 
     .counter-readout.over strong {
       color: var(--accent-rose);
     }
 
-    /* 中央デッキ表示エリア（横10列） */
+    /* 中央デッキ表示エリア（10列・余白を詰めた全面表示） */
     .deck-viewport {
       flex: 1 1 auto;
       min-height: 0;
-      margin: 0 12px 8px;
-      background: var(--bg-canvas);
-      border: 1px solid var(--border-hairline);
-      border-radius: 14px;
-      padding: 7px;
+      margin: 0;
+      background: var(--bg-base);
+      padding: 6px;
       overflow-y: auto;
     }
 
@@ -192,19 +194,23 @@
       grid-column: 1 / -1;
       text-align: center;
       color: var(--text-secondary);
-      font-size: 12px;
-      line-height: 1.7;
-      padding: 32px 12px;
+      font-size: 13px;
+      font-weight: 600;
+      line-height: 1.75;
+      padding: 36px 12px;
+      background: var(--bg-surface);
+      border: 1px dashed var(--border-hairline);
+      border-radius: 10px;
     }
 
     .slot-tile {
       aspect-ratio: var(--card-ratio);
       border-radius: 4px;
       overflow: hidden;
-      background: #15171c;
+      background: #e5e7eb;
       position: relative;
       cursor: pointer;
-      border: 1px solid rgba(255,255,255,0.08);
+      border: 1px solid rgba(17, 19, 24, 0.16);
       touch-action: pan-y;
     }
 
@@ -222,28 +228,29 @@
       flex-direction: column;
       justify-content: space-between;
       padding: 2px;
-      font-size: 6.5px;
-      line-height: 1.1;
-      color: #f8fafc;
-      background: linear-gradient(160deg, #2d323e, #181a20);
+      font-size: 7px;
+      line-height: 1.15;
+      color: #111318;
+      background: linear-gradient(160deg, #ffffff, #e2e6ec);
       text-align: center;
       overflow: hidden;
     }
 
-    /* 下部カードドック（横スクロール） */
+    /* 下部カードドック（横スクロール・しっかり大きめ） */
     .dock-section {
       flex-shrink: 0;
       background: var(--bg-elevated);
       border-top: 1px solid var(--border-hairline);
-      padding: 7px 0 6px;
+      padding: 8px 0 8px;
     }
 
     .dock-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 0 12px 5px;
-      font-size: 10px;
+      padding: 0 12px 6px;
+      font-size: 11px;
+      font-weight: 700;
       color: var(--text-secondary);
     }
 
@@ -258,19 +265,20 @@
 
     .dock-card {
       flex: 0 0 auto;
-      width: 66px;
+      width: 78px;
       aspect-ratio: var(--card-ratio);
       border-radius: 7px;
       overflow: hidden;
-      background: #14161b;
-      border: 1px solid rgba(255,255,255,0.12);
+      background: #ffffff;
+      border: 1px solid rgba(17, 19, 24, 0.22);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
       position: relative;
       cursor: pointer;
       transition: transform 0.12s ease;
     }
 
     .dock-card:active {
-      transform: scale(0.94);
+      transform: scale(0.95);
     }
 
     .dock-card img {
@@ -285,29 +293,28 @@
       position: absolute;
       top: 3px;
       right: 3px;
-      background: rgba(18, 19, 22, 0.88);
-      color: var(--accent-amber);
-      border: 1px solid rgba(245, 158, 11, 0.5);
+      background: rgba(17, 19, 24, 0.9);
+      color: #ffffff;
       border-radius: 6px;
-      font-size: 10px;
-      font-weight: 800;
-      padding: 0 4px;
-      line-height: 16px;
+      font-size: 11px;
+      font-weight: 900;
+      padding: 0 5px;
+      line-height: 18px;
     }
 
     .dock-badge.max {
       background: var(--accent-rose);
-      color: #fff;
-      border-color: transparent;
+      color: #ffffff;
     }
 
-    /* 検索・ツールバー */
+    /* 大きめ検索・ツールバー */
     .control-bar {
       display: flex;
       align-items: center;
-      gap: 6px;
-      padding: 7px 12px 8px;
-      background: var(--bg-base);
+      gap: 8px;
+      padding: 9px 12px 10px;
+      background: var(--bg-surface);
+      border-top: 1px solid var(--border-hairline);
       flex-shrink: 0;
     }
 
@@ -315,12 +322,12 @@
       flex: 1 1 auto;
       display: flex;
       align-items: center;
-      background: var(--bg-elevated);
-      border: 1px solid var(--border-hairline);
-      border-radius: 10px;
-      padding: 0 10px;
-      height: 36px;
-      gap: 6px;
+      background: var(--bg-base);
+      border: 1.5px solid var(--border-hairline);
+      border-radius: 12px;
+      padding: 0 12px;
+      height: 44px;
+      gap: 8px;
     }
 
     .search-wrap input {
@@ -329,7 +336,8 @@
       outline: none;
       background: transparent;
       color: var(--text-primary);
-      font-size: 13px;
+      font-size: 15px;
+      font-weight: 600;
       user-select: text;
     }
 
@@ -337,33 +345,34 @@
       border: none;
       background: none;
       color: var(--text-secondary);
-      font-size: 15px;
+      font-size: 18px;
       cursor: pointer;
     }
 
     .sub-btn {
-      height: 36px;
-      padding: 0 10px;
-      border-radius: 10px;
-      border: 1px solid var(--border-hairline);
+      height: 44px;
+      padding: 0 13px;
+      border-radius: 12px;
+      border: 1.5px solid var(--border-hairline);
       background: var(--bg-elevated);
       color: var(--text-primary);
-      font-size: 11px;
-      font-weight: 700;
+      font-size: 13px;
+      font-weight: 800;
       cursor: pointer;
       white-space: nowrap;
     }
 
     .sub-btn.active-filter {
-      border-color: var(--accent-amber);
-      color: var(--accent-amber);
+      background: #111318;
+      color: #ffffff;
+      border-color: #111318;
     }
 
     /* モーダル */
     .overlay {
       position: fixed;
       inset: 0;
-      background: rgba(0, 0, 0, 0.72);
+      background: rgba(17, 19, 24, 0.52);
       display: none;
       align-items: flex-end;
       justify-content: center;
@@ -373,12 +382,13 @@
 
     .sheet {
       width: 100%;
-      max-width: 640px;
-      background: #1b1d24;
+      max-width: 680px;
+      background: var(--bg-surface);
+      color: var(--text-primary);
       border-top: 1px solid var(--border-hairline);
       border-radius: 18px 18px 0 0;
       padding: 16px 16px calc(18px + env(safe-area-inset-bottom));
-      max-height: 85dvh;
+      max-height: 86dvh;
       overflow-y: auto;
     }
 
@@ -386,19 +396,20 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      font-weight: 800;
-      font-size: 14px;
+      font-weight: 900;
+      font-size: 15px;
       margin-bottom: 12px;
     }
 
     .sheet-close {
-      width: 28px;
-      height: 28px;
+      width: 30px;
+      height: 30px;
       border-radius: 999px;
       border: none;
-      background: rgba(255,255,255,0.1);
-      color: #fff;
-      font-size: 16px;
+      background: var(--bg-elevated);
+      color: var(--text-primary);
+      font-size: 17px;
+      font-weight: 800;
       cursor: pointer;
     }
 
@@ -410,10 +421,10 @@
     }
 
     .chip {
-      padding: 6px 12px;
+      padding: 7px 13px;
       border-radius: 999px;
       border: 1px solid var(--border-hairline);
-      background: var(--bg-canvas);
+      background: var(--bg-base);
       color: var(--text-primary);
       font-size: 12px;
       font-weight: 700;
@@ -421,26 +432,26 @@
     }
 
     .chip.selected {
-      background: var(--accent-amber);
-      color: #121316;
-      border-color: transparent;
+      background: #111318;
+      color: #ffffff;
+      border-color: #111318;
     }
 
     .sheet-btn {
       width: 100%;
-      padding: 11px;
-      border-radius: 10px;
+      padding: 12px;
+      border-radius: 11px;
       border: none;
-      background: var(--accent-amber);
-      color: #121316;
-      font-size: 13px;
+      background: #111318;
+      color: #ffffff;
+      font-size: 14px;
       font-weight: 800;
       cursor: pointer;
-      margin-top: 6px;
+      margin-top: 7px;
     }
 
     .sheet-btn.secondary {
-      background: var(--bg-canvas);
+      background: var(--bg-elevated);
       color: var(--text-primary);
       border: 1px solid var(--border-hairline);
     }
@@ -451,7 +462,7 @@
       color: var(--text-primary);
       border: 1px solid var(--border-hairline);
       border-radius: 10px;
-      padding: 9px 11px;
+      padding: 10px 12px;
       font-size: 13px;
       margin-bottom: 8px;
       user-select: text;
@@ -459,7 +470,7 @@
 
     .recipe-box {
       width: 100%;
-      height: 130px;
+      height: 120px;
       border-radius: 10px;
       background: var(--bg-base);
       color: var(--text-primary);
@@ -474,10 +485,10 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      background: var(--bg-canvas);
+      background: var(--bg-base);
       border: 1px solid var(--border-hairline);
       border-radius: 10px;
-      padding: 8px 10px;
+      padding: 9px 11px;
       margin-bottom: 6px;
       gap: 8px;
     }
@@ -486,21 +497,21 @@
       display: flex;
       align-items: center;
       gap: 8px;
-      margin-bottom: 5px;
+      margin-bottom: 6px;
       font-size: 12px;
     }
 
     .bar-track {
       flex: 1;
-      height: 8px;
-      background: var(--bg-base);
+      height: 9px;
+      background: var(--bg-elevated);
       border-radius: 999px;
       overflow: hidden;
     }
 
     .bar-fill {
       height: 100%;
-      background: var(--accent-amber);
+      background: #111318;
       border-radius: 999px;
     }
 
@@ -515,19 +526,19 @@
     .generated-img {
       width: 100%;
       border-radius: 10px;
-      margin-top: 10px;
+      margin-top: 8px;
       border: 1px solid var(--border-hairline);
+      background: #ffffff;
     }
 
     .toast {
       position: fixed;
-      top: 54px;
+      top: 58px;
       left: 50%;
       transform: translateX(-50%);
-      background: #242730;
-      color: var(--text-primary);
-      border: 1px solid var(--accent-amber);
-      padding: 6px 14px;
+      background: #111318;
+      color: #ffffff;
+      padding: 7px 15px;
       border-radius: 999px;
       font-size: 12px;
       font-weight: 700;
@@ -560,7 +571,7 @@
         <button class="seg-tab" data-zone="sub">サブ / 調整枠</button>
       </div>
       <div class="counter-readout" id="counterReadout">
-        <span id="zoneLabel">MAIN</span> <strong id="zoneCount">0</strong> / <span id="zoneTarget">40</span> 枚
+        <span id="zoneLabel">MAIN</span> <strong id="zoneCount">0</strong> / <span id="zoneTarget">50</span> 枚
       </div>
     </div>
 
@@ -578,7 +589,7 @@
 
     <footer class="control-bar">
       <div class="search-wrap">
-        <span style="font-size:13px;color:#94a3b8;">🔍</span>
+        <span style="font-size:15px;">🔍</span>
         <input type="search" id="searchInput" placeholder="カード名・型番で検索" />
         <button class="clear-btn" id="btnClearSearch">×</button>
       </div>
@@ -596,11 +607,11 @@
         <span>カード絞り込み</span>
         <button class="sheet-close" data-close="filterOverlay">×</button>
       </div>
-      <div style="font-size:11px;color:#94a3b8;margin-bottom:6px;">色</div>
+      <div style="font-size:12px;color:var(--text-secondary);margin-bottom:6px;font-weight:700;">色</div>
       <div class="chips" id="colorChipList"></div>
-      <div style="font-size:11px;color:#94a3b8;margin-bottom:6px;">種類</div>
+      <div style="font-size:12px;color:var(--text-secondary);margin-bottom:6px;font-weight:700;">種類</div>
       <div class="chips" id="typeChipList"></div>
-      <div style="font-size:11px;color:#94a3b8;margin-bottom:6px;">画像状態</div>
+      <div style="font-size:12px;color:var(--text-secondary);margin-bottom:6px;font-weight:700;">画像状態</div>
       <div class="chips" id="imgChipList">
         <button class="chip selected" data-img="ALL">すべて</button>
         <button class="chip" data-img="HAS">画像ありのみ</button>
@@ -687,19 +698,19 @@
         <span>HOROBEAT STUDIO について</span>
         <button class="sheet-close" data-close="aboutOverlay">×</button>
       </div>
-      <div style="font-size:12px;color:#cbd5e1;line-height:1.7;">
-        <p style="margin-top:0;"><strong>基本操作：</strong><br>
-        ・下部のカードをタップまたは上スワイプでデッキに1枚追加<br>
+      <div style="font-size:13px;color:var(--text-secondary);line-height:1.7;">
+        <p style="margin-top:0;color:var(--text-primary);"><strong>基本操作：</strong><br>
+        ・下部のカードをタップまたは上スワイプでデッキに1枚追加（基準50枚）<br>
         ・下部カードを長押しでカード画像・効果テキストを拡大表示<br>
         ・デッキ内のカードをタップまたは下スワイプで1枚削除</p>
-        <p style="margin-bottom:0;color:#94a3b8;">※ 本サイトは『ホロビートカードゲーム』の非公式ファンメイド・デッキ構築支援ツールです。掲載されているカード情報・画像の権利は各権利者に帰属します。</p>
+        <p style="margin-bottom:0;">※ 本サイトは『ホロビートカードゲーム』の非公式ファンメイド・デッキ構築支援ツールです。掲載されているカード情報・画像の権利は各権利者に帰属します。</p>
       </div>
     </div>
   </div>
 
   <script>
     const MAX_PER_CARD = 4;
-    const TARGET_COUNTS = { main: 40, sub: 10 };
+    const TARGET_COUNTS = { main: 50, sub: 10 };
     const SAVE_KEY = "horobeat_studio_deck_v1";
     const SLOTS_KEY = "horobeat_studio_slots_v1";
 
@@ -807,7 +818,7 @@
       const items = getSortedZoneEntries(zone);
 
       if (!items.length) {
-        grid.innerHTML = `<div class="deck-empty">下のカードをタップ（または上スワイプ）で追加<br>デッキ内のカードをタップ（または下スワイプ）で削除</div>`;
+        grid.innerHTML = `<div class="deck-empty">下のカードをタップ（または上スワイプ）で追加（50枚基準）<br>デッキ内のカードをタップ（または下スワイプ）で削除</div>`;
         return;
       }
 
@@ -951,7 +962,7 @@
       document.getElementById("detailTitle").textContent = `${card.name || ""} [${card.id || ""}]`;
       document.getElementById("detailBody").innerHTML = `
         ${card.imageUrl ? `<img class="preview-img" src="${card.imageUrl}" alt="${card.name || ""}">` : ""}
-        <div style="font-size:12px;color:#cbd5e1;margin-bottom:8px;">
+        <div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px;">
           色: ${card.color || "-"} / 種類: ${card.type || "-"} / コスト: ${card.cost ?? "-"}
         </div>
         <p style="font-size:13px;line-height:1.6;margin:0 0 12px;">${card.text || ""}</p>
@@ -980,12 +991,12 @@
         const pct = Math.round((costMap[k] / maxCostCount) * 100);
         return `
           <div class="bar-row">
-            <span style="width:48px;">コスト ${k}</span>
+            <span style="width:52px;">コスト ${k}</span>
             <div class="bar-track"><div class="bar-fill" style="width:${pct}%"></div></div>
-            <span style="width:36px;text-align:right;">${costMap[k]}枚</span>
+            <span style="width:38px;text-align:right;">${costMap[k]}枚</span>
           </div>
         `;
-      }).join("") || "<div style='color:#94a3b8;'>カードがありません</div>";
+      }).join("") || "<div style='color:var(--text-secondary);'>カードがありません</div>";
 
       const colorHtml = Object.entries(colorMap).map(([k, v]) => `${k}: ${v}枚`).join(" / ") || "なし";
       document.getElementById("statsContent").innerHTML = `
@@ -997,7 +1008,6 @@
       document.getElementById("statsOverlay").classList.add("open");
     }
 
-    /* 複数デッキ管理 */
     function getSlots() {
       try { return JSON.parse(localStorage.getItem(SLOTS_KEY) || "[]"); } catch (e) { return []; }
     }
@@ -1010,7 +1020,7 @@
       const box = document.getElementById("savedSlotList");
       const list = getSlots();
       if (!list.length) {
-        box.innerHTML = `<div style="font-size:12px;color:#94a3b8;text-align:center;padding:16px 0;">保存済みデッキはまだありません</div>`;
+        box.innerHTML = `<div style="font-size:12px;color:var(--text-secondary);text-align:center;padding:16px 0;">保存済みデッキはまだありません</div>`;
         return;
       }
       box.innerHTML = "";
@@ -1021,7 +1031,7 @@
         row.innerHTML = `
           <div style="min-width:0;">
             <div style="font-size:13px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${slot.name}</div>
-            <div style="font-size:11px;color:#94a3b8;">メイン ${mCount}枚 / ${slot.updatedAt || ""}</div>
+            <div style="font-size:11px;color:var(--text-secondary);">メイン ${mCount}枚 / ${slot.updatedAt || ""}</div>
           </div>
           <div style="display:flex;gap:5px;flex-shrink:0;">
             <button class="pill-btn primary" data-load="${idx}">読込</button>
@@ -1054,7 +1064,6 @@
       });
     }
 
-    /* レシピ出力・インポート・画像生成 */
     function openShare() {
       const map = new Map(cards.map(c => [c.id, c]));
       const title = document.getElementById("exportTitleInput").value.trim() || "HOROBEAT DECK";
@@ -1111,100 +1120,149 @@
       toast(`合計 ${importedCount}枚 を読み込みました`);
     }
 
-    async function loadCorsImage(url) {
+    function loadCardImageForCanvas(url) {
       return new Promise(resolve => {
         if (!url) return resolve(null);
-        const img = new Image();
-        img.crossOrigin = "anonymous";
-        img.onload = () => resolve(img);
-        img.onerror = () => resolve(null);
-        img.src = url;
+        const tryLoad = (withCors) => {
+          const img = new Image();
+          if (withCors) img.crossOrigin = "anonymous";
+          img.onload = () => resolve(img);
+          img.onerror = () => {
+            if (withCors) {
+              tryLoad(false);
+            } else {
+              resolve(null);
+            }
+          };
+          img.src = url;
+        };
+        tryLoad(true);
       });
     }
 
     async function generateDeckImage() {
-      const entries = getSortedZoneEntries("main");
-      if (!entries.length) {
-        toast("メインデッキにカードがありません");
-        return;
+      const btn = document.getElementById("btnRenderImage");
+      const wrap = document.getElementById("generatedImgWrap");
+      btn.disabled = true;
+      btn.textContent = "画像を生成中...";
+
+      try {
+        const entries = getSortedZoneEntries("main");
+        const expanded = [];
+        entries.forEach(item => {
+          for (let i = 0; i < item.n; i++) {
+            expanded.push(item.card);
+          }
+        });
+
+        const cols = 10;
+        const minRows = 5;
+        const rows = Math.max(minRows, Math.ceil(expanded.length / cols));
+        const cardW = 128;
+        const cardH = Math.round(cardW * (88 / 63));
+        const gap = 8;
+        const pad = 22;
+        const headerH = 64;
+
+        const canvas = document.createElement("canvas");
+        canvas.width = pad * 2 + cols * cardW + (cols - 1) * gap;
+        canvas.height = headerH + pad + rows * cardH + (rows - 1) * gap + pad;
+        const ctx = canvas.getContext("2d");
+
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        const title = document.getElementById("exportTitleInput").value.trim() || "HOROBEAT DECK";
+        ctx.fillStyle = "#000000";
+        ctx.font = "bold 24px sans-serif";
+        ctx.fillText(title, pad, 41);
+
+        ctx.fillStyle = "#4b5563";
+        ctx.font = "bold 16px sans-serif";
+        ctx.textAlign = "right";
+        ctx.fillText(`MAIN ${zoneTotal("main")} / 50枚（10×5）`, canvas.width - pad, 41);
+        ctx.textAlign = "left";
+
+        const loadedImgs = await Promise.all(expanded.map(c => loadCardImageForCanvas(c.imageUrl)));
+
+        for (let idx = 0; idx < cols * rows; idx++) {
+          const r = Math.floor(idx / cols);
+          const c = idx % cols;
+          const x = pad + c * (cardW + gap);
+          const y = headerH + r * (cardH + gap);
+
+          ctx.fillStyle = "#f4f5f7";
+          ctx.fillRect(x, y, cardW, cardH);
+
+          const card = expanded[idx];
+          if (!card) {
+            ctx.strokeStyle = "rgba(17, 19, 24, 0.14)";
+            ctx.strokeRect(x + 1, y + 1, cardW - 2, cardH - 2);
+            continue;
+          }
+
+          const img = loadedImgs[idx];
+          let drewImg = false;
+          if (img) {
+            try {
+              ctx.drawImage(img, x, y, cardW, cardH);
+              drewImg = true;
+            } catch (e) {
+              drewImg = false;
+            }
+          }
+
+          if (!drewImg) {
+            ctx.strokeStyle = "rgba(17, 19, 24, 0.25)";
+            ctx.strokeRect(x + 1, y + 1, cardW - 2, cardH - 2);
+            ctx.fillStyle = "#4b5563";
+            ctx.font = "bold 10px sans-serif";
+            ctx.fillText(String(card.id || "").slice(0, 14), x + 6, y + 18);
+            ctx.fillStyle = "#111318";
+            ctx.font = "bold 12px sans-serif";
+            const name = String(card.name || "");
+            ctx.fillText(name.slice(0, 8), x + 6, y + 84);
+            if (name.length > 8) ctx.fillText(name.slice(8, 16), x + 6, y + 102);
+          }
+        }
+
+        let dataUrl = "";
+        try {
+          dataUrl = canvas.toDataURL("image/png");
+        } catch (e) {
+          // 外部画像がCORS制限でCanvasを汚染した場合でもフォールバック枠で再描画
+          ctx.fillStyle = "#ffffff";
+          ctx.fillRect(0, headerH + pad, canvas.width, canvas.height - headerH - pad);
+          for (let idx = 0; idx < cols * rows; idx++) {
+            const r = Math.floor(idx / cols);
+            const c = idx % cols;
+            const x = pad + c * (cardW + gap);
+            const y = headerH + r * (cardH + gap);
+            ctx.fillStyle = "#f4f5f7";
+            ctx.fillRect(x, y, cardW, cardH);
+            ctx.strokeStyle = "rgba(17, 19, 24, 0.22)";
+            ctx.strokeRect(x + 1, y + 1, cardW - 2, cardH - 2);
+            const card = expanded[idx];
+            if (card) {
+              ctx.fillStyle = "#111318";
+              ctx.font = "bold 11px sans-serif";
+              ctx.fillText(String(card.name || "").slice(0, 8), x + 6, y + 84);
+            }
+          }
+          dataUrl = canvas.toDataURL("image/png");
+        }
+
+        wrap.innerHTML = `
+          <p style="font-size:12px;color:var(--text-secondary);margin:8px 0 4px;font-weight:700;">画像が生成されました（長押しで保存 / 下のボタンからも保存可能）</p>
+          <img class="generated-img" src="${dataUrl}" alt="デッキレシピ画像" />
+          <a class="sheet-btn" href="${dataUrl}" download="${title.replace(/\s+/g, "_")}_10x5.png" style="display:block;text-align:center;text-decoration:none;">PNG画像をダウンロード</a>
+        `;
+        wrap.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        toast("デッキ画像を生成しました");
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "デッキ画像を生成（10×5 / PNG保存用）";
       }
-
-      // 1枚ずつ展開して10×5（50枠）グリッドに配置
-      const expanded = [];
-      entries.forEach(item => {
-        for (let i = 0; i < item.n; i++) {
-          expanded.push(item.card);
-        }
-      });
-
-      const cols = 10;
-      const minRows = 5;
-      const rows = Math.max(minRows, Math.ceil(expanded.length / cols));
-      const cardW = 126;
-      const cardH = Math.round(cardW * (88 / 63));
-      const gap = 8;
-      const pad = 22;
-      const headerH = 64;
-
-      const canvas = document.createElement("canvas");
-      canvas.width = pad * 2 + cols * cardW + (cols - 1) * gap;
-      canvas.height = headerH + pad + rows * cardH + (rows - 1) * gap + pad;
-      const ctx = canvas.getContext("2d");
-
-      ctx.fillStyle = "#121316";
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      const title = document.getElementById("exportTitleInput").value.trim() || "HOROBEAT DECK";
-      ctx.fillStyle = "#f59e0b";
-      ctx.font = "bold 24px sans-serif";
-      ctx.fillText(title, pad, 41);
-
-      ctx.fillStyle = "#94a3b8";
-      ctx.font = "bold 16px sans-serif";
-      ctx.textAlign = "right";
-      ctx.fillText(`MAIN ${zoneTotal("main")}枚 / 10×5`, canvas.width - pad, 41);
-      ctx.textAlign = "left";
-
-      const loadedImgs = await Promise.all(expanded.map(c => loadCorsImage(c.imageUrl)));
-
-      for (let idx = 0; idx < cols * rows; idx++) {
-        const r = Math.floor(idx / cols);
-        const c = idx % cols;
-        const x = pad + c * (cardW + gap);
-        const y = headerH + r * (cardH + gap);
-
-        ctx.fillStyle = "#1c1e24";
-        ctx.fillRect(x, y, cardW, cardH);
-
-        const card = expanded[idx];
-        if (!card) {
-          ctx.strokeStyle = "rgba(255,255,255,0.07)";
-          ctx.strokeRect(x + 1, y + 1, cardW - 2, cardH - 2);
-          continue;
-        }
-
-        const img = loadedImgs[idx];
-        if (img) {
-          ctx.drawImage(img, x, y, cardW, cardH);
-        } else {
-          ctx.strokeStyle = "rgba(255,255,255,0.2)";
-          ctx.strokeRect(x + 1, y + 1, cardW - 2, cardH - 2);
-          ctx.fillStyle = "#94a3b8";
-          ctx.font = "bold 10px sans-serif";
-          ctx.fillText(String(card.id || "").slice(0, 14), x + 6, y + 18);
-          ctx.fillStyle = "#f8fafc";
-          ctx.font = "bold 12px sans-serif";
-          const name = String(card.name || "");
-          ctx.fillText(name.slice(0, 8), x + 6, y + 82);
-          if (name.length > 8) ctx.fillText(name.slice(8, 16), x + 6, y + 100);
-        }
-      }
-
-      const dataUrl = canvas.toDataURL("image/png");
-      document.getElementById("generatedImgWrap").innerHTML = `
-        <p style="font-size:11px;color:#94a3b8;margin:8px 0 4px;">画像を長押しして「写真に保存」できます</p>
-        <img class="generated-img" src="${dataUrl}" alt="デッキレシピ画像" />
-      `;
     }
 
     function bind() {
