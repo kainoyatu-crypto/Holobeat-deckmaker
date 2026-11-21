@@ -12,7 +12,7 @@ IMAGES_DIR = BASE_DIR / "data" / "images"
 # 公式カード一覧ページのURL（必要に応じて実際のカード一覧URLへ変更）
 OFFICIAL_URL = os.environ.get(
     "HOROBEAT_OFFICIAL_URL",
-    "https://www.takaratomy.co.jp/products/horobeat/",
+    "https://www.takaratomy.co.jp/products/horobeat-cardgame/cardlist/?same_name=hide&page=3",
 )
 
 EXCLUDE_URL_KEYWORDS = (
