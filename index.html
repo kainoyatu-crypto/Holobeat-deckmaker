@@ -165,7 +165,7 @@ font-size: 16px;
 .counter-readout.over strong {
 color: var(--accent-rose);
 }
-/* 中央デッキ表示エリア（10×5枠 + 余白の便利ウィジェット群） */
+/* 中央デッキ表示エリア */
 .deck-viewport {
 flex: 1 1 auto;
 min-height: 0;
@@ -656,6 +656,66 @@ border-radius: 10px;
 display: block;
 margin: 0 auto 12px;
 }
+/* 詳細モーダル内のレアリティ/イラスト個別選択UI */
+.copy-tabs-row {
+display: flex;
+gap: 6px;
+flex-wrap: wrap;
+margin-bottom: 10px;
+}
+.copy-tab {
+padding: 5px 10px;
+border-radius: 8px;
+border: 1px solid var(--border-hairline);
+background: var(--bg-base);
+color: var(--text-primary);
+font-size: 12px;
+font-weight: 800;
+cursor: pointer;
+}
+.copy-tab.active {
+background: #111318;
+color: #ffffff;
+border-color: #111318;
+}
+.variant-strip {
+display: flex;
+gap: 8px;
+overflow-x: auto;
+padding: 4px 2px 10px;
+scrollbar-width: none;
+}
+.variant-strip::-webkit-scrollbar { display: none; }
+.variant-thumb {
+flex: 0 0 66px;
+border-radius: 7px;
+overflow: hidden;
+border: 2px solid transparent;
+background: var(--bg-base);
+cursor: pointer;
+display: flex;
+flex-direction: column;
+align-items: center;
+padding: 2px;
+}
+.variant-thumb.selected {
+border-color: #111318;
+background: var(--bg-elevated);
+}
+.variant-thumb img {
+width: 100%;
+aspect-ratio: var(--card-ratio);
+object-fit: cover;
+border-radius: 5px;
+display: block;
+}
+.variant-label {
+font-size: 10px;
+font-weight: 800;
+margin-top: 3px;
+color: var(--text-primary);
+white-space: nowrap;
+}
 .generated-img {
 width: 100%;
 border-radius: 10px;
@@ -840,7 +900,7 @@ z-index: 200;
 <button class="sheet-btn secondary" id="btnImportText">テキストからデッキを読み込む</button>
 </div>
 </div>
-<!-- カード詳細 -->
+<!-- カード詳細（1枚ごとのレアリティ・イラスト選択対応） -->
 <div class="overlay" id="detailOverlay">
 <div class="sheet">
 <div class="sheet-head">
@@ -878,8 +938,10 @@ const SAVE_KEY = "horobeat_studio_deck_v1";
 const SLOTS_KEY = "horobeat_studio_slots_v1";
 let cards = [];
 let zone = "main";
-let deckData = { main: {}, sub: {} };
+// variants: { main: { [baseId]: [variantId0, variantId1, ...] }, sub: { ... } }
+let deckData = { main: {}, sub: {}, variants: { main: {}, sub: {} } };
 let focusedCardId = null;
+let detailCopyIndex = 0;
 let state = { q: "", rarity: "ALL", color: "ALL", type: "ALL", img: "ALL", sort: "id" };
 function detectRarity(card) {
 if (card.rarity) return String(card.rarity).trim().toUpperCase();
@@ -893,6 +955,47 @@ return "その他";
 function displayCardNumber(card) {
 return card.cardNumber || card.id || "";
 }
+function getBaseCardKey(card) {
+const no = String(card.cardNumber || "").trim().toUpperCase();
+if (no) return ⁠NO:${no}⁠;
+const rawId = String(card.id || "").trim().toUpperCase();
+const stripped = rawId.replace(/(_[A-Z0-9]+)?(__\d+)?$/i, "");
+if (stripped) return ⁠ID:${stripped}⁠;
+return ⁠NAME:${String(card.name || "").trim()}⁠;
+}
+function getCardVariants(card) {
+const key = getBaseCardKey(card);
+const matches = cards.filter(c => getBaseCardKey(c) === key);
+if (matches.length > 0) return matches;
+return [card];
+}
+function ensureVariantsArray(z, baseId, count) {
+if (!deckData.variants) deckData.variants = { main: {}, sub: {} };
+if (!deckData.variants[z]) deckData.variants[z] = {};
+const current = Array.isArray(deckData.variants[z][baseId]) ? [...deckData.variants[z][baseId]] : [];
+while (current.length < count) {
+current.push(baseId);
+}
+if (current.length > count) {
+current.length = count;
+}
+deckData.variants[z][baseId] = current;
+return current;
+}
+function getDeckCopyIds(z, baseId) {
+const qty = Math.max(0, Number(deckData[z]?.[baseId] || 0));
+if (qty <= 0) return [];
+return ensureVariantsArray(z, baseId, qty);
+}
+function setDeckCopyVariant(z, baseId, copyIdx, chosenId) {
+const qty = Math.max(0, Number(deckData[z]?.[baseId] || 0));
+if (qty <= 0 || copyIdx < 0 || copyIdx >= qty) return;
+const arr = ensureVariantsArray(z, baseId, qty);
+arr[copyIdx] = chosenId;
+deckData.variants[z][baseId] = arr;
+persist();
+render();
+}
 function toast(msg) {
 const el = document.getElementById("toast");
 el.textContent = msg;
@@ -901,21 +1004,41 @@ clearTimeout(toast._timer);
 toast._timer = setTimeout(() => el.classList.remove("show"), 1800);
 }
 function zoneTotal(z) {
-return Object.values(deckData[z]).reduce((sum, n) => sum + n, 0);
+return Object.values(deckData[z] || {}).reduce((sum, n) => sum + Number(n || 0), 0);
 }
 function cardTotal(id) {
-return (deckData.main[id] || 0) + (deckData.sub[id] || 0);
+return Number(deckData.main?.[id] || 0) + Number(deckData.sub?.[id] || 0);
 }
 function persist() {
 try { localStorage.setItem(SAVE_KEY, JSON.stringify(deckData)); } catch (e) {}
 }
 function restore() {
+const normalizeLoaded = parsed => {
+const main = (parsed && parsed.main) || {};
+const sub = (parsed && parsed.sub) || {};
+const variants = {
+main: (parsed && parsed.variants && parsed.variants.main) || {},
+sub: (parsed && parsed.variants && parsed.variants.sub) || {}
+};
+deckData = { main, sub, variants };
+["main", "sub"].forEach(z => {
+Object.entries(deckData[z]).forEach(([id, n]) => {
+const qty = Math.max(0, Number(n || 0));
+if (qty > 0) {
+ensureVariantsArray(z, id, qty);
+} else {
+delete deckData[z][id];
+delete deckData.variants[z][id];
+}
+});
+});
+};
 const urlParam = new URLSearchParams(location.search).get("deck");
 if (urlParam) {
 try {
 const decoded = JSON.parse(decodeURIComponent(escape(atob(urlParam))));
 if (decoded && typeof decoded === "object") {
-deckData = { main: decoded.main || {}, sub: decoded.sub || {} };
+normalizeLoaded(decoded);
 return;
 }
 } catch (e) {}
@@ -924,18 +1047,21 @@ try {
 const saved = localStorage.getItem(SAVE_KEY);
 if (saved) {
 const parsed = JSON.parse(saved);
-deckData = { main: parsed.main || {}, sub: parsed.sub || {} };
+normalizeLoaded(parsed);
 }
 } catch (e) {}
 }
-function addToDeck(id) {
+function addToDeck(id, preferredVariantId = null) {
 focusedCardId = id;
 if (cardTotal(id) >= MAX_PER_CARD) {
 toast(⁠同名カードは最大${MAX_PER_CARD}枚までです⁠);
 renderUtilityPanel();
 return;
 }
-deckData[zone][id] = (deckData[zone][id] || 0) + 1;
+const nextQty = (deckData[zone][id] || 0) + 1;
+deckData[zone][id] = nextQty;
+const arr = ensureVariantsArray(zone, id, nextQty);
+arr[nextQty - 1] = preferredVariantId || id;
 persist();
 render();
 }
@@ -946,7 +1072,12 @@ renderUtilityPanel();
 return;
 }
 deckData[zone][id] -= 1;
-if (deckData[zone][id] <= 0) delete deckData[zone][id];
+if (deckData[zone][id] <= 0) {
+delete deckData[zone][id];
+if (deckData.variants?.[zone]) delete deckData.variants[zone][id];
+} else {
+ensureVariantsArray(zone, id, deckData[zone][id]);
+}
 persist();
 render();
 }
@@ -969,34 +1100,48 @@ return makeFallback(card);
 }
 function getSortedZoneEntries(z) {
 const map = new Map(cards.map(c => [c.id, c]));
-return Object.entries(deckData[z])
-.filter(([, n]) => n > 0)
-.map(([id, n]) => ({ card: map.get(id) || { id, name: id }, n }))
+return Object.entries(deckData[z] || {})
+.filter(([, n]) => Number(n) > 0)
+.map(([id, n]) => ({ card: map.get(id) || { id, name: id }, n: Number(n) }))
 .sort((a, b) => {
 const ca = Number(a.card.cost ?? 99);
 const cb = Number(b.card.cost ?? 99);
 return ca !== cb ? ca - cb : String(displayCardNumber(a.card)).localeCompare(String(displayCardNumber(b.card)), "ja");
 });
 }
+function getExpandedZoneCards(z) {
+const map = new Map(cards.map(c => [c.id, c]));
+const items = getSortedZoneEntries(z);
+const expanded = [];
+items.forEach(({ card, n }) => {
+const copyIds = getDeckCopyIds(z, card.id);
+for (let i = 0; i < n; i++) {
+const chosenId = copyIds[i] || card.id;
+expanded.push({
+baseCard: card,
+displayCard: map.get(chosenId) || card,
+copyIndex: i
+});
+}
+});
+return expanded;
+}
 function renderDeck() {
 const grid = document.getElementById("deckGrid");
 grid.innerHTML = "";
-const items = getSortedZoneEntries(zone);
-const expanded = [];
-items.forEach(({ card, n }) => {
-for (let i = 0; i < n; i++) expanded.push(card);
-});
+const expanded = getExpandedZoneCards(zone);
 const totalTiles = Math.max(GRID_SLOTS_10X5, Math.ceil(expanded.length / 10) * 10);
 for (let i = 0; i < totalTiles; i++) {
-const card = expanded[i];
+const entry = expanded[i];
 const tile = document.createElement("div");
-if (!card) {
+if (!entry) {
 tile.className = "slot-tile ghost";
 grid.appendChild(tile);
 continue;
 }
+const { baseCard, displayCard, copyIndex } = entry;
 tile.className = "slot-tile";
-tile.appendChild(makeArt(card));
+tile.appendChild(makeArt(displayCard));
 let startY = 0;
 let swipedDown = false;
 tile.addEventListener("touchstart", e => {
@@ -1007,7 +1152,7 @@ tile.addEventListener("touchend", e => {
 if (e.changedTouches[0].clientY - startY > 24) {
 swipedDown = true;
 e.preventDefault();
-removeFromDeck(card.id);
+removeFromDeck(baseCard.id);
 }
 });
 tile.addEventListener("click", () => {
@@ -1015,8 +1160,8 @@ if (swipedDown) {
 swipedDown = false;
 return;
 }
-focusedCardId = card.id;
-openDetail(card);
+focusedCardId = baseCard.id;
+openDetail(baseCard, copyIndex);
 });
 grid.appendChild(tile);
 }
@@ -1043,9 +1188,9 @@ fillEl.classList.add("over");
 }
 const map = new Map(cards.map(c => [c.id, c]));
 const colorCounts = {};
-Object.entries(deckData[zone]).forEach(([id, n]) => {
+Object.entries(deckData[zone] || {}).forEach(([id, n]) => {
 const col = (map.get(id)?.color) || "無";
-colorCounts[col] = (colorCounts[col] || 0) + n;
+colorCounts[col] = (colorCounts[col] || 0) + Number(n || 0);
 });
 const chipRow = document.getElementById("colorQuickChips");
 chipRow.innerHTML = "";
@@ -1125,7 +1270,7 @@ infoBtn.textContent = "詳細";
 infoBtn.addEventListener("click", e => {
 e.stopPropagation();
 focusedCardId = card.id;
-openDetail(card);
+openDetail(card, 0);
 });
 el.appendChild(infoBtn);
 let startX = 0, startY = 0, timer = null, didLong = false;
@@ -1136,7 +1281,7 @@ didLong = false;
 timer = setTimeout(() => {
 didLong = true;
 focusedCardId = card.id;
-openDetail(card);
+openDetail(card, 0);
 }, LONG_PRESS_MS);
 }, { passive: true });
 el.addEventListener("touchmove", e => {
@@ -1211,19 +1356,57 @@ document.querySelectorAll("#imgChipList .chip").forEach(chip => {
 chip.classList.toggle("selected", chip.dataset.img === state.img);
 });
 }
-function openDetail(card) {
-const inZone = deckData[zone][card.id] || 0;
-document.getElementById("detailTitle").textContent = ⁠${card.name || ""} [${displayCardNumber(card)}]⁠;
-document.getElementById("detailBody").innerHTML = ⁠${card.imageUrl ?⁠<img class="preview-img" src="{card.imageUrl}" alt="{card.name || ""}">⁠: ""} <div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px;"> レア: ${detectRarity(card)} / 色: ${card.color || "-"} / 種類: ${card.type || "-"} / コスト: ${card.cost ?? "-"} </div> <p style="font-size:13px;line-height:1.6;margin:0 0 12px;">${card.text || ""}</p> <button class="sheet-btn" id="detailAdd">1枚追加（合計 ${cardTotal(card.id)} / ${MAX_PER_CARD}）</button> ${inZone > 0 ?⁠<button class="sheet-btn secondary" id="detailRemove">現在の枠から1枚減らす（${inZone}枚中）</button>⁠: ""}⁠;
+function openDetail(card, initialCopyIdx = 0) {
+const map = new Map(cards.map(c => [c.id, c]));
+const variants = getCardVariants(card);
+const inZone = Number(deckData[zone]?.[card.id] || 0);
+const copyIds = getDeckCopyIds(zone, card.id);
+detailCopyIndex = Math.max(0, Math.min(initialCopyIdx, Math.max(0, inZone - 1)));
+const activeVariantId = inZone > 0 ? (copyIds[detailCopyIndex] || card.id) : card.id;
+const activeCard = map.get(activeVariantId) || card;
+document.getElementById("detailTitle").textContent = ⁠${activeCard.name || card.name || ""} [${displayCardNumber(activeCard)}]⁠;
+let copySelectorHtml = "";
+if (inZone > 0) {
+copySelectorHtml = ⁠<div style="font-size:12px;font-weight:800;margin-bottom:5px;">デッキ内の枚数ごとにレアリティを選択</div> <div class="copy-tabs-row"> ${copyIds.map((vid, idx) => { const vCard = map.get(vid) || card; const vRarity = detectRarity(vCard); return⁠<button type="button" class="copy-tab ￼{idx}">{idx + 1}枚目 ({vRarity})</button>⁠; }).join("")} </div> ⁠;
+}
+const variantStripHtml = ⁠<div style="font-size:12px;font-weight:800;margin-bottom:4px;">表示レアリティ / イラスト候補（${variants.length}種）</div> <div class="variant-strip"> ${variants.map((v, vIdx) => { const isSelected = v.id === activeCard.id; const rLabel = detectRarity(v); return⁠
+<button type="button" class="variant-thumb ￼{v.id}">
+{v.imageUrl
+￼
+￼
+}
+￼{rLabel}${variants.length > 1 ? ⁠ #${vIdx + 1}⁠ : ""}</span>
+</button>
+⁠; }).join("")} </div> ⁠;
+document.getElementById("detailBody").innerHTML = ⁠${activeCard.imageUrl ?⁠<img class="preview-img" src="￼{activeCard.name || ""}">⁠: ""} ${copySelectorHtml} ${variantStripHtml} <div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px;"> レア: ${detectRarity(activeCard)} / 色: ${activeCard.color || "-"} / 種類: ${activeCard.type || "-"} / コスト: ${activeCard.cost ?? "-"} </div> <p style="font-size:13px;line-height:1.6;margin:0 0 12px;">${activeCard.text || ""}</p> <button class="sheet-btn" id="detailAdd">1枚追加（合計 ${cardTotal(card.id)} / ${MAX_PER_CARD}）</button> ${inZone > 0 ?⁠<button class="sheet-btn secondary" id="detailRemove">現在の枠から1枚減らす（${inZone}枚中）</button>⁠: ""}⁠;
+document.querySelectorAll("#detailBody [data-copy-idx]").forEach(btn => {
+btn.onclick = () => {
+openDetail(card, Number(btn.dataset.copyIdx));
+};
+});
+document.querySelectorAll("#detailBody [data-variant-id]").forEach(btn => {
+btn.onclick = () => {
+const chosenId = btn.dataset.variantId;
+if (inZone > 0) {
+setDeckCopyVariant(zone, card.id, detailCopyIndex, chosenId);
+openDetail(card, detailCopyIndex);
+} else {
+const picked = map.get(chosenId) || card;
+openDetail(picked, 0);
+}
+};
+});
 document.getElementById("detailAdd").onclick = () => {
-addToDeck(card.id);
-openDetail(card);
+addToDeck(card.id, activeCard.id);
+const updatedQty = Number(deckData[zone]?.[card.id] || 0);
+openDetail(card, Math.max(0, updatedQty - 1));
 };
 const remBtn = document.getElementById("detailRemove");
 if (remBtn) {
 remBtn.onclick = () => {
 removeFromDeck(card.id);
-openDetail(card);
+const nextQty = Number(deckData[zone]?.[card.id] || 0);
+openDetail(card, Math.max(0, Math.min(detailCopyIndex, nextQty - 1)));
 };
 }
 document.getElementById("detailOverlay").classList.add("open");
@@ -1233,12 +1416,12 @@ const map = new Map(cards.map(c => [c.id, c]));
 const costMap = {};
 const colorMap = {};
 const total = zoneTotal(zone);
-Object.entries(deckData[zone]).forEach(([id, n]) => {
+Object.entries(deckData[zone] || {}).forEach(([id, n]) => {
 const c = map.get(id) || {};
 const kCost = c.cost ?? "?";
 const kCol = c.color || "無";
-costMap[kCost] = (costMap[kCost] || 0) + n;
-colorMap[kCol] = (colorMap[kCol] || 0) + n;
+costMap[kCost] = (costMap[kCost] || 0) + Number(n || 0);
+colorMap[kCol] = (colorMap[kCol] || 0) + Number(n || 0);
 });
 const maxCostCount = Math.max(1, ...Object.values(costMap));
 const costBars = Object.keys(costMap).sort((a, b) => Number(a) - Number(b)).map(k => {
@@ -1264,7 +1447,7 @@ return;
 }
 box.innerHTML = "";
 list.forEach((slot, idx) => {
-const mCount = Object.values(slot.deck?.main || {}).reduce((a, b) => a + b, 0);
+const mCount = Object.values(slot.deck?.main || {}).reduce((a, b) => a + Number(b || 0), 0);
 const row = document.createElement("div");
 row.className = "saved-slot-item";
 row.innerHTML = ⁠<div style="min-width:0;"> <div style="font-size:13px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${slot.name}</div> <div style="font-size:11px;color:var(--text-secondary);">メイン ${mCount}枚 / ${slot.updatedAt || ""}</div> </div> <div style="display:flex;gap:5px;flex-shrink:0;"> <button class="pill-btn primary" data-load="${idx}">読込</button> <button class="pill-btn danger" data-del="${idx}">削除</button> </div>⁠;
@@ -1275,6 +1458,7 @@ btn.onclick = () => {
 const target = getSlots()[Number(btn.dataset.load)];
 if (!target) return;
 deckData = JSON.parse(JSON.stringify(target.deck));
+if (!deckData.variants) deckData.variants = { main: {}, sub: {} };
 persist();
 render();
 document.getElementById("decksOverlay").classList.remove("open");
@@ -1296,12 +1480,16 @@ const map = new Map(cards.map(c => [c.id, c]));
 const title = document.getElementById("exportTitleInput").value.trim() || "HOROBEAT DECK";
 const out = [⁠【${title}】⁠];
 ["main", "sub"].forEach(z => {
-const entries = Object.entries(deckData[z]).filter(([, n]) => n > 0);
+const entries = Object.entries(deckData[z] || {}).filter(([, n]) => Number(n) > 0);
 if (entries.length) {
 out.push(z === "main" ? ⁠\n■ メイン (${zoneTotal("main")}枚)⁠ : ⁠\n■ サブ (${zoneTotal("sub")}枚)⁠);
 entries.forEach(([id, n]) => {
 const c = map.get(id) || { id, name: id };
-out.push(⁠${n} × ${c.name} (${displayCardNumber(c)})⁠);
+const copyIds = getDeckCopyIds(z, id);
+const rarities = copyIds.map(vid => detectRarity(map.get(vid) || c));
+const uniqueRarities = [...new Set(rarities)].filter(r => r && r !== "その他");
+const rSuffix = uniqueRarities.length ? ⁠ [${uniqueRarities.join("/")}]⁠ : "";
+out.push(⁠${n} × ${c.name} (${displayCardNumber(c)})${rSuffix}⁠);
 });
 }
 });
@@ -1310,7 +1498,7 @@ document.getElementById("generatedImgWrap").innerHTML = "";
 document.getElementById("shareOverlay").classList.add("open");
 }
 function importFromRecipeText(text) {
-const newDeck = { main: {}, sub: {} };
+const newDeck = { main: {}, sub: {}, variants: { main: {}, sub: {} } };
 let currentTarget = "main";
 const byId = new Map();
 cards.forEach(c => {
@@ -1326,14 +1514,15 @@ const line = rawLine.trim();
 if (!line) return;
 if (line.includes("サブ")) { currentTarget = "sub"; return; }
 if (line.includes("メイン")) { currentTarget = "main"; return; }
-const m = line.match(/^(\d+)\s*[x×]\s*(.+?)(?:\s*[(（[])）])?$/i);
-if (!m) return;
-const qty = Math.min(MAX_PER_CARD, Math.max(1, Number(m[1])));
-const namePart = m[2].trim();
+const m = line.match(/^(\d+)\s*[x×]\s*(.+?)(?:\s*[(（[])）])?￼
+￼
+￼
+const namePart = m[2].replace(/\s*\[[^\]]+\]\s*/, "").trim();
 const idPart = (m[3] || "").trim().toUpperCase();
 const resolvedId = (idPart && byId.get(idPart)) || byName.get(namePart);
 if (resolvedId) {
 newDeck[currentTarget][resolvedId] = qty;
+newDeck.variants[currentTarget][resolvedId] = Array.from({ length: qty }, () => resolvedId);
 importedCount += qty;
 }
 });
@@ -1401,12 +1590,8 @@ btn.disabled = true;
 const prevLabel = btn.textContent;
 btn.textContent = "画像を生成中...";
 try {
-const entries = getSortedZoneEntries("main");
-const expanded = [];
-entries.forEach(({ card, n }) => {
-const qty = Math.max(0, Number(n) || 0);
-for (let i = 0; i < qty; i++) expanded.push(card);
-});
+const expandedEntries = getExpandedZoneCards("main");
+const expanded = expandedEntries.map(e => e.displayCard);
 const cols = 10;
 const minRows = 5;
 const rows = Math.max(minRows, Math.ceil(expanded.length / cols));
@@ -1516,6 +1701,7 @@ if (e.target === clearOverlay) closeClearDialog();
 });
 document.getElementById("btnConfirmClear").onclick = () => {
 deckData[zone] = {};
+if (deckData.variants) deckData.variants[zone] = {};
 persist();
 render();
 closeClearDialog();
@@ -1529,7 +1715,7 @@ if (focusedCardId) addToDeck(focusedCardId);
 document.getElementById("btnFocusDetail").onclick = () => {
 if (!focusedCardId) return;
 const c = cards.find(item => item.id === focusedCardId);
-if (c) openDetail(c);
+if (c) openDetail(c, 0);
 };
 document.getElementById("btnAbout").onclick = () => document.getElementById("aboutOverlay").classList.add("open");
 document.getElementById("btnStats").onclick = openStats;
