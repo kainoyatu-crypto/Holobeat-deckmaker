@@ -2,1814 +2,1026 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-<title>HOROBEAT STUDIO | デッキビルダー</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>HOROBEAT STUDIO</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,700;1,500&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet" />
 <style>
-:root {
---bg-base: #f4f5f7;
---bg-surface: #ffffff;
---bg-elevated: #eceef2;
---accent-emerald: #059669;
---accent-rose: #e11d48;
---text-primary: #111318;
---text-secondary: #4b5563;
---border-hairline: rgba(17, 19, 24, 0.15);
---card-ratio: 63 / 88;
-}
-* {
-box-sizing: border-box;
--webkit-tap-highlight-color: transparent;
--webkit-touch-callout: none;
-user-select: none;
--webkit-user-select: none;
-}
-input, textarea {
-user-select: text;
--webkit-user-select: text;
--webkit-touch-callout: default;
-}
-html, body {
-margin: 0;
-padding: 0;
-width: 100%;
-height: 100dvh;
-overflow: hidden;
-background: var(--bg-base);
-color: var(--text-primary);
-font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Noto Sans JP", sans-serif;
-}
-.studio {
-display: flex;
-flex-direction: column;
-height: 100dvh;
-max-width: 700px;
-margin: 0 auto;
-padding-top: env(safe-area-inset-top);
-padding-bottom: env(safe-area-inset-bottom);
-background: var(--bg-surface);
-}
-/* 上部バー */
-.top-bar {
-display: flex;
-align-items: center;
-justify-content: space-between;
-padding: 8px 12px;
-background: var(--bg-surface);
-border-bottom: 1px solid var(--border-hairline);
-flex-shrink: 0;
-gap: 6px;
-}
-.logo-area {
-display: flex;
-align-items: center;
-gap: 6px;
-min-width: 0;
-flex: 1 1 auto;
-}
-.logo-mark {
-font-family: "Playfair Display", Georgia, serif;
-font-size: 18px;
-font-weight: 700;
-letter-spacing: 0.08em;
-color: #000000;
-white-space: nowrap;
-}
-.help-dot {
-width: 20px;
-height: 20px;
-border-radius: 999px;
-border: 1px solid var(--border-hairline);
-background: var(--bg-elevated);
-color: var(--text-primary);
-font-size: 11px;
-font-weight: 900;
-display: grid;
-place-items: center;
-cursor: pointer;
-flex-shrink: 0;
-}
-.top-actions {
-display: flex;
-gap: 5px;
-flex-shrink: 0;
-}
-.pill-btn {
-background: var(--bg-elevated);
-color: var(--text-primary);
-border: 1px solid var(--border-hairline);
-border-radius: 8px;
-padding: 6px 8px;
-font-size: 11px;
-font-weight: 800;
-cursor: pointer;
-white-space: nowrap;
-}
-.pill-btn.primary {
-background: #111318;
-color: #ffffff;
-border-color: #111318;
-}
-.pill-btn.danger {
-background: #fff1f2;
-color: var(--accent-rose);
-border-color: rgba(225, 29, 72, 0.3);
-}
-/* タブ＆枚数バー */
-.deck-meta-bar {
-display: flex;
-align-items: center;
-justify-content: space-between;
-padding: 6px 12px;
-background: var(--bg-base);
-border-bottom: 1px solid var(--border-hairline);
-gap: 8px;
-flex-shrink: 0;
-}
-.seg-tabs {
-display: inline-flex;
-background: var(--bg-elevated);
-padding: 2px;
-border-radius: 10px;
-border: 1px solid var(--border-hairline);
-}
-.seg-tab {
-border: none;
-background: transparent;
-color: var(--text-secondary);
-padding: 5px 11px;
-border-radius: 8px;
-font-size: 12px;
-font-weight: 800;
-cursor: pointer;
-}
-.seg-tab.active {
-background: var(--bg-surface);
-color: #000000;
-box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-}
-.counter-readout {
-font-size: 12px;
-font-weight: 800;
-color: var(--text-secondary);
-display: flex;
-align-items: center;
-gap: 4px;
-}
-.counter-readout strong {
-color: var(--accent-emerald);
-font-size: 16px;
-}
-.counter-readout.over strong {
-color: var(--accent-rose);
-}
-/* 中央デッキ表示エリア */
-.deck-viewport {
-flex: 1 1 auto;
-min-height: 0;
-background: var(--bg-base);
-padding: 6px 10px;
-overflow-y: auto;
-display: flex;
-flex-direction: column;
-gap: 6px;
-}
-.deck-grid {
-display: grid;
-grid-template-columns: repeat(10, 1fr);
-gap: 3px;
-align-content: start;
-background: var(--bg-surface);
-padding: 5px;
-border-radius: 10px;
-border: 1px solid var(--border-hairline);
-}
-.slot-tile {
-aspect-ratio: var(--card-ratio);
-border-radius: 3px;
-overflow: hidden;
-background: #f4f5f7;
-position: relative;
-cursor: pointer;
-border: 1px solid rgba(17, 19, 24, 0.16);
-touch-action: pan-y;
-}
-.slot-tile.ghost {
-border: 1px dashed rgba(17, 19, 24, 0.16);
-background: #f8f9fb;
-cursor: default;
-}
-.slot-tile img {
-width: 100%;
-height: 100%;
-object-fit: cover;
-display: block;
-pointer-events: none;
-}
-.fallback-card {
-width: 100%;
-height: 100%;
-display: flex;
-flex-direction: column;
-justify-content: space-between;
-padding: 2px;
-font-size: 6px;
-line-height: 1.1;
-color: #111318;
-background: linear-gradient(160deg, #ffffff, #e2e6ec);
-text-align: center;
-overflow: hidden;
-}
-/* 余白パネル */
-.deck-utility-panel {
-flex: 1 1 auto;
-min-height: 0;
-background: var(--bg-surface);
-border: 1px solid var(--border-hairline);
-border-radius: 10px;
-padding: 8px 10px;
-display: flex;
-flex-direction: column;
-justify-content: space-between;
-gap: 6px;
-}
-.progress-row {
-display: flex;
-align-items: center;
-gap: 8px;
-font-size: 11px;
-font-weight: 800;
-}
-.progress-track {
-flex: 1;
-height: 8px;
-background: var(--bg-elevated);
-border-radius: 999px;
-overflow: hidden;
-}
-.progress-fill {
-height: 100%;
-background: #111318;
-border-radius: 999px;
-transition: width 0.2s ease;
-}
-.progress-fill.done {
-background: var(--accent-emerald);
-}
-.progress-fill.over {
-background: var(--accent-rose);
-}
-.mini-chips-row {
-display: flex;
-flex-wrap: wrap;
-gap: 5px;
-align-items: center;
-}
-.mini-tag {
-background: var(--bg-base);
-border: 1px solid var(--border-hairline);
-color: var(--text-primary);
-border-radius: 7px;
-padding: 3px 8px;
-font-size: 11px;
-font-weight: 700;
-cursor: pointer;
-}
-.mini-tag.active {
-background: #111318;
-color: #ffffff;
-border-color: #111318;
-}
-.focus-card-bar {
-display: flex;
-align-items: center;
-justify-content: space-between;
-background: var(--bg-base);
-border: 1px solid var(--border-hairline);
-border-radius: 8px;
-padding: 5px 8px;
-gap: 8px;
-font-size: 11px;
-}
-.focus-name {
-font-weight: 800;
-color: var(--text-primary);
-overflow: hidden;
-text-overflow: ellipsis;
-white-space: nowrap;
-flex: 1;
-}
-.focus-controls {
-display: flex;
-align-items: center;
-gap: 5px;
-flex-shrink: 0;
-}
-.step-btn {
-width: 24px;
-height: 24px;
-border-radius: 6px;
-border: 1px solid var(--border-hairline);
-background: var(--bg-surface);
-color: #111318;
-font-size: 13px;
-font-weight: 900;
-cursor: pointer;
-}
-/* 下部カードドック */
-.dock-section {
-flex-shrink: 0;
-background: var(--bg-elevated);
-border-top: 1px solid var(--border-hairline);
-padding: 7px 0;
-}
-.dock-header {
-display: flex;
-justify-content: space-between;
-align-items: center;
-padding: 0 12px 5px;
-font-size: 11px;
-font-weight: 700;
-color: var(--text-secondary);
-gap: 8px;
-}
-.dock-scroll {
-display: flex;
-gap: 8px;
-overflow-x: auto;
-padding: 0 12px;
-scrollbar-width: none;
-}
-.dock-scroll::-webkit-scrollbar { display: none; }
-.dock-card {
-flex: 0 0 auto;
-width: 76px;
-aspect-ratio: var(--card-ratio);
-border-radius: 7px;
-overflow: hidden;
-background: #ffffff;
-border: 1px solid rgba(17, 19, 24, 0.22);
-box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-position: relative;
-cursor: pointer;
-transition: transform 0.1s ease;
-}
-.dock-card:active {
-transform: scale(0.95);
-}
-.dock-card img {
-width: 100%;
-height: 100%;
-object-fit: cover;
-display: block;
-pointer-events: none;
-}
-.dock-badge {
-position: absolute;
-top: 3px;
-right: 3px;
-background: rgba(17, 19, 24, 0.9);
-color: #ffffff;
-border-radius: 6px;
-font-size: 11px;
-font-weight: 900;
-padding: 0 5px;
-line-height: 18px;
-pointer-events: none;
-}
-.dock-badge.max {
-background: var(--accent-rose);
-color: #ffffff;
-}
-.dock-info-btn {
-position: absolute;
-bottom: 3px;
-right: 3px;
-background: rgba(255, 255, 255, 0.92);
-color: #111318;
-border: 1px solid rgba(17, 19, 24, 0.25);
-border-radius: 5px;
-font-size: 9px;
-font-weight: 800;
-padding: 1px 4px;
-line-height: 13px;
-cursor: pointer;
-}
-/* 下部検索・ツールバー */
-.control-bar {
-display: flex;
-align-items: center;
-gap: 8px;
-padding: 8px 12px 9px;
-background: var(--bg-surface);
-border-top: 1px solid var(--border-hairline);
-flex-shrink: 0;
-}
-.search-wrap {
-flex: 1 1 auto;
-display: flex;
-align-items: center;
-background: var(--bg-base);
-border: 1.5px solid var(--border-hairline);
-border-radius: 12px;
-padding: 0 12px;
-height: 42px;
-gap: 8px;
-}
-.search-wrap input {
-flex: 1;
-border: none;
-outline: none;
-background: transparent;
-color: var(--text-primary);
-font-size: 14px;
-font-weight: 600;
-}
-.clear-btn {
-border: none;
-background: none;
-color: var(--text-secondary);
-font-size: 18px;
-cursor: pointer;
-}
-.sub-btn {
-height: 42px;
-padding: 0 12px;
-border-radius: 12px;
-border: 1.5px solid var(--border-hairline);
-background: var(--bg-elevated);
-color: var(--text-primary);
-font-size: 12px;
-font-weight: 800;
-cursor: pointer;
-white-space: nowrap;
-}
-.sub-btn.active-filter {
-background: #111318;
-color: #ffffff;
-border-color: #111318;
-}
-/* クリア確認中央ポップアップダイアログ */
-.dialog-overlay {
-position: fixed;
-inset: 0;
-background: rgba(17, 19, 24, 0.56);
-display: none;
-align-items: center;
-justify-content: center;
-padding: 20px;
-z-index: 250;
-}
-.dialog-overlay.open {
-display: flex;
-}
-.dialog-card {
-width: 100%;
-max-width: 420px;
-background: #ffffff;
-color: #111318;
-border-radius: 10px;
-padding: 18px 20px 20px;
-box-shadow: 0 16px 40px rgba(0, 0, 0, 0.25);
-}
-.dialog-head {
-display: flex;
-align-items: center;
-justify-content: space-between;
-font-size: 16px;
-font-weight: 800;
-margin-bottom: 14px;
-}
-.dialog-close {
-border: none;
-background: transparent;
-color: #2563eb;
-font-size: 22px;
-line-height: 1;
-padding: 2px 6px;
-cursor: pointer;
-}
-.dialog-body {
-margin: 0 0 20px;
-font-size: 14px;
-line-height: 1.65;
-color: #1f2937;
-}
-.dialog-actions {
-display: grid;
-grid-template-columns: 1fr 1fr;
-gap: 12px;
-}
-.dialog-btn {
-height: 42px;
-border-radius: 8px;
-font-size: 14px;
-font-weight: 700;
-cursor: pointer;
-}
-.dialog-btn.cancel {
-background: #ffffff;
-color: #111318;
-border: 1px solid #d1d5db;
-}
-.dialog-btn.danger {
-background: #be344b;
-color: #ffffff;
-border: none;
-}
-/* モーダル */
-.overlay {
-position: fixed;
-inset: 0;
-background: rgba(17, 19, 24, 0.52);
-display: none;
-align-items: flex-end;
-justify-content: center;
-z-index: 100;
-}
-.overlay.open { display: flex; }
-.sheet {
-width: 100%;
-max-width: 700px;
-background: var(--bg-surface);
-color: var(--text-primary);
-border-top: 1px solid var(--border-hairline);
-border-radius: 18px 18px 0 0;
-padding: 16px 16px calc(18px + env(safe-area-inset-bottom));
-max-height: 86dvh;
-overflow-y: auto;
-}
-.sheet-head {
-display: flex;
-justify-content: space-between;
-align-items: center;
-font-weight: 900;
-font-size: 15px;
-margin-bottom: 12px;
-}
-.sheet-close {
-width: 30px;
-height: 30px;
-border-radius: 999px;
-border: none;
-background: var(--bg-elevated);
-color: var(--text-primary);
-font-size: 17px;
-font-weight: 800;
-cursor: pointer;
-}
-.chips {
-display: flex;
-flex-wrap: wrap;
-gap: 7px;
-margin-bottom: 14px;
-}
-.chip {
-padding: 7px 13px;
-border-radius: 999px;
-border: 1px solid var(--border-hairline);
-background: var(--bg-base);
-color: var(--text-primary);
-font-size: 12px;
-font-weight: 700;
-cursor: pointer;
-}
-.chip.selected {
-background: #111318;
-color: #ffffff;
-border-color: #111318;
-}
-.sheet-btn {
-width: 100%;
-padding: 12px;
-border-radius: 11px;
-border: none;
-background: #111318;
-color: #ffffff;
-font-size: 14px;
-font-weight: 800;
-cursor: pointer;
-margin-top: 7px;
-}
-.sheet-btn.secondary {
-background: var(--bg-elevated);
-color: var(--text-primary);
-border: 1px solid var(--border-hairline);
-}
-.text-input {
-width: 100%;
-background: var(--bg-base);
-color: var(--text-primary);
-border: 1px solid var(--border-hairline);
-border-radius: 10px;
-padding: 10px 12px;
-font-size: 13px;
-margin-bottom: 8px;
-}
-.recipe-box {
-width: 100%;
-height: 115px;
-border-radius: 10px;
-background: var(--bg-base);
-color: var(--text-primary);
-border: 1px solid var(--border-hairline);
-padding: 10px;
-font-size: 12px;
-font-family: monospace;
-}
-.saved-slot-item {
-display: flex;
-align-items: center;
-justify-content: space-between;
-background: var(--bg-base);
-border: 1px solid var(--border-hairline);
-border-radius: 10px;
-padding: 9px 11px;
-margin-bottom: 6px;
-gap: 8px;
-}
-.bar-row {
-display: flex;
-align-items: center;
-gap: 8px;
-margin-bottom: 6px;
-font-size: 12px;
-}
-.bar-track {
-flex: 1;
-height: 9px;
-background: var(--bg-elevated);
-border-radius: 999px;
-overflow: hidden;
-}
-.bar-fill {
-height: 100%;
-background: #111318;
-border-radius: 999px;
-}
-.preview-img {
-width: 210px;
-max-width: 60vw;
-border-radius: 10px;
-display: block;
-margin: 0 auto 12px;
-}
-/* 詳細モーダル内のレアリティ/イラスト個別選択UI */
-.copy-tabs-row {
-display: flex;
-gap: 6px;
-flex-wrap: wrap;
-margin-bottom: 10px;
-}
-.copy-tab {
-padding: 5px 10px;
-border-radius: 8px;
-border: 1px solid var(--border-hairline);
-background: var(--bg-base);
-color: var(--text-primary);
-font-size: 12px;
-font-weight: 800;
-cursor: pointer;
-}
-.copy-tab.active {
-background: #111318;
-color: #ffffff;
-border-color: #111318;
-}
-.variant-strip {
-display: flex;
-gap: 8px;
-overflow-x: auto;
-padding: 4px 2px 10px;
-scrollbar-width: none;
-}
-.variant-strip::-webkit-scrollbar { display: none; }
-.variant-thumb {
-flex: 0 0 66px;
-border-radius: 7px;
-overflow: hidden;
-border: 2px solid transparent;
-background: var(--bg-base);
-cursor: pointer;
-display: flex;
-flex-direction: column;
-align-items: center;
-padding: 2px;
-}
-.variant-thumb.selected {
-border-color: #111318;
-background: var(--bg-elevated);
-}
-.variant-thumb img {
-width: 100%;
-aspect-ratio: var(--card-ratio);
-object-fit: cover;
-border-radius: 5px;
-display: block;
-}
-.variant-label {
-font-size: 10px;
-font-weight: 800;
-margin-top: 3px;
-color: var(--text-primary);
-white-space: nowrap;
-}
-.generated-img {
-width: 100%;
-border-radius: 10px;
-margin-top: 8px;
-border: 1px solid var(--border-hairline);
-background: #ffffff;
-}
-.toast {
-position: fixed;
-top: 58px;
-left: 50%;
-transform: translateX(-50%);
-background: #111318;
-color: #ffffff;
-padding: 7px 15px;
-border-radius: 999px;
-font-size: 12px;
-font-weight: 700;
-opacity: 0;
-pointer-events: none;
-transition: opacity 0.2s;
-z-index: 200;
-}
-.toast.show { opacity: 1; }
+  :root {
+    --bg: #f4f4f6;
+    --surface: #ffffff;
+    --surface-2: #ececef;
+    --border: rgba(15, 15, 18, 0.14);
+    --text: #111114;
+    --muted: #666670;
+    --accent: #111114;
+    --accent-text: #ffffff;
+    --danger: #dc2626;
+  }
+
+  * {
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, sans-serif;
+    line-height: 1.5;
+    min-height: 100vh;
+  }
+
+  .app-header {
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 16px;
+    background: rgba(255, 255, 255, 0.94);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .brand-logo {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 1.15rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    color: var(--text);
+    text-transform: uppercase;
+    user-select: none;
+  }
+
+  .header-actions {
+    display: flex;
+    gap: 8px;
+  }
+
+  button {
+    font-family: inherit;
+    color: var(--text);
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 7px 12px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s ease, transform 0.1s ease;
+  }
+
+  button:hover {
+    background: #e2e2e7;
+  }
+
+  button:active {
+    transform: scale(0.98);
+  }
+
+  button.primary {
+    background: var(--accent);
+    color: var(--accent-text);
+    border-color: var(--accent);
+    font-weight: 700;
+  }
+
+  button.primary:hover {
+    background: #27272c;
+  }
+
+  button.danger {
+    border-color: rgba(220, 38, 38, 0.45);
+    color: var(--danger);
+  }
+
+  .container {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 16px;
+    display: grid;
+    gap: 20px;
+  }
+
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px;
+  }
+
+  .deck-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+  }
+
+  .deck-count {
+    font-size: 0.9rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+  }
+
+  .deck-grid {
+    display: grid;
+    grid-template-columns: repeat(10, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  @media (max-width: 720px) {
+    .deck-grid {
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+    }
+  }
+
+  .deck-slot {
+    position: relative;
+    aspect-ratio: 5 / 7;
+    background: var(--surface-2);
+    border: 1px dashed rgba(17, 17, 20, 0.18);
+    border-radius: 6px;
+    overflow: hidden;
+    touch-action: pan-x;
+  }
+
+  .deck-slot.filled {
+    border: 1px solid rgba(17, 17, 20, 0.24);
+    cursor: pointer;
+  }
+
+  .deck-slot img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .rarity-badge {
+    position: absolute;
+    left: 4px;
+    bottom: 4px;
+    background: rgba(17, 17, 20, 0.85);
+    color: #ffffff;
+    border-radius: 4px;
+    padding: 1px 4px;
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    pointer-events: none;
+  }
+
+  .controls-bar {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+  }
+
+  .search-input {
+    flex: 1 1 200px;
+    background: var(--surface-2);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 0.9rem;
+  }
+
+  .catalog-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
+    gap: 10px;
+  }
+
+  .catalog-card {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    cursor: pointer;
+  }
+
+  .catalog-card img {
+    width: 100%;
+    aspect-ratio: 5 / 7;
+    object-fit: cover;
+    display: block;
+    background: #e2e2e7;
+  }
+
+  .catalog-meta {
+    padding: 6px;
+    font-size: 0.72rem;
+  }
+
+  .catalog-name {
+    font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .catalog-sub {
+    color: var(--muted);
+    font-size: 0.66rem;
+    margin-top: 2px;
+  }
+
+  .modal-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    background: rgba(17, 17, 20, 0.56);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+  }
+
+  .modal-backdrop.open {
+    display: flex;
+  }
+
+  .modal-box {
+    width: 100%;
+    max-width: 520px;
+    max-height: 90vh;
+    overflow-y: auto;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 18px;
+  }
+
+  .modal-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+
+  .modal-title {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 700;
+  }
+
+  .detail-preview {
+    width: 180px;
+    aspect-ratio: 5 / 7;
+    margin: 0 auto 14px;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+  }
+
+  .detail-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .copy-tabs {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+  }
+
+  .copy-tab.active {
+    background: var(--accent);
+    color: var(--accent-text);
+    border-color: var(--accent);
+  }
+
+  .variant-strip {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(76px, 1fr));
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+
+  .variant-item {
+    background: var(--surface-2);
+    border: 2px solid transparent;
+    border-radius: 8px;
+    padding: 4px;
+    cursor: pointer;
+    text-align: center;
+  }
+
+  .variant-item.selected {
+    border-color: var(--accent);
+  }
+
+  .variant-item img {
+    width: 100%;
+    aspect-ratio: 5 / 7;
+    object-fit: cover;
+    border-radius: 4px;
+    display: block;
+  }
+
+  .variant-label {
+    font-size: 0.68rem;
+    margin-top: 4px;
+    font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 14px;
+    flex-wrap: wrap;
+  }
+
+  .toast-msg {
+    position: fixed;
+    left: 50%;
+    bottom: 24px;
+    transform: translateX(-50%);
+    z-index: 90;
+    background: #111114;
+    color: #ffffff;
+    padding: 9px 16px;
+    border-radius: 999px;
+    font-size: 0.82rem;
+    display: none;
+  }
+
+  .toast-msg.show {
+    display: block;
+  }
 </style>
 </head>
-<body oncontextmenu="return false;">
-<div class="studio">
-<header class="top-bar">
-<div class="logo-area">
-<span class="logo-mark">HOROBEAT STUDIO</span>
-<button class="help-dot" id="btnAbout" title="使い方・免責">?</button>
-</div>
-<div class="top-actions">
-<button class="pill-btn" id="btnDecks">保存</button>
-<button class="pill-btn" id="btnStats">分布</button>
-<button class="pill-btn primary" id="btnShare">出力</button>
-<button class="pill-btn danger" id="btnClear">クリア</button>
-</div>
-</header>
-<div class="deck-meta-bar">
-<div class="seg-tabs">
-<button class="seg-tab active" data-zone="main">メインデッキ</button>
-<button class="seg-tab" data-zone="sub">サブ / 調整枠</button>
-</div>
-<div class="counter-readout" id="counterReadout">
-<span id="zoneLabel">MAIN</span> <strong id="zoneCount">0</strong> / <span id="zoneTarget">50</span> 枚
-</div>
-</div>
-<main class="deck-viewport">
-<!-- 10×5 枠グリッド -->
-<div class="deck-grid" id="deckGrid"></div>
-<!-- 余白エリアの便利ウィジェット -->
-<div class="deck-utility-panel">
-<div class="progress-row">
-<span id="deckStatusLabel">あと 50 枚</span>
-<div class="progress-track">
-<div class="progress-fill" id="deckProgressFill" style="width:0%"></div>
-</div>
-<span id="deckPctLabel">0%</span>
-</div>
-<div class="mini-chips-row" id="colorQuickChips"></div>
-<div class="focus-card-bar">
-<span class="focus-name" id="focusCardLabel">カード未選択</span>
-<div class="focus-controls">
-<button class="step-btn" id="btnFocusMinus" title="1枚減らす">-</button>
-<span id="focusCountLabel" style="font-weight:900;min-width:34px;text-align:center;">0/4</span>
-<button class="step-btn" id="btnFocusPlus" title="1枚増やす">+</button>
-<button class="mini-tag" id="btnFocusDetail">詳細</button>
-</div>
-</div>
-</div>
-</main>
-<section class="dock-section">
-<div class="dock-header">
-<span>タップ・上スワイプで追加 / 長押し・詳細で拡大表示 / 下スワイプで1枚削除</span>
-<span id="poolCountLabel">0件</span>
-</div>
-<div class="dock-scroll" id="dockScroll"></div>
-</section>
-<footer class="control-bar">
-<div class="search-wrap">
-<span style="font-size:15px;">🔍</span>
-<input type="search" id="searchInput" placeholder="カード名・型番で検索" />
-<button class="clear-btn" id="btnClearSearch">×</button>
-</div>
-<button class="sub-btn" id="btnOpenFilter">絞り込み</button>
-<button class="sub-btn" id="btnOpenSort">並替</button>
-</footer>
-</div>
-<!-- デッキ削除確認ポップアップ中央ダイアログ -->
-<div class="dialog-overlay" id="clearOverlay">
-<div class="dialog-card" role="dialog" aria-modal="true" aria-labelledby="clearDialogTitle">
-<div class="dialog-head">
-<span id="clearDialogTitle">デッキ削除</span>
-<button type="button" class="dialog-close" id="btnCancelClearX" aria-label="閉じる">×</button>
-</div>
-<p class="dialog-body">
-現在デッキに採用されているカードを全て削除しますか？
-</p>
-<div class="dialog-actions">
-<button type="button" class="dialog-btn cancel" id="btnCancelClear">キャンセル</button>
-<button type="button" class="dialog-btn danger" id="btnConfirmClear">削除</button>
-</div>
-</div>
-</div>
-<div class="toast" id="toast"></div>
-<!-- 絞り込み -->
-<div class="overlay" id="filterOverlay">
-<div class="sheet">
-<div class="sheet-head">
-<span>カード絞り込み</span>
-<button class="sheet-close" data-close="filterOverlay">×</button>
-</div>
-<div style="font-size:12px;color:var(--text-secondary);margin-bottom:6px;font-weight:700;">レアリティ</div>
-<div class="chips" id="rarityChipList"></div>
-<div style="font-size:12px;color:var(--text-secondary);margin-bottom:6px;font-weight:700;">色</div>
-<div class="chips" id="colorChipList"></div>
-<div style="font-size:12px;color:var(--text-secondary);margin-bottom:6px;font-weight:700;">種類</div>
-<div class="chips" id="typeChipList"></div>
-<div style="font-size:12px;color:var(--text-secondary);margin-bottom:6px;font-weight:700;">画像状態</div>
-<div class="chips" id="imgChipList">
-<button class="chip selected" data-img="ALL">すべて</button>
-<button class="chip" data-img="HAS">画像ありのみ</button>
-<button class="chip" data-img="NONE">画像未設定のみ</button>
-</div>
-<button class="sheet-btn secondary" id="btnResetFilters">フィルタ解除</button>
-</div>
-</div>
-<!-- 並べ替え -->
-<div class="overlay" id="sortOverlay">
-<div class="sheet">
-<div class="sheet-head">
-<span>並べ替え順</span>
-<button class="sheet-close" data-close="sortOverlay">×</button>
-</div>
-<div class="chips" id="sortChipList">
-<button class="chip selected" data-sort="id">型番順</button>
-<button class="chip" data-sort="cost_asc">コスト低い順</button>
-<button class="chip" data-sort="cost_desc">コスト高い順</button>
-<button class="chip" data-sort="name">名前順</button>
-</div>
-</div>
-</div>
-<!-- 分布・内訳 -->
-<div class="overlay" id="statsOverlay">
-<div class="sheet">
-<div class="sheet-head">
-<span>デッキ内訳・コスト分布</span>
-<button class="sheet-close" data-close="statsOverlay">×</button>
-</div>
-<div id="statsContent" style="font-size:13px;line-height:1.7;"></div>
-</div>
-</div>
-<!-- 複数デッキ管理 -->
-<div class="overlay" id="decksOverlay">
-<div class="sheet">
-<div class="sheet-head">
-<span>保存済みデッキ一覧</span>
-<button class="sheet-close" data-close="decksOverlay">×</button>
-</div>
-<div style="display:flex;gap:6px;margin-bottom:12px;">
-<input type="text" class="text-input" id="deckNameInput" placeholder="デッキ名（例：赤単ビート）" style="margin:0;" />
-<button class="sheet-btn" id="btnSaveSlot" style="width:auto;margin:0;padding:0 14px;white-space:nowrap;">デッキを保存</button>
-</div>
-<div id="savedSlotList"></div>
-</div>
-</div>
-<!-- 出力・共有・画像生成・インポート -->
-<div class="overlay" id="shareOverlay">
-<div class="sheet">
-<div class="sheet-head">
-<span>レシピ出力・共有・読込</span>
-<button class="sheet-close" data-close="shareOverlay">×</button>
-</div>
-<input type="text" class="text-input" id="exportTitleInput" placeholder="デッキタイトル（画像書き出し用）" value="HOROBEAT DECK" />
-<textarea class="recipe-box" id="recipeText"></textarea>
-<button class="sheet-btn" id="btnRenderImage">デッキ画像を生成（10×5 / PNG保存用）</button>
-<div id="generatedImgWrap"></div>
-<button class="sheet-btn secondary" id="btnCopyText">テキストをコピー</button>
-<button class="sheet-btn secondary" id="btnCopyLink">共有URLをコピー</button>
-<button class="sheet-btn secondary" id="btnImportText">テキストからデッキを読み込む</button>
-</div>
-</div>
-<!-- カード詳細（1枚ごとのレアリティ・イラスト選択対応） -->
-<div class="overlay" id="detailOverlay">
-<div class="sheet">
-<div class="sheet-head">
-<span id="detailTitle">カード詳細</span>
-<button class="sheet-close" data-close="detailOverlay">×</button>
-</div>
-<div id="detailBody"></div>
-</div>
-</div>
-<!-- サイト情報・免責 -->
-<div class="overlay" id="aboutOverlay">
-<div class="sheet">
-<div class="sheet-head">
-<span>HOROBEAT STUDIO について</span>
-<button class="sheet-close" data-close="aboutOverlay">×</button>
-</div>
-<div style="font-size:13px;color:var(--text-secondary);line-height:1.7;">
-<p style="margin-top:0;color:var(--text-primary);"><strong>操作方法：</strong>
+<body>
+  <header class="app-header">
+    <div class="brand-logo">HOROBEAT STUDIO</div>
+    <div class="header-actions">
+      <button id="btnExportModal" class="primary" type="button">出力・画像</button>
+      <button id="btnOpenClear" class="danger" type="button">クリア</button>
+    </div>
+  </header>
 
-・タップ・上スワイプで追加
+  <main class="container">
+    <section class="panel">
+      <div class="deck-top">
+        <div class="deck-count" id="deckCountLabel">DECK 0 / 50</div>
+        <div style="font-size:0.75rem;color:var(--muted);">タップで詳細・枚数別レアリティ選択 / 下スワイプで1枚削除</div>
+      </div>
+      <div class="deck-grid" id="deckGrid"></div>
+    </section>
 
-・長押し・詳細で拡大表示
+    <section class="panel">
+      <div class="controls-bar">
+        <input id="searchInput" class="search-input" type="search" placeholder="カード名・型番・レアリティで検索" />
+        <span id="catalogCountLabel" style="align-self:center;font-size:0.82rem;color:var(--muted);">0件</span>
+      </div>
+      <div class="catalog-grid" id="catalogGrid"></div>
+    </section>
+  </main>
 
-・下スワイプで1枚削除（デッキ内のカードはタップでも拡大表示）</p>
-<p style="margin-bottom:0;">※ 本サイトは『ホロビートカードゲーム』の非公式ファンメイド・デッキ構築支援ツールです。掲載されているカード情報・画像の権利は各権利者に帰属します。</p>
-</div>
-</div>
-</div>
-<script>
-const MAX_PER_CARD = 4;
-const TARGET_COUNTS = { main: 50, sub: 10 };
-const GRID_SLOTS_10X5 = 50;
-const LONG_PRESS_MS = 260;
-const SAVE_KEY = "horobeat_studio_deck_v1";
-const SLOTS_KEY = "horobeat_studio_slots_v1";
-let cards = [];
-let zone = "main";
-// variants: { main: { [baseId]: [variantId0, variantId1, ...] }, sub: { ... } }
-let deckData = { main: {}, sub: {}, variants: { main: {}, sub: {} } };
-let focusedCardId = null;
-let detailCopyIndex = 0;
-let state = { q: "", rarity: "ALL", color: "ALL", type: "ALL", img: "ALL", sort: "id" };
-function detectRarity(card) {
-if (card.rarity) return String(card.rarity).trim().toUpperCase();
-const hay = ⁠${card.id || ""} ${card.cardNumber || ""} ${card.type || ""} ${card.text || ""}⁠.toUpperCase();
-for (const r of ["SEC", "DR", "SR", "RR", "R", "UC", "C", "PR"]) {
-const re = new RegExp(⁠(^|[^A-Z])${r}([^A-Z]|$)⁠);
-if (re.test(hay)) return r;
-}
-return "その他";
-}
-function displayCardNumber(card) {
-return card.cardNumber || card.id || "";
-}
-function getBaseCardKey(card) {
-const no = String(card.cardNumber || "").trim().toUpperCase();
-if (no) return ⁠NO:${no}⁠;
-const rawId = String(card.id || "").trim().toUpperCase();
-const stripped = rawId.replace(/(_[A-Z0-9]+)?(__\d+)?$/i, "");
-if (stripped) return ⁠ID:${stripped}⁠;
-return ⁠NAME:${String(card.name || "").trim()}⁠;
-}
-function getCardVariants(card) {
-const key = getBaseCardKey(card);
-const matches = cards.filter(c => getBaseCardKey(c) === key);
-if (matches.length > 0) return matches;
-return [card];
-}
-function ensureVariantsArray(z, baseId, count) {
-if (!deckData.variants) deckData.variants = { main: {}, sub: {} };
-if (!deckData.variants[z]) deckData.variants[z] = {};
-const current = Array.isArray(deckData.variants[z][baseId]) ? [...deckData.variants[z][baseId]] : [];
-while (current.length < count) {
-current.push(baseId);
-}
-if (current.length > count) {
-current.length = count;
-}
-deckData.variants[z][baseId] = current;
-return current;
-}
-function getDeckCopyIds(z, baseId) {
-const qty = Math.max(0, Number(deckData[z]?.[baseId] || 0));
-if (qty <= 0) return [];
-return ensureVariantsArray(z, baseId, qty);
-}
-function setDeckCopyVariant(z, baseId, copyIdx, chosenId) {
-const qty = Math.max(0, Number(deckData[z]?.[baseId] || 0));
-if (qty <= 0 || copyIdx < 0 || copyIdx >= qty) return;
-const arr = ensureVariantsArray(z, baseId, qty);
-arr[copyIdx] = chosenId;
-deckData.variants[z][baseId] = arr;
-persist();
-render();
-}
-function toast(msg) {
-const el = document.getElementById("toast");
-el.textContent = msg;
-el.classList.add("show");
-clearTimeout(toast._timer);
-toast._timer = setTimeout(() => el.classList.remove("show"), 1800);
-}
-function zoneTotal(z) {
-return Object.values(deckData[z] || {}).reduce((sum, n) => sum + Number(n || 0), 0);
-}
-function cardTotal(id) {
-return Number(deckData.main?.[id] || 0) + Number(deckData.sub?.[id] || 0);
-}
-function persist() {
-try { localStorage.setItem(SAVE_KEY, JSON.stringify(deckData)); } catch (e) {}
-}
-function restore() {
-const normalizeLoaded = parsed => {
-const main = (parsed && parsed.main) || {};
-const sub = (parsed && parsed.sub) || {};
-const variants = {
-main: (parsed && parsed.variants && parsed.variants.main) || {},
-sub: (parsed && parsed.variants && parsed.variants.sub) || {}
-};
-deckData = { main, sub, variants };
-["main", "sub"].forEach(z => {
-Object.entries(deckData[z]).forEach(([id, n]) => {
-const qty = Math.max(0, Number(n || 0));
-if (qty > 0) {
-ensureVariantsArray(z, id, qty);
-} else {
-delete deckData[z][id];
-delete deckData.variants[z][id];
-}
-});
-});
-};
-const urlParam = new URLSearchParams(location.search).get("deck");
-if (urlParam) {
-try {
-const decoded = JSON.parse(decodeURIComponent(escape(atob(urlParam))));
-if (decoded && typeof decoded === "object") {
-normalizeLoaded(decoded);
-return;
-}
-} catch (e) {}
-}
-try {
-const saved = localStorage.getItem(SAVE_KEY);
-if (saved) {
-const parsed = JSON.parse(saved);
-normalizeLoaded(parsed);
-}
-} catch (e) {}
-}
-function addToDeck(id, preferredVariantId = null) {
-focusedCardId = id;
-if (cardTotal(id) >= MAX_PER_CARD) {
-toast(⁠同名カードは最大${MAX_PER_CARD}枚までです⁠);
-renderUtilityPanel();
-return;
-}
-const nextQty = (deckData[zone][id] || 0) + 1;
-deckData[zone][id] = nextQty;
-const arr = ensureVariantsArray(zone, id, nextQty);
-arr[nextQty - 1] = preferredVariantId || id;
-persist();
-render();
-}
-function removeFromDeck(id) {
-focusedCardId = id;
-if (!deckData[zone][id]) {
-renderUtilityPanel();
-return;
-}
-deckData[zone][id] -= 1;
-if (deckData[zone][id] <= 0) {
-delete deckData[zone][id];
-if (deckData.variants?.[zone]) delete deckData.variants[zone][id];
-} else {
-ensureVariantsArray(zone, id, deckData[zone][id]);
-}
-persist();
-render();
-}
-function makeFallback(card) {
-const div = document.createElement("div");
-div.className = "fallback-card";
-div.innerHTML = ⁠<span style="opacity:.7;">${displayCardNumber(card)}</span> <span style="font-weight:800;">${card.name || ""}</span> <span style="opacity:.7;">${card.cost ?? ""}</span>⁠;
-return div;
-}
-function makeArt(card) {
-if (card.imageUrl) {
-const img = document.createElement("img");
-img.src = card.imageUrl;
-img.alt = card.name || displayCardNumber(card);
-img.loading = "lazy";
-img.onerror = () => img.replaceWith(makeFallback(card));
-return img;
-}
-return makeFallback(card);
-}
-function getSortedZoneEntries(z) {
-const map = new Map(cards.map(c => [c.id, c]));
-return Object.entries(deckData[z] || {})
-.filter(([, n]) => Number(n) > 0)
-.map(([id, n]) => ({ card: map.get(id) || { id, name: id }, n: Number(n) }))
-.sort((a, b) => {
-const ca = Number(a.card.cost ?? 99);
-const cb = Number(b.card.cost ?? 99);
-return ca !== cb ? ca - cb : String(displayCardNumber(a.card)).localeCompare(String(displayCardNumber(b.card)), "ja");
-});
-}
-function getExpandedZoneCards(z) {
-const map = new Map(cards.map(c => [c.id, c]));
-const items = getSortedZoneEntries(z);
-const expanded = [];
-items.forEach(({ card, n }) => {
-const copyIds = getDeckCopyIds(z, card.id);
-for (let i = 0; i < n; i++) {
-const chosenId = copyIds[i] || card.id;
-expanded.push({
-baseCard: card,
-displayCard: map.get(chosenId) || card,
-copyIndex: i
-});
-}
-});
-return expanded;
-}
-function renderDeck() {
-const grid = document.getElementById("deckGrid");
-grid.innerHTML = "";
-const expanded = getExpandedZoneCards(zone);
-const totalTiles = Math.max(GRID_SLOTS_10X5, Math.ceil(expanded.length / 10) * 10);
-for (let i = 0; i < totalTiles; i++) {
-const entry = expanded[i];
-const tile = document.createElement("div");
-if (!entry) {
-tile.className = "slot-tile ghost";
-grid.appendChild(tile);
-continue;
-}
-const { baseCard, displayCard, copyIndex } = entry;
-tile.className = "slot-tile";
-tile.appendChild(makeArt(displayCard));
-let startY = 0;
-let swipedDown = false;
-tile.addEventListener("touchstart", e => {
-startY = e.touches[0].clientY;
-swipedDown = false;
-}, { passive: true });
-tile.addEventListener("touchend", e => {
-if (e.changedTouches[0].clientY - startY > 24) {
-swipedDown = true;
-e.preventDefault();
-removeFromDeck(baseCard.id);
-}
-});
-tile.addEventListener("click", () => {
-if (swipedDown) {
-swipedDown = false;
-return;
-}
-focusedCardId = baseCard.id;
-openDetail(baseCard, copyIndex);
-});
-grid.appendChild(tile);
-}
-}
-function renderUtilityPanel() {
-const total = zoneTotal(zone);
-const target = TARGET_COUNTS[zone];
-const diff = target - total;
-const pct = Math.min(100, Math.round((total / target) * 100));
-const statusEl = document.getElementById("deckStatusLabel");
-const fillEl = document.getElementById("deckProgressFill");
-const pctEl = document.getElementById("deckPctLabel");
-pctEl.textContent = ⁠${pct}%⁠;
-fillEl.style.width = ⁠${pct}%⁠;
-fillEl.classList.remove("done", "over");
-if (diff > 0) {
-statusEl.textContent = ⁠あと ${diff} 枚⁠;
-} else if (diff === 0) {
-statusEl.textContent = ⁠基準達成（${target}枚）⁠;
-fillEl.classList.add("done");
-} else {
-statusEl.textContent = ⁠超過 +${Math.abs(diff)} 枚⁠;
-fillEl.classList.add("over");
-}
-const map = new Map(cards.map(c => [c.id, c]));
-const colorCounts = {};
-Object.entries(deckData[zone] || {}).forEach(([id, n]) => {
-const col = (map.get(id)?.color) || "無";
-colorCounts[col] = (colorCounts[col] || 0) + Number(n || 0);
-});
-const chipRow = document.getElementById("colorQuickChips");
-chipRow.innerHTML = "";
-const allChip = document.createElement("button");
-allChip.type = "button";
-allChip.className = "mini-tag" + (state.color === "ALL" ? " active" : "");
-allChip.textContent = ⁠全色 (${total})⁠;
-allChip.onclick = () => {
-state.color = "ALL";
-render();
-};
-chipRow.appendChild(allChip);
-Object.entries(colorCounts).forEach(([col, cnt]) => {
-const btn = document.createElement("button");
-btn.type = "button";
-btn.className = "mini-tag" + (state.color === col ? " active" : "");
-btn.textContent = ⁠${col}: ${cnt}⁠;
-btn.onclick = () => {
-state.color = state.color === col ? "ALL" : col;
-render();
-};
-chipRow.appendChild(btn);
-});
-const focusCard = focusedCardId ? map.get(focusedCardId) : null;
-const focusLabel = document.getElementById("focusCardLabel");
-const focusCount = document.getElementById("focusCountLabel");
-if (focusCard) {
-focusLabel.textContent = ⁠${focusCard.name || displayCardNumber(focusCard)}⁠;
-focusCount.textContent = ⁠${cardTotal(focusCard.id)}/${MAX_PER_CARD}⁠;
-} else {
-focusLabel.textContent = "カード未選択";
-focusCount.textContent = ⁠0/${MAX_PER_CARD}⁠;
-}
-}
-function filteredPool() {
-const q = state.q.trim().toLowerCase();
-return cards
-.filter(c => {
-if (state.rarity !== "ALL" && detectRarity(c) !== state.rarity) return false;
-if (state.color !== "ALL" && (c.color || "無") !== state.color) return false;
-if (state.type !== "ALL" && (c.type || "その他") !== state.type) return false;
-if (state.img === "HAS" && !c.imageUrl) return false;
-if (state.img === "NONE" && c.imageUrl) return false;
-if (q) {
-const text = ⁠${c.id || ""} ${c.cardNumber || ""} ${c.name || ""} ${c.text || ""} ${detectRarity(c)}⁠.toLowerCase();
-if (!text.includes(q)) return false;
-}
-return true;
-})
-.sort((a, b) => {
-if (state.sort === "cost_asc") return Number(a.cost ?? 99) - Number(b.cost ?? 99);
-if (state.sort === "cost_desc") return Number(b.cost ?? -1) - Number(a.cost ?? -1);
-if (state.sort === "name") return String(a.name || "").localeCompare(String(b.name || ""), "ja");
-return String(displayCardNumber(a)).localeCompare(String(displayCardNumber(b)), "ja");
-});
-}
-function renderDock() {
-const scroll = document.getElementById("dockScroll");
-scroll.innerHTML = "";
-const pool = filteredPool();
-document.getElementById("poolCountLabel").textContent = ⁠${pool.length}件⁠;
-pool.forEach(card => {
-const el = document.createElement("div");
-el.className = "dock-card";
-el.appendChild(makeArt(card));
-const count = cardTotal(card.id);
-if (count > 0) {
-const badge = document.createElement("span");
-badge.className = "dock-badge" + (count >= MAX_PER_CARD ? " max" : "");
-badge.textContent = count;
-el.appendChild(badge);
-}
-const infoBtn = document.createElement("button");
-infoBtn.type = "button";
-infoBtn.className = "dock-info-btn";
-infoBtn.textContent = "詳細";
-infoBtn.addEventListener("click", e => {
-e.stopPropagation();
-focusedCardId = card.id;
-openDetail(card, 0);
-});
-el.appendChild(infoBtn);
-let startX = 0, startY = 0, timer = null, didLong = false;
-el.addEventListener("touchstart", e => {
-startX = e.touches[0].clientX;
-startY = e.touches[0].clientY;
-didLong = false;
-timer = setTimeout(() => {
-didLong = true;
-focusedCardId = card.id;
-openDetail(card, 0);
-}, LONG_PRESS_MS);
-}, { passive: true });
-el.addEventListener("touchmove", e => {
-const dx = Math.abs(e.touches[0].clientX - startX);
-const dy = Math.abs(e.touches[0].clientY - startY);
-if (dx > 12 || dy > 12) clearTimeout(timer);
-}, { passive: true });
-el.addEventListener("touchend", e => {
-clearTimeout(timer);
-if (didLong) return;
-const dx = Math.abs(e.changedTouches[0].clientX - startX);
-const dy = e.changedTouches[0].clientY - startY;
-if (dy < -24 && dx < 30) {
-e.preventDefault();
-addToDeck(card.id);
-}
-});
-el.addEventListener("click", () => {
-if (!didLong) addToDeck(card.id);
-});
-scroll.appendChild(el);
-});
-}
-function renderMeta() {
-const total = zoneTotal(zone);
-const target = TARGET_COUNTS[zone];
-document.getElementById("zoneLabel").textContent = zone === "main" ? "MAIN" : "SUB";
-document.getElementById("zoneCount").textContent = total;
-document.getElementById("zoneTarget").textContent = target;
-document.getElementById("counterReadout").classList.toggle("over", total > target);
-const filtered = state.rarity !== "ALL" || state.color !== "ALL" || state.type !== "ALL" || state.img !== "ALL";
-document.getElementById("btnOpenFilter").classList.toggle("active-filter", filtered);
-}
-function render() {
-renderMeta();
-renderDeck();
-renderUtilityPanel();
-renderDock();
-}
-function buildFilterOptions() {
-const rarities = ["ALL", ...new Set(cards.map(c => detectRarity(c)).filter(Boolean))];
-const colors = ["ALL", ...new Set(cards.map(c => c.color || "無").filter(Boolean))];
-const types = ["ALL", ...new Set(cards.map(c => c.type || "その他").filter(Boolean))];
-const rBox = document.getElementById("rarityChipList");
-rBox.innerHTML = "";
-rarities.forEach(rar => {
-const b = document.createElement("button");
-b.className = "chip" + (state.rarity === rar ? " selected" : "");
-b.textContent = rar === "ALL" ? "すべて" : rar;
-b.onclick = () => { state.rarity = rar; buildFilterOptions(); render(); };
-rBox.appendChild(b);
-});
-const cBox = document.getElementById("colorChipList");
-cBox.innerHTML = "";
-colors.forEach(col => {
-const b = document.createElement("button");
-b.className = "chip" + (state.color === col ? " selected" : "");
-b.textContent = col === "ALL" ? "すべて" : col;
-b.onclick = () => { state.color = col; buildFilterOptions(); render(); };
-cBox.appendChild(b);
-});
-const tBox = document.getElementById("typeChipList");
-tBox.innerHTML = "";
-types.forEach(tp => {
-const b = document.createElement("button");
-b.className = "chip" + (state.type === tp ? " selected" : "");
-b.textContent = tp === "ALL" ? "すべて" : tp;
-b.onclick = () => { state.type = tp; buildFilterOptions(); render(); };
-tBox.appendChild(b);
-});
-document.querySelectorAll("#imgChipList .chip").forEach(chip => {
-chip.classList.toggle("selected", chip.dataset.img === state.img);
-});
-}
-function openDetail(card, initialCopyIdx = 0) {
-const map = new Map(cards.map(c => [c.id, c]));
-const variants = getCardVariants(card);
-const inZone = Number(deckData[zone]?.[card.id] || 0);
-const copyIds = getDeckCopyIds(zone, card.id);
-detailCopyIndex = Math.max(0, Math.min(initialCopyIdx, Math.max(0, inZone - 1)));
-const activeVariantId = inZone > 0 ? (copyIds[detailCopyIndex] || card.id) : card.id;
-const activeCard = map.get(activeVariantId) || card;
-document.getElementById("detailTitle").textContent = ⁠${activeCard.name || card.name || ""} [${displayCardNumber(activeCard)}]⁠;
-let copySelectorHtml = "";
-if (inZone > 0) {
-copySelectorHtml = ⁠<div style="font-size:12px;font-weight:800;margin-bottom:5px;">デッキ内の枚数ごとにレアリティを選択</div> <div class="copy-tabs-row"> ${copyIds.map((vid, idx) => { const vCard = map.get(vid) || card; const vRarity = detectRarity(vCard); return⁠<button type="button" class="copy-tab ￼{idx}">{idx + 1}枚目 ({vRarity})</button>⁠; }).join("")} </div> ⁠;
-}
-const variantStripHtml = ⁠<div style="font-size:12px;font-weight:800;margin-bottom:4px;">表示レアリティ / イラスト候補（${variants.length}種）</div> <div class="variant-strip"> ${variants.map((v, vIdx) => { const isSelected = v.id === activeCard.id; const rLabel = detectRarity(v); return⁠
-<button type="button" class="variant-thumb ￼{v.id}">
-{v.imageUrl
-￼
-￼
-}
-￼{rLabel}${variants.length > 1 ? ⁠ #${vIdx + 1}⁠ : ""}</span>
-</button>
-⁠; }).join("")} </div> ⁠;
-document.getElementById("detailBody").innerHTML = ⁠${activeCard.imageUrl ?⁠<img class="preview-img" src="￼{activeCard.name || ""}">⁠: ""} ${copySelectorHtml} ${variantStripHtml} <div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px;"> レア: ${detectRarity(activeCard)} / 色: ${activeCard.color || "-"} / 種類: ${activeCard.type || "-"} / コスト: ${activeCard.cost ?? "-"} </div> <p style="font-size:13px;line-height:1.6;margin:0 0 12px;">${activeCard.text || ""}</p> <button class="sheet-btn" id="detailAdd">1枚追加（合計 ${cardTotal(card.id)} / ${MAX_PER_CARD}）</button> ${inZone > 0 ?⁠<button class="sheet-btn secondary" id="detailRemove">現在の枠から1枚減らす（${inZone}枚中）</button>⁠: ""}⁠;
-document.querySelectorAll("#detailBody [data-copy-idx]").forEach(btn => {
-btn.onclick = () => {
-openDetail(card, Number(btn.dataset.copyIdx));
-};
-});
-document.querySelectorAll("#detailBody [data-variant-id]").forEach(btn => {
-btn.onclick = () => {
-const chosenId = btn.dataset.variantId;
-if (inZone > 0) {
-setDeckCopyVariant(zone, card.id, detailCopyIndex, chosenId);
-openDetail(card, detailCopyIndex);
-} else {
-const picked = map.get(chosenId) || card;
-openDetail(picked, 0);
-}
-};
-});
-document.getElementById("detailAdd").onclick = () => {
-addToDeck(card.id, activeCard.id);
-const updatedQty = Number(deckData[zone]?.[card.id] || 0);
-openDetail(card, Math.max(0, updatedQty - 1));
-};
-const remBtn = document.getElementById("detailRemove");
-if (remBtn) {
-remBtn.onclick = () => {
-removeFromDeck(card.id);
-const nextQty = Number(deckData[zone]?.[card.id] || 0);
-openDetail(card, Math.max(0, Math.min(detailCopyIndex, nextQty - 1)));
-};
-}
-document.getElementById("detailOverlay").classList.add("open");
-}
-function openStats() {
-const map = new Map(cards.map(c => [c.id, c]));
-const costMap = {};
-const colorMap = {};
-const total = zoneTotal(zone);
-Object.entries(deckData[zone] || {}).forEach(([id, n]) => {
-const c = map.get(id) || {};
-const kCost = c.cost ?? "?";
-const kCol = c.color || "無";
-costMap[kCost] = (costMap[kCost] || 0) + Number(n || 0);
-colorMap[kCol] = (colorMap[kCol] || 0) + Number(n || 0);
-});
-const maxCostCount = Math.max(1, ...Object.values(costMap));
-const costBars = Object.keys(costMap).sort((a, b) => Number(a) - Number(b)).map(k => {
-const pct = Math.round((costMap[k] / maxCostCount) * 100);
-return ⁠<div class="bar-row"> <span style="width:52px;">コスト ${k}</span> <div class="bar-track"><div class="bar-fill" style="width:${pct}%"></div></div> <span style="width:38px;text-align:right;">${costMap[k]}枚</span> </div>⁠;
-}).join("") || "<div style='color:var(--text-secondary);'>カードがありません</div>";
-const colorHtml = Object.entries(colorMap).map(([k, v]) => ⁠${k}: ${v}枚⁠).join(" / ") || "なし";
-document.getElementById("statsContent").innerHTML = ⁠<div style="margin-bottom:6px;"><strong>合計:</strong> ${total} / ${TARGET_COUNTS[zone]}枚</div> <div style="margin-bottom:10px;"><strong>色内訳:</strong> ${colorHtml}</div> <div style="font-weight:700;margin-bottom:6px;">コスト分布</div> ${costBars}⁠;
-document.getElementById("statsOverlay").classList.add("open");
-}
-function getSlots() {
-try { return JSON.parse(localStorage.getItem(SLOTS_KEY) || "[]"); } catch (e) { return []; }
-}
-function setSlots(list) {
-try { localStorage.setItem(SLOTS_KEY, JSON.stringify(list)); } catch (e) {}
-}
-function renderSavedSlots() {
-const box = document.getElementById("savedSlotList");
-const list = getSlots();
-if (!list.length) {
-box.innerHTML = ⁠<div style="font-size:12px;color:var(--text-secondary);text-align:center;padding:16px 0;">保存済みデッキはまだありません</div>⁠;
-return;
-}
-box.innerHTML = "";
-list.forEach((slot, idx) => {
-const mCount = Object.values(slot.deck?.main || {}).reduce((a, b) => a + Number(b || 0), 0);
-const row = document.createElement("div");
-row.className = "saved-slot-item";
-row.innerHTML = ⁠<div style="min-width:0;"> <div style="font-size:13px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${slot.name}</div> <div style="font-size:11px;color:var(--text-secondary);">メイン ${mCount}枚 / ${slot.updatedAt || ""}</div> </div> <div style="display:flex;gap:5px;flex-shrink:0;"> <button class="pill-btn primary" data-load="${idx}">読込</button> <button class="pill-btn danger" data-del="${idx}">削除</button> </div>⁠;
-box.appendChild(row);
-});
-box.querySelectorAll("[data-load]").forEach(btn => {
-btn.onclick = () => {
-const target = getSlots()[Number(btn.dataset.load)];
-if (!target) return;
-deckData = JSON.parse(JSON.stringify(target.deck));
-if (!deckData.variants) deckData.variants = { main: {}, sub: {} };
-persist();
-render();
-document.getElementById("decksOverlay").classList.remove("open");
-toast(⁠「${target.name}」を読み込みました⁠);
-};
-});
-box.querySelectorAll("[data-del]").forEach(btn => {
-btn.onclick = () => {
-const list = getSlots();
-list.splice(Number(btn.dataset.del), 1);
-setSlots(list);
-renderSavedSlots();
-toast("削除しました");
-};
-});
-}
-function openShare() {
-const map = new Map(cards.map(c => [c.id, c]));
-const title = document.getElementById("exportTitleInput").value.trim() || "HOROBEAT DECK";
-const out = [⁠【${title}】⁠];
-["main", "sub"].forEach(z => {
-const entries = Object.entries(deckData[z] || {}).filter(([, n]) => Number(n) > 0);
-if (entries.length) {
-out.push(z === "main" ? ⁠\n■ メイン (${zoneTotal("main")}枚)⁠ : ⁠\n■ サブ (${zoneTotal("sub")}枚)⁠);
-entries.forEach(([id, n]) => {
-const c = map.get(id) || { id, name: id };
-const copyIds = getDeckCopyIds(z, id);
-const rarities = copyIds.map(vid => detectRarity(map.get(vid) || c));
-const uniqueRarities = [...new Set(rarities)].filter(r => r && r !== "その他");
-const rSuffix = uniqueRarities.length ? ⁠ [${uniqueRarities.join("/")}]⁠ : "";
-out.push(⁠${n} × ${c.name} (${displayCardNumber(c)})${rSuffix}⁠);
-});
-}
-});
-document.getElementById("recipeText").value = out.join("\n");
-document.getElementById("generatedImgWrap").innerHTML = "";
-document.getElementById("shareOverlay").classList.add("open");
-}
-function importFromRecipeText(text) {
-const newDeck = { main: {}, sub: {}, variants: { main: {}, sub: {} } };
-let currentTarget = "main";
-const byId = new Map();
-cards.forEach(c => {
-if (c.id) byId.set(String(c.id).toUpperCase(), c.id);
-if (c.cardNumber && !byId.has(String(c.cardNumber).toUpperCase())) {
-byId.set(String(c.cardNumber).toUpperCase(), c.id);
-}
-});
-const byName = new Map(cards.map(c => [String(c.name).trim(), c.id]));
-let importedCount = 0;
-text.split(/\r?\n/).forEach(rawLine => {
-const line = rawLine.trim();
-if (!line) return;
-if (line.includes("サブ")) { currentTarget = "sub"; return; }
-if (line.includes("メイン")) { currentTarget = "main"; return; }
-const m = line.match(/^(\d+)\s*[x×]\s*(.+?)(?:\s*[(（[])）])?￼
-￼
-￼
-const namePart = m[2].replace(/\s*\[[^\]]+\]\s*/, "").trim();
-const idPart = (m[3] || "").trim().toUpperCase();
-const resolvedId = (idPart && byId.get(idPart)) || byName.get(namePart);
-if (resolvedId) {
-newDeck[currentTarget][resolvedId] = qty;
-newDeck.variants[currentTarget][resolvedId] = Array.from({ length: qty }, () => resolvedId);
-importedCount += qty;
-}
-});
-if (importedCount === 0) {
-toast("読み込めるカード行が見つかりませんでした");
-return;
-}
-deckData = newDeck;
-persist();
-render();
-document.getElementById("shareOverlay").classList.remove("open");
-toast(⁠合計 ${importedCount}枚 を読み込みました⁠);
-}
-function loadCardImageSafe(url, timeoutMs = 2500) {
-return new Promise(resolve => {
-if (!url) return resolve(null);
-let settled = false;
-const done = val => {
-if (!settled) {
-settled = true;
-resolve(val);
-}
-};
-const timer = setTimeout(() => done(null), timeoutMs);
-const img = new Image();
-img.crossOrigin = "anonymous";
-img.onload = async () => {
-try {
-if (typeof img.decode === "function") await img.decode();
-} catch (_) {}
-clearTimeout(timer);
-done((img.naturalWidth || img.width) > 0 ? img : null);
-};
-img.onerror = () => {
-clearTimeout(timer);
-done(null);
-};
-img.src = url;
-});
-}
-function drawCardPlaceholder(ctx, card, x, y, w, h) {
-ctx.save();
-ctx.fillStyle = "#f4f5f7";
-ctx.fillRect(x, y, w, h);
-ctx.strokeStyle = "rgba(17, 19, 24, 0.25)";
-ctx.lineWidth = 1;
-ctx.strokeRect(x + 0.5, y + 0.5, w - 1, h - 1);
-ctx.fillStyle = "#4b5563";
-ctx.font = "bold 10px sans-serif";
-ctx.fillText(String((card && displayCardNumber(card)) || "").slice(0, 14), x + 6, y + 18);
-ctx.fillStyle = "#111318";
-ctx.font = "bold 12px sans-serif";
-const name = String((card && card.name) || "");
-ctx.fillText(name.slice(0, 8), x + 6, y + Math.round(h * 0.52));
-if (name.length > 8) {
-ctx.fillText(name.slice(8, 16), x + 6, y + Math.round(h * 0.52) + 18);
-}
-ctx.restore();
-}
-async function generateDeckImage() {
-const btn = document.getElementById("btnRenderImage");
-const wrap = document.getElementById("generatedImgWrap");
-if (!btn || !wrap) return;
-btn.disabled = true;
-const prevLabel = btn.textContent;
-btn.textContent = "画像を生成中...";
-try {
-const expandedEntries = getExpandedZoneCards("main");
-const expanded = expandedEntries.map(e => e.displayCard);
-const cols = 10;
-const minRows = 5;
-const rows = Math.max(minRows, Math.ceil(expanded.length / cols));
-const cardW = 128;
-const cardH = Math.round(cardW * (88 / 63));
-const gap = 8;
-const pad = 22;
-const headerH = 64;
-const canvas = document.createElement("canvas");
-canvas.width = pad * 2 + cols * cardW + (cols - 1) * gap;
-canvas.height = headerH + pad + rows * cardH + (rows - 1) * gap + pad;
-const ctx = canvas.getContext("2d");
-if (!ctx) throw new Error("Canvas context unavailable");
-ctx.fillStyle = "#ffffff";
-ctx.fillRect(0, 0, canvas.width, canvas.height);
-const titleInput = document.getElementById("exportTitleInput");
-const title = (titleInput && titleInput.value.trim()) || "HOROBEAT DECK";
-ctx.fillStyle = "#000000";
-ctx.font = "bold 24px sans-serif";
-ctx.fillText(title, pad, 41);
-ctx.fillStyle = "#4b5563";
-ctx.font = "bold 16px sans-serif";
-ctx.textAlign = "right";
-ctx.fillText(⁠MAIN ${zoneTotal("main")} / 50枚（10×5）⁠, canvas.width - pad, 41);
-ctx.textAlign = "left";
-const loadedImgs = await Promise.all(
-expanded.map(card => loadCardImageSafe(card && card.imageUrl, 2500))
-);
-let usedFallback = false;
-for (let idx = 0; idx < cols * rows; idx++) {
-const r = Math.floor(idx / cols);
-const c = idx % cols;
-const x = pad + c * (cardW + gap);
-const y = headerH + r * (cardH + gap);
-const card = expanded[idx];
-if (!card) {
-drawCardPlaceholder(ctx, { name: "", id: "" }, x, y, cardW, cardH);
-continue;
-}
-const img = loadedImgs[idx];
-let drewPhoto = false;
-if (img) {
-try {
-ctx.drawImage(img, x, y, cardW, cardH);
-drewPhoto = true;
-} catch (_) {
-drewPhoto = false;
-}
-}
-if (!drewPhoto) {
-usedFallback = true;
-drawCardPlaceholder(ctx, card, x, y, cardW, cardH);
-}
-}
-let dataUrl = "";
-try {
-dataUrl = canvas.toDataURL("image/png");
-} catch (_) {
-usedFallback = true;
-ctx.fillStyle = "#ffffff";
-ctx.fillRect(0, headerH + pad, canvas.width, canvas.height - headerH - pad);
-for (let idx = 0; idx < cols * rows; idx++) {
-const r = Math.floor(idx / cols);
-const c = idx % cols;
-const x = pad + c * (cardW + gap);
-const y = headerH + r * (cardH + gap);
-drawCardPlaceholder(ctx, expanded[idx] || { name: "", id: "" }, x, y, cardW, cardH);
-}
-dataUrl = canvas.toDataURL("image/png");
-}
-const safeFileBase = (title.replace(/[^\w-一-龠ぁ-んァ-ヶ]/g, "_") || "deck").slice(0, 40);
-const noteText = usedFallback
-? "外部画像が読み込めなかった枠はカード枠で生成しました（長押し、またはボタンから保存）"
-: "画像を生成しました（長押し、またはボタンから保存）";
-wrap.innerHTML = ⁠<p style="font-size:12px;color:var(--text-secondary);margin:8px 0 4px;font-weight:700;">${noteText}</p> <img class="generated-img" src="${dataUrl}" alt="デッキレシピ画像" /> <a class="sheet-btn" href="${dataUrl}" download="${safeFileBase}_10x5.png" style="display:block;text-align:center;text-decoration:none;">PNG画像をダウンロード</a>⁠;
-wrap.scrollIntoView({ behavior: "smooth", block: "nearest" });
-toast("デッキ画像を生成しました");
-} catch (err) {
-const reason = (err && err.message) ? err.message : String(err);
-console.error("generateDeckImage error:", err);
-toast(⁠エラー: ${reason}⁠);
-} finally {
-btn.disabled = false;
-btn.textContent = prevLabel || "デッキ画像を生成（10×5 / PNG保存用）";
-}
-}
-function bind() {
-document.querySelectorAll(".seg-tab").forEach(btn => {
-btn.onclick = () => {
-document.querySelectorAll(".seg-tab").forEach(b => b.classList.remove("active"));
-btn.classList.add("active");
-zone = btn.dataset.zone;
-render();
-};
-});
-const clearOverlay = document.getElementById("clearOverlay");
-function closeClearDialog() {
-clearOverlay.classList.remove("open");
-}
-document.getElementById("btnClear").onclick = () => {
-clearOverlay.classList.add("open");
-};
-document.getElementById("btnCancelClearX").onclick = closeClearDialog;
-document.getElementById("btnCancelClear").onclick = closeClearDialog;
-clearOverlay.addEventListener("click", e => {
-if (e.target === clearOverlay) closeClearDialog();
-});
-document.getElementById("btnConfirmClear").onclick = () => {
-deckData[zone] = {};
-if (deckData.variants) deckData.variants[zone] = {};
-persist();
-render();
-closeClearDialog();
-};
-document.getElementById("btnFocusMinus").onclick = () => {
-if (focusedCardId) removeFromDeck(focusedCardId);
-};
-document.getElementById("btnFocusPlus").onclick = () => {
-if (focusedCardId) addToDeck(focusedCardId);
-};
-document.getElementById("btnFocusDetail").onclick = () => {
-if (!focusedCardId) return;
-const c = cards.find(item => item.id === focusedCardId);
-if (c) openDetail(c, 0);
-};
-document.getElementById("btnAbout").onclick = () => document.getElementById("aboutOverlay").classList.add("open");
-document.getElementById("btnStats").onclick = openStats;
-document.getElementById("btnShare").onclick = openShare;
-document.getElementById("btnDecks").onclick = () => {
-renderSavedSlots();
-document.getElementById("decksOverlay").classList.add("open");
-};
-document.getElementById("btnSaveSlot").onclick = () => {
-const name = document.getElementById("deckNameInput").value.trim() || ⁠デッキ ${getSlots().length + 1}⁠;
-const list = getSlots();
-const now = new Date();
-const stamp = ⁠${now.getMonth() + 1}/${now.getDate()} ${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}⁠;
-list.unshift({ name, updatedAt: stamp, deck: JSON.parse(JSON.stringify(deckData)) });
-setSlots(list.slice(0, 20));
-document.getElementById("deckNameInput").value = "";
-renderSavedSlots();
-toast("デッキを保存しました");
-};
-document.getElementById("searchInput").addEventListener("input", e => {
-state.q = e.target.value;
-renderDock();
-});
-document.getElementById("btnClearSearch").onclick = () => {
-state.q = "";
-document.getElementById("searchInput").value = "";
-renderDock();
-};
-document.getElementById("btnOpenFilter").onclick = () => {
-buildFilterOptions();
-document.getElementById("filterOverlay").classList.add("open");
-};
-document.querySelectorAll("#imgChipList .chip").forEach(chip => {
-chip.onclick = () => {
-state.img = chip.dataset.img;
-buildFilterOptions();
-render();
-};
-});
-document.getElementById("btnResetFilters").onclick = () => {
-state.rarity = "ALL";
-state.color = "ALL";
-state.type = "ALL";
-state.img = "ALL";
-buildFilterOptions();
-render();
-};
-document.getElementById("btnOpenSort").onclick = () => {
-document.getElementById("sortOverlay").classList.add("open");
-};
-document.querySelectorAll("#sortChipList .chip").forEach(chip => {
-chip.onclick = () => {
-document.querySelectorAll("#sortChipList .chip").forEach(c => c.classList.remove("selected"));
-chip.classList.add("selected");
-state.sort = chip.dataset.sort;
-renderDock();
-document.getElementById("sortOverlay").classList.remove("open");
-};
-});
-document.getElementById("btnRenderImage").onclick = generateDeckImage;
-document.getElementById("btnCopyText").onclick = async () => {
-await navigator.clipboard.writeText(document.getElementById("recipeText").value);
-toast("レシピをコピーしました");
-};
-document.getElementById("btnCopyLink").onclick = async () => {
-const b64 = btoa(unescape(encodeURIComponent(JSON.stringify(deckData))));
-const link = ⁠${location.origin}${location.pathname}?deck=${encodeURIComponent(b64)}⁠;
-await navigator.clipboard.writeText(link);
-toast("共有URLをコピーしました");
-};
-document.getElementById("btnImportText").onclick = () => {
-importFromRecipeText(document.getElementById("recipeText").value);
-};
-document.querySelectorAll("[data-close]").forEach(btn => {
-btn.onclick = () => document.getElementById(btn.dataset.close).classList.remove("open");
-});
-document.querySelectorAll(".overlay").forEach(ov => {
-ov.addEventListener("click", e => { if (e.target === ov) ov.classList.remove("open"); });
-});
-}
-async function boot() {
-bind();
-restore();
-try {
-const r = await fetch("./data/cards.json", { cache: "no-store" });
-const j = await r.json();
-cards = Array.isArray(j) ? j : (j.cards || []);
-} catch (e) {
-cards = [];
-toast("カードデータの読み込みに失敗しました");
-}
-render();
-}
-boot();
-</script>
+  <div class="modal-backdrop" id="detailModal" aria-hidden="true">
+    <div class="modal-box">
+      <div class="modal-head">
+        <h2 class="modal-title" id="detailTitle">カード詳細</h2>
+        <button type="button" id="closeDetailModal">閉じる</button>
+      </div>
+      <div class="detail-preview">
+        <img id="detailPreviewImg" alt="" />
+      </div>
+      <div id="detailMeta" style="font-size:0.8rem;color:var(--muted);margin-bottom:12px;"></div>
+
+      <div id="copySelectorWrap" style="display:none;">
+        <div style="font-size:0.8rem;font-weight:700;margin-bottom:6px;">デッキ内の各枚数ごとのレアリティ選択</div>
+        <div class="copy-tabs" id="copyTabs"></div>
+      </div>
+
+      <div style="font-size:0.8rem;font-weight:700;margin-bottom:6px;">レアリティ / イラスト候補</div>
+      <div class="variant-strip" id="variantStrip"></div>
+
+      <div class="modal-footer">
+        <button type="button" id="btnRemoveOneCopy" class="danger">1枚減らす</button>
+        <button type="button" id="btnAddOneCopy" class="primary">1枚追加</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="clearModal" aria-hidden="true">
+    <div class="modal-box" style="max-width:380px;">
+      <div class="modal-head">
+        <h2 class="modal-title">デッキをクリアしますか？</h2>
+      </div>
+      <p style="margin:0 0 14px;font-size:0.86rem;color:var(--muted);">現在のデッキ内のカードがすべて外れます。</p>
+      <div class="modal-footer">
+        <button type="button" id="btnCancelClear">キャンセル</button>
+        <button type="button" id="btnConfirmClear" class="danger">クリアする</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="exportModal" aria-hidden="true">
+    <div class="modal-box">
+      <div class="modal-head">
+        <h2 class="modal-title">デッキ出力・画像生成</h2>
+        <button type="button" id="closeExportModal">閉じる</button>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+        <button type="button" id="btnGenerateDeckImage" class="primary">デッキ画像を生成 (PNG)</button>
+        <button type="button" id="btnCopyDeckText">テキストをコピー</button>
+      </div>
+      <textarea id="deckTextOutput" rows="8" readonly style="width:100%;background:var(--surface-2);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:8px;font-size:0.8rem;"></textarea>
+      <div id="generatedImageWrap" style="margin-top:12px;"></div>
+    </div>
+  </div>
+
+  <div class="toast-msg" id="toastMsg"></div>
+
+  <script>
+    const MAX_DECK_SIZE = 50;
+    const STORAGE_KEY = "horobeat_studio_deck_v1";
+
+    let allCards = [];
+    let variantGroups = new Map();
+    let deckSlots = [];
+    let activeDetailKey = null;
+    let activeCopyIndex = 0;
+
+    const toastEl = document.getElementById("toastMsg");
+    function showToast(msg) {
+      toastEl.textContent = msg;
+      toastEl.classList.add("show");
+      clearTimeout(showToast._t);
+      showToast._t = setTimeout(() => toastEl.classList.remove("show"), 2200);
+    }
+
+    function normalizeCardsPayload(raw) {
+      if (Array.isArray(raw)) return raw;
+      if (raw && typeof raw === "object") {
+        if (Array.isArray(raw.cards)) return raw.cards;
+        if (Array.isArray(raw.items)) return raw.items;
+        if (Array.isArray(raw.data)) return raw.data;
+        const values = Object.values(raw);
+        if (values.length > 0 && values.every((v) => v && typeof v === "object" && !Array.isArray(v))) {
+          return values;
+        }
+      }
+      return [];
+    }
+
+    async function fetchCardsWithFallback() {
+      const candidateUrls = [
+        "./data/cards.json",
+        "data/cards.json",
+        "../data/cards.json",
+        "./cards.json",
+      ];
+      let lastError = null;
+      for (const url of candidateUrls) {
+        try {
+          const res = await fetch(url, { cache: "no-store" });
+          if (!res.ok) {
+            lastError = new Error(`${url} -> HTTP ${res.status}`);
+            continue;
+          }
+          const json = await res.json();
+          const list = normalizeCardsPayload(json);
+          if (list.length > 0) {
+            return { cards: list, sourceUrl: url, error: null };
+          }
+          lastError = new Error(`${url} -> 0件`);
+        } catch (err) {
+          lastError = new Error(`${url} -> ${String(err && err.message || err)}`);
+        }
+      }
+      return {
+        cards: [],
+        sourceUrl: null,
+        error: lastError ? lastError.message : "カードデータを読み込めませんでした",
+      };
+    }
+
+    function getBaseCardKey(card) {
+      const no = String(card.cardNumber || card.card_no || card.number || "").trim();
+      if (no) return `NO:${no.toUpperCase()}`;
+      const id = String(card.id || card.cardId || "").trim();
+      const stripped = id.replace(/(_[A-Z0-9]+)?(__\d+)?$/i, "");
+      if (stripped) return `ID:${stripped.toUpperCase()}`;
+      return `NAME:${String(card.name || card.title || "").trim()}`;
+    }
+
+    function getVariantKey(card) {
+      const id = String(card.id || card.cardId || "").trim();
+      const rarity = String(card.rarity || "").trim();
+      const img = String(card.imageUrl || card.image || card.img || card.src || "").trim();
+      return id || `${getBaseCardKey(card)}::${rarity}::${img}`;
+    }
+
+    function buildVariantGroups(cards) {
+      const groups = new Map();
+      for (const c of cards) {
+        if (!c || typeof c !== "object") continue;
+        const baseKey = getBaseCardKey(c);
+        const vKey = getVariantKey(c);
+        const imageUrl = String(c.imageUrl || c.image || c.img || c.src || "").trim();
+        const entry = {
+          variantKey: vKey,
+          baseKey,
+          cardId: String(c.id || c.cardId || ""),
+          cardNumber: String(c.cardNumber || c.card_no || c.number || c.id || ""),
+          name: String(c.name || c.title || "名称未設定"),
+          rarity: String(c.rarity || "STD"),
+          imageUrl,
+          raw: c,
+        };
+        if (!groups.has(baseKey)) {
+          groups.set(baseKey, []);
+        }
+        const list = groups.get(baseKey);
+        if (!list.some((item) => item.variantKey === vKey)) {
+          list.push(entry);
+        }
+      }
+      return groups;
+    }
+
+    function findEntryByVariantKey(variantKey) {
+      for (const list of variantGroups.values()) {
+        const hit = list.find((item) => item.variantKey === variantKey);
+        if (hit) return hit;
+      }
+      return null;
+    }
+
+    function saveDeckToStorage() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(deckSlots.map((s) => s.variantKey)));
+      } catch (_) {}
+    }
+
+    function loadDeckFromStorage() {
+      try {
+        const raw = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+        if (!Array.isArray(raw)) return;
+        deckSlots = raw
+          .slice(0, MAX_DECK_SIZE)
+          .map((vk) => findEntryByVariantKey(vk))
+          .filter(Boolean)
+          .map((e) => ({ ...e }));
+      } catch (_) {
+        deckSlots = [];
+      }
+    }
+
+    function addCardToDeck(entry) {
+      if (!entry) return;
+      if (deckSlots.length >= MAX_DECK_SIZE) {
+        showToast(`デッキ上限（${MAX_DECK_SIZE}枚）です`);
+        return;
+      }
+      deckSlots.push({ ...entry });
+      saveDeckToStorage();
+      renderDeck();
+      showToast(`${entry.name}（${entry.rarity}）を追加しました`);
+    }
+
+    function removeDeckSlotAt(index) {
+      if (index < 0 || index >= deckSlots.length) return;
+      const removed = deckSlots.splice(index, 1)[0];
+      saveDeckToStorage();
+      renderDeck();
+      if (removed) {
+        showToast(`${removed.name} を1枚外しました`);
+      }
+    }
+
+    function renderDeck() {
+      const grid = document.getElementById("deckGrid");
+      document.getElementById("deckCountLabel").textContent = `DECK ${deckSlots.length} / ${MAX_DECK_SIZE}`;
+      grid.innerHTML = "";
+
+      for (let i = 0; i < MAX_DECK_SIZE; i++) {
+        const slotEl = document.createElement("div");
+        slotEl.className = "deck-slot";
+
+        const item = deckSlots[i];
+        if (item) {
+          slotEl.classList.add("filled");
+
+          const img = document.createElement("img");
+          img.src = item.imageUrl || "";
+          img.alt = item.name;
+          img.loading = "lazy";
+          slotEl.appendChild(img);
+
+          const badge = document.createElement("span");
+          badge.className = "rarity-badge";
+          badge.textContent = item.rarity || "STD";
+          slotEl.appendChild(badge);
+
+          let startY = null;
+          let swipedDown = false;
+
+          slotEl.addEventListener("pointerdown", (e) => {
+            startY = e.clientY;
+            swipedDown = false;
+          });
+
+          slotEl.addEventListener("pointermove", (e) => {
+            if (startY === null) return;
+            if (e.clientY - startY > 36) {
+              swipedDown = true;
+            }
+          });
+
+          slotEl.addEventListener("pointerup", () => {
+            if (swipedDown) {
+              removeDeckSlotAt(i);
+            } else if (startY !== null) {
+              openDetailModal(item.baseKey, item.variantKey);
+            }
+            startY = null;
+            swipedDown = false;
+          });
+        }
+
+        grid.appendChild(slotEl);
+      }
+    }
+
+    function renderCatalog(loadErrorMsg = "") {
+      const q = document.getElementById("searchInput").value.trim().toLowerCase();
+      const grid = document.getElementById("catalogGrid");
+      grid.innerHTML = "";
+
+      const entries = [];
+      for (const list of variantGroups.values()) {
+        const primary = list[0];
+        if (!primary) continue;
+        const allRarities = list.map((x) => x.rarity).join(" ");
+        const hay = `${primary.name} ${primary.cardNumber} ${primary.cardId} ${allRarities}`.toLowerCase();
+        if (!q || hay.includes(q)) {
+          entries.push({ primary, variants: list });
+        }
+      }
+
+      document.getElementById("catalogCountLabel").textContent = `${entries.length}種（全${allCards.length}件）`;
+
+      if (entries.length === 0) {
+        const notice = document.createElement("div");
+        notice.style.gridColumn = "1 / -1";
+        notice.style.padding = "16px";
+        notice.style.borderRadius = "8px";
+        notice.style.background = "var(--surface-2)";
+        notice.style.fontSize = "0.82rem";
+        notice.style.color = "var(--muted)";
+        notice.textContent = loadErrorMsg
+          ? `カードデータを読み込めませんでした（${loadErrorMsg}）。./data/cards.json の配置とJSON形式を確認してください。`
+          : "該当するカードがありません。";
+        grid.appendChild(notice);
+        return;
+      }
+
+      for (const { primary, variants } of entries) {
+        const cardEl = document.createElement("div");
+        cardEl.className = "catalog-card";
+
+        const img = document.createElement("img");
+        img.src = primary.imageUrl || "";
+        img.alt = primary.name;
+        img.loading = "lazy";
+
+        const meta = document.createElement("div");
+        meta.className = "catalog-meta";
+
+        const nameEl = document.createElement("div");
+        nameEl.className = "catalog-name";
+        nameEl.textContent = primary.name;
+
+        const subEl = document.createElement("div");
+        subEl.className = "catalog-sub";
+        subEl.textContent = variants.length > 1
+          ? `${primary.cardNumber || ""} · ${variants.length}種`
+          : `${primary.cardNumber || ""} · ${primary.rarity}`;
+
+        meta.appendChild(nameEl);
+        meta.appendChild(subEl);
+        cardEl.appendChild(img);
+        cardEl.appendChild(meta);
+
+        cardEl.addEventListener("click", () => {
+          openDetailModal(primary.baseKey, primary.variantKey);
+        });
+
+        grid.appendChild(cardEl);
+      }
+    }
+
+    function getDeckSlotIndicesForBaseKey(baseKey) {
+      const indices = [];
+      deckSlots.forEach((slot, idx) => {
+        if (slot.baseKey === baseKey) indices.push(idx);
+      });
+      return indices;
+    }
+
+    function openDetailModal(baseKey, preferredVariantKey = null) {
+      activeDetailKey = baseKey;
+      const variants = variantGroups.get(baseKey) || [];
+      if (!variants.length) return;
+
+      const matchingDeckIndices = getDeckSlotIndicesForBaseKey(baseKey);
+      if (matchingDeckIndices.length > 0) {
+        activeCopyIndex = Math.min(activeCopyIndex, matchingDeckIndices.length - 1);
+        if (activeCopyIndex < 0) activeCopyIndex = 0;
+      } else {
+        activeCopyIndex = 0;
+      }
+
+      const currentSlot = matchingDeckIndices.length > 0
+        ? deckSlots[matchingDeckIndices[activeCopyIndex]]
+        : null;
+
+      const selectedVariant =
+        variants.find((v) => v.variantKey === (currentSlot ? currentSlot.variantKey : preferredVariantKey)) ||
+        variants[0];
+
+      document.getElementById("detailTitle").textContent = selectedVariant.name;
+      document.getElementById("detailPreviewImg").src = selectedVariant.imageUrl || "";
+      document.getElementById("detailMeta").textContent =
+        `型番: ${selectedVariant.cardNumber || "-"} / デッキ内枚数: ${matchingDeckIndices.length}枚`;
+
+      const copyWrap = document.getElementById("copySelectorWrap");
+      const copyTabs = document.getElementById("copyTabs");
+      copyTabs.innerHTML = "";
+
+      if (matchingDeckIndices.length > 0) {
+        copyWrap.style.display = "block";
+        matchingDeckIndices.forEach((slotIdx, i) => {
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = "copy-tab" + (i === activeCopyIndex ? " active" : "");
+          btn.textContent = `${i + 1}枚目 (${deckSlots[slotIdx].rarity})`;
+          btn.addEventListener("click", () => {
+            activeCopyIndex = i;
+            openDetailModal(baseKey, deckSlots[slotIdx].variantKey);
+          });
+          copyTabs.appendChild(btn);
+        });
+      } else {
+        copyWrap.style.display = "none";
+      }
+
+      const strip = document.getElementById("variantStrip");
+      strip.innerHTML = "";
+      variants.forEach((v) => {
+        const item = document.createElement("div");
+        item.className = "variant-item" + (v.variantKey === selectedVariant.variantKey ? " selected" : "");
+
+        const vImg = document.createElement("img");
+        vImg.src = v.imageUrl || "";
+        vImg.alt = v.rarity;
+
+        const vLabel = document.createElement("div");
+        vLabel.className = "variant-label";
+        vLabel.textContent = v.rarity || "STD";
+
+        item.appendChild(vImg);
+        item.appendChild(vLabel);
+
+        item.addEventListener("click", () => {
+          document.getElementById("detailPreviewImg").src = v.imageUrl || "";
+          if (matchingDeckIndices.length > 0) {
+            const targetSlotIdx = matchingDeckIndices[activeCopyIndex];
+            deckSlots[targetSlotIdx] = { ...v };
+            saveDeckToStorage();
+            renderDeck();
+            showToast(`${activeCopyIndex + 1}枚目を ${v.rarity} に変更しました`);
+          }
+          openDetailModal(baseKey, v.variantKey);
+        });
+
+        strip.appendChild(item);
+      });
+
+      document.getElementById("btnAddOneCopy").onclick = () => {
+        addCardToDeck(selectedVariant);
+        const updatedIndices = getDeckSlotIndicesForBaseKey(baseKey);
+        activeCopyIndex = Math.max(0, updatedIndices.length - 1);
+        openDetailModal(baseKey, selectedVariant.variantKey);
+      };
+
+      document.getElementById("btnRemoveOneCopy").onclick = () => {
+        const updatedIndices = getDeckSlotIndicesForBaseKey(baseKey);
+        if (!updatedIndices.length) return;
+        const targetIdx = updatedIndices[Math.min(activeCopyIndex, updatedIndices.length - 1)];
+        removeDeckSlotAt(targetIdx);
+        openDetailModal(baseKey, selectedVariant.variantKey);
+      };
+
+      const modal = document.getElementById("detailModal");
+      modal.classList.add("open");
+      modal.setAttribute("aria-hidden", "false");
+    }
+
+    function closeDetailModal() {
+      const modal = document.getElementById("detailModal");
+      modal.classList.remove("open");
+      modal.setAttribute("aria-hidden", "true");
+    }
+
+    document.getElementById("closeDetailModal").addEventListener("click", closeDetailModal);
+    document.getElementById("detailModal").addEventListener("click", (e) => {
+      if (e.target.id === "detailModal") closeDetailModal();
+    });
+
+    const clearModal = document.getElementById("clearModal");
+    document.getElementById("btnOpenClear").addEventListener("click", () => {
+      clearModal.classList.add("open");
+      clearModal.setAttribute("aria-hidden", "false");
+    });
+    document.getElementById("btnCancelClear").addEventListener("click", () => {
+      clearModal.classList.remove("open");
+      clearModal.setAttribute("aria-hidden", "true");
+    });
+    document.getElementById("btnConfirmClear").addEventListener("click", () => {
+      deckSlots = [];
+      saveDeckToStorage();
+      renderDeck();
+      clearModal.classList.remove("open");
+      clearModal.setAttribute("aria-hidden", "true");
+      showToast("デッキをクリアしました");
+    });
+    clearModal.addEventListener("click", (e) => {
+      if (e.target.id === "clearModal") {
+        clearModal.classList.remove("open");
+        clearModal.setAttribute("aria-hidden", "true");
+      }
+    });
+
+    const exportModal = document.getElementById("exportModal");
+    function buildDeckText() {
+      const map = new Map();
+      for (const slot of deckSlots) {
+        const key = `${slot.name}__${slot.rarity}`;
+        if (!map.has(key)) {
+          map.set(key, { name: slot.name, rarity: slot.rarity, cardNumber: slot.cardNumber, count: 0 });
+        }
+        map.get(key).count += 1;
+      }
+      const lines = [`【HOROBEAT DECK (${deckSlots.length}/${MAX_DECK_SIZE})】`];
+      for (const item of map.values()) {
+        lines.push(`${item.count} x ${item.name} [${item.rarity}] ${item.cardNumber ? `(${item.cardNumber})` : ""}`.trim());
+      }
+      return lines.join("\n");
+    }
+
+    document.getElementById("btnExportModal").addEventListener("click", () => {
+      document.getElementById("deckTextOutput").value = buildDeckText();
+      document.getElementById("generatedImageWrap").innerHTML = "";
+      exportModal.classList.add("open");
+      exportModal.setAttribute("aria-hidden", "false");
+    });
+
+    document.getElementById("closeExportModal").addEventListener("click", () => {
+      exportModal.classList.remove("open");
+      exportModal.setAttribute("aria-hidden", "true");
+    });
+
+    document.getElementById("btnCopyDeckText").addEventListener("click", async () => {
+      const txt = document.getElementById("deckTextOutput").value;
+      try {
+        await navigator.clipboard.writeText(txt);
+        showToast("デッキテキストをコピーしました");
+      } catch (_) {
+        showToast("コピーに失敗しました");
+      }
+    });
+
+    async function loadImageSafe(url) {
+      if (!url) return null;
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+        const timer = setTimeout(() => resolve(null), 6000);
+        img.onload = () => {
+          clearTimeout(timer);
+          resolve(img);
+        };
+        img.onerror = () => {
+          clearTimeout(timer);
+          resolve(null);
+        };
+        img.src = url;
+      });
+    }
+
+    document.getElementById("btnGenerateDeckImage").addEventListener("click", async () => {
+      if (!deckSlots.length) {
+        showToast("デッキにカードがありません");
+        return;
+      }
+      const wrap = document.getElementById("generatedImageWrap");
+      wrap.innerHTML = `<div style="font-size:0.82rem;color:var(--muted);">画像を生成中...</div>`;
+
+      try {
+        const cols = 10;
+        const rows = Math.max(1, Math.ceil(deckSlots.length / cols));
+        const cardW = 140;
+        const cardH = 196;
+        const gap = 10;
+        const pad = 20;
+        const headerH = 44;
+
+        const canvas = document.createElement("canvas");
+        canvas.width = pad * 2 + cols * cardW + (cols - 1) * gap;
+        canvas.height = pad * 2 + headerH + rows * cardH + (rows - 1) * gap;
+
+        const ctx = canvas.getContext("2d");
+        ctx.fillStyle = "#f4f4f6";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.fillStyle = "#111114";
+        ctx.font = "700 22px 'Playfair Display', Georgia, serif";
+        ctx.fillText(`HOROBEAT STUDIO  (${deckSlots.length}/${MAX_DECK_SIZE})`, pad, pad + 24);
+
+        const images = await Promise.all(deckSlots.map((slot) => loadImageSafe(slot.imageUrl)));
+
+        deckSlots.forEach((slot, idx) => {
+          const col = idx % cols;
+          const row = Math.floor(idx / cols);
+          const x = pad + col * (cardW + gap);
+          const y = pad + headerH + row * (cardH + gap);
+
+          ctx.fillStyle = "#e2e2e7";
+          ctx.fillRect(x, y, cardW, cardH);
+
+          const img = images[idx];
+          if (img) {
+            try {
+              ctx.drawImage(img, x, y, cardW, cardH);
+            } catch (_) {
+              ctx.fillStyle = "#52525b";
+              ctx.font = "12px sans-serif";
+              ctx.fillText(slot.name.slice(0, 10), x + 8, y + 24);
+            }
+          } else {
+            ctx.fillStyle = "#52525b";
+            ctx.font = "12px sans-serif";
+            ctx.fillText(slot.name.slice(0, 10), x + 8, y + 24);
+          }
+
+          ctx.fillStyle = "rgba(17, 17, 20, 0.85)";
+          ctx.fillRect(x + 6, y + cardH - 24, 46, 18);
+          ctx.fillStyle = "#ffffff";
+          ctx.font = "700 11px sans-serif";
+          ctx.fillText(slot.rarity || "STD", x + 11, y + cardH - 11);
+        });
+
+        const dataUrl = canvas.toDataURL("image/png");
+        wrap.innerHTML = "";
+        const outImg = document.createElement("img");
+        outImg.src = dataUrl;
+        outImg.alt = "生成されたデッキ画像";
+        outImg.style.width = "100%";
+        outImg.style.borderRadius = "8px";
+        outImg.style.border = "1px solid var(--border)";
+        wrap.appendChild(outImg);
+        showToast("デッキ画像を生成しました");
+      } catch (err) {
+        wrap.innerHTML = `<div style="font-size:0.82rem;color:#dc2626;">画像生成エラー: ${String(err && err.message || err)}</div>`;
+      }
+    });
+
+    document.getElementById("searchInput").addEventListener("input", () => renderCatalog());
+
+    async function initApp() {
+      const result = await fetchCardsWithFallback();
+      allCards = result.cards;
+      variantGroups = buildVariantGroups(allCards);
+      loadDeckFromStorage();
+      renderDeck();
+      renderCatalog(result.error || "");
+    }
+
+    initApp();
+  </script>
 </body>
 </html>
