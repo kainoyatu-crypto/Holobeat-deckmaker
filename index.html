@@ -233,14 +233,25 @@ html, body {
 .deck-utility-panel {
   flex: 1 1 auto;
   min-height: 0;
-  background: var(--bg-surface);
-  border: 1px solid var(--border-hairline);
-  border-radius: 10px;
-  padding: 8px 10px;
+  background: transparent;
+  padding: 0;
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
   gap: 6px;
+}
+.util-box {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-hairline);
+  border-radius: 8px;
+  padding: 6px 8px;
+}
+.util-row-label {
+  font-size: 10px;
+  font-weight: 800;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+  line-height: 1.2;
 }
 .mini-chips-row {
   display: flex;
@@ -277,10 +288,6 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: var(--bg-base);
-  border: 1px solid var(--border-hairline);
-  border-radius: 8px;
-  padding: 5px 8px;
   gap: 8px;
   font-size: 11px;
 }
@@ -788,7 +795,7 @@ html, body {
       <button class="pill-btn" id="btnDecks">保存</button>
       <button class="pill-btn" id="btnStats">分布</button>
       <button class="pill-btn primary" id="btnShare">出力</button>
-      <button class="pill-btn danger" id="btnClear">クリア</button>
+      <button class="pill-btn danger" id="btnClear">削除</button>
     </div>
   </header>
   <div class="deck-meta-bar">
@@ -807,10 +814,17 @@ html, body {
     </div>
     <!-- 10×5 枠グリッド -->
     <div class="deck-grid" id="deckGrid"></div>
-    <!-- 余白エリアの便利ウィジェット（色＋カスタムタグ枚数表示・下寄せ） -->
+    <!-- 余白エリアの便利ウィジェット（色・タグ行分け＆白枠ボックス） -->
     <div class="deck-utility-panel">
-      <div class="mini-chips-row" id="colorQuickChips"></div>
-      <div class="focus-card-bar">
+      <div class="util-box" id="colorBox">
+        <div class="util-row-label">色</div>
+        <div class="mini-chips-row" id="colorQuickChips"></div>
+      </div>
+      <div class="util-box" id="customTagBox">
+        <div class="util-row-label">タグ</div>
+        <div class="mini-chips-row" id="customTagQuickChips"></div>
+      </div>
+      <div class="util-box focus-card-bar">
         <span class="focus-name" id="focusCardLabel">カード未選択</span>
         <div class="focus-controls">
           <button class="step-btn" id="btnFocusMinus" title="1枚減らす">-</button>
@@ -823,7 +837,7 @@ html, body {
   </main>
   <section class="dock-section">
     <div class="dock-header">
-      <span>一覧：タップ・上スワイプで追加（ノーマル基準）/ 長押し・詳細でレアリティ＆タグ設定</span>
+      <span>タップ・上スワイプで追加 / 長押し・詳細でレアリティ＆タグ設定</span>
       <span id="poolCountLabel">0件</span>
     </div>
     <div class="dock-scroll" id="dockScroll"></div>
@@ -953,7 +967,7 @@ html, body {
     </div>
     <div style="font-size:13px;color:var(--text-secondary);line-height:1.7;">
       <p style="margin-top:0;color:var(--text-primary);"><strong>操作方法：</strong><br>
-      ・一覧のタップ・上スワイプで追加（ノーマル基準）<br>
+      ・タップ・上スワイプで追加<br>
       ・長押し・詳細で拡大表示、レアリティ変更、自由タグ設定<br>
       ・デッキ内のカードはタップ・下スワイプで1枚削除、長押しで拡大・レアリティ変更・タグ設定</p>
       <p style="margin-bottom:0;">※ 本サイトは『ホロビートカードゲーム』の非公式ファンメイド・デッキ構築支援ツールです。掲載されているカード情報・画像の権利は各権利者に帰属します。</p>
@@ -1489,18 +1503,17 @@ function renderUtilityPanel() {
       tagCounts[tag] = (tagCounts[tag] || 0) + qty;
     });
   });
-  const chipRow = document.getElementById("colorQuickChips");
-  chipRow.innerHTML = "";
-  const allChip = document.createElement("button");
-  allChip.type = "button";
-  allChip.className = "mini-tag" + (state.color === "ALL" && state.customTag === "ALL" ? " active" : "");
-  allChip.textContent = `全色 (${total})`;
-  allChip.onclick = () => {
+  const colorRow = document.getElementById("colorQuickChips");
+  colorRow.innerHTML = "";
+  const allColorChip = document.createElement("button");
+  allColorChip.type = "button";
+  allColorChip.className = "mini-tag" + (state.color === "ALL" ? " active" : "");
+  allColorChip.textContent = `全色 (${total})`;
+  allColorChip.onclick = () => {
     state.color = "ALL";
-    state.customTag = "ALL";
     render();
   };
-  chipRow.appendChild(allChip);
+  colorRow.appendChild(allColorChip);
   Object.entries(colorCounts).forEach(([col, cnt]) => {
     const btn = document.createElement("button");
     btn.type = "button";
@@ -1510,20 +1523,33 @@ function renderUtilityPanel() {
       state.color = state.color === col ? "ALL" : col;
       render();
     };
-    chipRow.appendChild(btn);
+    colorRow.appendChild(btn);
   });
-  getAllDefinedTags().forEach(tag => {
-    const cnt = tagCounts[tag] || 0;
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.className = "mini-tag custom-tag" + (state.customTag === tag ? " active" : "");
-    btn.textContent = `#${tag}: ${cnt}`;
-    btn.onclick = () => {
-      state.customTag = state.customTag === tag ? "ALL" : tag;
-      render();
-    };
-    chipRow.appendChild(btn);
-  });
+
+  const tagRow = document.getElementById("customTagQuickChips");
+  tagRow.innerHTML = "";
+  const definedTags = getAllDefinedTags();
+  if (definedTags.length === 0) {
+    const emptyNote = document.createElement("span");
+    emptyNote.style.fontSize = "11px";
+    emptyNote.style.color = "var(--text-secondary)";
+    emptyNote.textContent = "詳細画面からタグを追加できます";
+    tagRow.appendChild(emptyNote);
+  } else {
+    definedTags.forEach(tag => {
+      const cnt = tagCounts[tag] || 0;
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "mini-tag custom-tag" + (state.customTag === tag ? " active" : "");
+      btn.textContent = `#${tag}: ${cnt}`;
+      btn.onclick = () => {
+        state.customTag = state.customTag === tag ? "ALL" : tag;
+        render();
+      };
+      tagRow.appendChild(btn);
+    });
+  }
+
   const focusCard = focusedCardId ? map.get(focusedCardId) : null;
   const focusLabel = document.getElementById("focusCardLabel");
   const focusCount = document.getElementById("focusCountLabel");
