@@ -174,7 +174,14 @@ html, body {
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 5px;
+}
+.deck-guide-bar {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.35;
+  padding: 0 2px;
 }
 .deck-grid {
   display: grid;
@@ -256,6 +263,16 @@ html, body {
   color: #ffffff;
   border-color: #111318;
 }
+.mini-tag.custom-tag {
+  background: #eef2ff;
+  border-color: rgba(79, 70, 229, 0.28);
+  color: #1e1b4b;
+}
+.mini-tag.custom-tag.active {
+  background: #3730a3;
+  color: #ffffff;
+  border-color: #3730a3;
+}
 .focus-card-bar {
   display: flex;
   align-items: center;
@@ -298,13 +315,6 @@ html, body {
   background: var(--bg-elevated);
   border-top: 1px solid var(--border-hairline);
   padding: 7px 0;
-}
-.dock-guide-bar {
-  padding: 0 12px 4px;
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--text-primary);
-  line-height: 1.4;
 }
 .dock-header {
   display: flex;
@@ -697,6 +707,50 @@ html, body {
   color: var(--text-primary);
   white-space: nowrap;
 }
+/* カードカスタムタグUI */
+.card-tag-box {
+  background: var(--bg-base);
+  border: 1px solid var(--border-hairline);
+  border-radius: 10px;
+  padding: 10px;
+  margin-bottom: 12px;
+}
+.card-tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.card-tag-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #eef2ff;
+  color: #1e1b4b;
+  border: 1px solid rgba(79, 70, 229, 0.3);
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 800;
+}
+.card-tag-remove {
+  border: none;
+  background: transparent;
+  color: #4338ca;
+  font-size: 14px;
+  font-weight: 900;
+  line-height: 1;
+  padding: 0 2px;
+  cursor: pointer;
+}
+.card-tag-form {
+  display: flex;
+  gap: 6px;
+}
+.card-tag-form input {
+  flex: 1;
+  margin: 0;
+}
 .generated-img {
   width: 100%;
   border-radius: 10px;
@@ -747,9 +801,13 @@ html, body {
     </div>
   </div>
   <main class="deck-viewport">
+    <!-- デッキ内挙動の説明（デッキリストの上） -->
+    <div class="deck-guide-bar">
+      デッキ内：タップ・下スワイプで1枚削除 / 長押しで拡大・レアリティ＆タグ設定
+    </div>
     <!-- 10×5 枠グリッド -->
     <div class="deck-grid" id="deckGrid"></div>
-    <!-- 余白エリアの便利ウィジェット（ゲージなし・下寄せ） -->
+    <!-- 余白エリアの便利ウィジェット（色＋カスタムタグ枚数表示・下寄せ） -->
     <div class="deck-utility-panel">
       <div class="mini-chips-row" id="colorQuickChips"></div>
       <div class="focus-card-bar">
@@ -764,11 +822,8 @@ html, body {
     </div>
   </main>
   <section class="dock-section">
-    <div class="dock-guide-bar">
-      デッキ内：タップ・下スワイプで1枚削除 / 長押しで拡大・レアリティ変更
-    </div>
     <div class="dock-header">
-      <span>一覧：タップ・上スワイプで追加（ノーマル基準）/ 長押し・詳細でレアリティ変更</span>
+      <span>一覧：タップ・上スワイプで追加（ノーマル基準）/ 長押し・詳細でレアリティ＆タグ設定</span>
       <span id="poolCountLabel">0件</span>
     </div>
     <div class="dock-scroll" id="dockScroll"></div>
@@ -776,7 +831,7 @@ html, body {
   <footer class="control-bar">
     <div class="search-wrap">
       <span style="font-size:15px;">🔍</span>
-      <input type="search" id="searchInput" placeholder="カード名・型番で検索" />
+      <input type="search" id="searchInput" placeholder="カード名・型番・タグで検索" />
       <button class="clear-btn" id="btnClearSearch">×</button>
     </div>
     <button class="sub-btn" id="btnOpenFilter">絞り込み</button>
@@ -813,6 +868,8 @@ html, body {
     <div class="chips" id="colorChipList"></div>
     <div style="font-size:12px;color:var(--text-secondary);margin-bottom:6px;font-weight:700;">種類</div>
     <div class="chips" id="typeChipList"></div>
+    <div style="font-size:12px;color:var(--text-secondary);margin-bottom:6px;font-weight:700;">カスタムタグ</div>
+    <div class="chips" id="customTagChipList"></div>
     <div style="font-size:12px;color:var(--text-secondary);margin-bottom:6px;font-weight:700;">画像状態</div>
     <div class="chips" id="imgChipList">
       <button class="chip selected" data-img="ALL">すべて</button>
@@ -877,7 +934,7 @@ html, body {
     <button class="sheet-btn secondary" id="btnImportText">テキストからデッキを読み込む</button>
   </div>
 </div>
-<!-- カード詳細（1枚ごとのレアリティ・イラスト選択対応） -->
+<!-- カード詳細（1枚ごとのレアリティ・イラスト選択＆自由タグ設定対応） -->
 <div class="overlay" id="detailOverlay">
   <div class="sheet">
     <div class="sheet-head">
@@ -897,8 +954,8 @@ html, body {
     <div style="font-size:13px;color:var(--text-secondary);line-height:1.7;">
       <p style="margin-top:0;color:var(--text-primary);"><strong>操作方法：</strong><br>
       ・一覧のタップ・上スワイプで追加（ノーマル基準）<br>
-      ・長押し・詳細で拡大表示およびレアリティ変更<br>
-      ・デッキ内のカードはタップ・下スワイプで1枚削除、長押しで拡大・レアリティ変更</p>
+      ・長押し・詳細で拡大表示、レアリティ変更、自由タグ設定<br>
+      ・デッキ内のカードはタップ・下スワイプで1枚削除、長押しで拡大・レアリティ変更・タグ設定</p>
       <p style="margin-bottom:0;">※ 本サイトは『ホロビートカードゲーム』の非公式ファンメイド・デッキ構築支援ツールです。掲載されているカード情報・画像の権利は各権利者に帰属します。</p>
     </div>
   </div>
@@ -910,13 +967,16 @@ const GRID_SLOTS_10X5 = 50;
 const LONG_PRESS_MS = 260;
 const SAVE_KEY = "horobeat_studio_deck_v1";
 const SLOTS_KEY = "horobeat_studio_slots_v1";
+const TAGS_KEY = "horobeat_studio_card_tags_v1";
 let cards = [];
 let zone = "main";
 // variants: { main: { [baseId]: [variantId0, variantId1, ...] }, sub: { ... } }
 let deckData = { main: {}, sub: {}, variants: { main: {}, sub: {} } };
+// cardTags: { [baseCardKey]: ["初動", "除去", ...] }
+let cardTags = {};
 let focusedCardId = null;
 let detailCopyIndex = 0;
-let state = { q: "", rarity: "ALL", color: "ALL", type: "ALL", img: "ALL", sort: "id" };
+let state = { q: "", rarity: "ALL", color: "ALL", type: "ALL", customTag: "ALL", img: "ALL", sort: "id" };
 
 function pickCardId(raw) {
   return String(
@@ -1085,6 +1145,7 @@ function displayCardNumber(card) {
 }
 
 function getBaseCardKey(card) {
+  if (!card) return "UNKNOWN";
   const no = String(card.cardNumber || "").trim().toUpperCase();
   if (no) return `NO:${no}`;
   const rawId = String(card.id || "").trim().toUpperCase();
@@ -1114,6 +1175,70 @@ function getUniquePoolCards() {
     }
   });
   return Array.from(byKey.values());
+}
+
+function getTagsForCard(card) {
+  const key = getBaseCardKey(card);
+  const list = cardTags[key];
+  return Array.isArray(list) ? [...list] : [];
+}
+
+function persistTags() {
+  try { localStorage.setItem(TAGS_KEY, JSON.stringify(cardTags)); } catch (e) {}
+}
+
+function restoreTags() {
+  try {
+    const raw = localStorage.getItem(TAGS_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === "object") {
+        cardTags = parsed;
+      }
+    }
+  } catch (e) {}
+}
+
+function addTagToCard(card, tagText) {
+  const clean = String(tagText || "").trim();
+  if (!clean) return;
+  const key = getBaseCardKey(card);
+  const current = Array.isArray(cardTags[key]) ? [...cardTags[key]] : [];
+  if (!current.includes(clean)) {
+    current.push(clean);
+    cardTags[key] = current;
+    persistTags();
+    render();
+  }
+}
+
+function removeTagFromCard(card, tagText) {
+  const key = getBaseCardKey(card);
+  const current = Array.isArray(cardTags[key]) ? [...cardTags[key]] : [];
+  const next = current.filter(t => t !== tagText);
+  if (next.length > 0) {
+    cardTags[key] = next;
+  } else {
+    delete cardTags[key];
+  }
+  if (state.customTag === tagText && !getAllDefinedTags().includes(tagText)) {
+    state.customTag = "ALL";
+  }
+  persistTags();
+  render();
+}
+
+function getAllDefinedTags() {
+  const set = new Set();
+  Object.values(cardTags || {}).forEach(list => {
+    if (Array.isArray(list)) {
+      list.forEach(t => {
+        const s = String(t || "").trim();
+        if (s) set.add(s);
+      });
+    }
+  });
+  return Array.from(set);
 }
 
 function ensureVariantsArray(z, baseId, count) {
@@ -1353,18 +1478,26 @@ function renderUtilityPanel() {
   const total = zoneTotal(zone);
   const map = new Map(cards.map(c => [c.id, c]));
   const colorCounts = {};
+  const tagCounts = {};
   Object.entries(deckData[zone] || {}).forEach(([id, n]) => {
-    const col = (map.get(id)?.color) || "無";
-    colorCounts[col] = (colorCounts[col] || 0) + Number(n || 0);
+    const qty = Number(n || 0);
+    if (qty <= 0) return;
+    const c = map.get(id) || { id };
+    const col = c.color || "無";
+    colorCounts[col] = (colorCounts[col] || 0) + qty;
+    getTagsForCard(c).forEach(tag => {
+      tagCounts[tag] = (tagCounts[tag] || 0) + qty;
+    });
   });
   const chipRow = document.getElementById("colorQuickChips");
   chipRow.innerHTML = "";
   const allChip = document.createElement("button");
   allChip.type = "button";
-  allChip.className = "mini-tag" + (state.color === "ALL" ? " active" : "");
+  allChip.className = "mini-tag" + (state.color === "ALL" && state.customTag === "ALL" ? " active" : "");
   allChip.textContent = `全色 (${total})`;
   allChip.onclick = () => {
     state.color = "ALL";
+    state.customTag = "ALL";
     render();
   };
   chipRow.appendChild(allChip);
@@ -1379,11 +1512,25 @@ function renderUtilityPanel() {
     };
     chipRow.appendChild(btn);
   });
+  getAllDefinedTags().forEach(tag => {
+    const cnt = tagCounts[tag] || 0;
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "mini-tag custom-tag" + (state.customTag === tag ? " active" : "");
+    btn.textContent = `#${tag}: ${cnt}`;
+    btn.onclick = () => {
+      state.customTag = state.customTag === tag ? "ALL" : tag;
+      render();
+    };
+    chipRow.appendChild(btn);
+  });
   const focusCard = focusedCardId ? map.get(focusedCardId) : null;
   const focusLabel = document.getElementById("focusCardLabel");
   const focusCount = document.getElementById("focusCountLabel");
   if (focusCard) {
-    focusLabel.textContent = `${focusCard.name || displayCardNumber(focusCard)}`;
+    const tags = getTagsForCard(focusCard);
+    const tagSuffix = tags.length ? ` [${tags.map(t => `#${t}`).join(" ")}]` : "";
+    focusLabel.textContent = `${focusCard.name || displayCardNumber(focusCard)}${tagSuffix}`;
     focusCount.textContent = `${cardTotal(focusCard.id)}/${MAX_PER_CARD}`;
   } else {
     focusLabel.textContent = "カード未選択";
@@ -1396,14 +1543,17 @@ function filteredPool() {
   return getUniquePoolCards()
     .filter(c => {
       const variants = getCardVariants(c);
+      const tags = getTagsForCard(c);
       if (state.rarity !== "ALL" && !variants.some(v => detectRarity(v) === state.rarity)) return false;
       if (state.color !== "ALL" && (c.color || "無") !== state.color) return false;
       if (state.type !== "ALL" && (c.type || "その他") !== state.type) return false;
+      if (state.customTag !== "ALL" && !tags.includes(state.customTag)) return false;
       if (state.img === "HAS" && !variants.some(v => v.imageUrl)) return false;
       if (state.img === "NONE" && variants.some(v => v.imageUrl)) return false;
       if (q) {
         const allVarText = variants.map(v => `${v.id || ""} ${v.cardNumber || ""} ${v.name || ""} ${v.text || ""} ${detectRarity(v)}`).join(" ");
-        if (!allVarText.toLowerCase().includes(q)) return false;
+        const tagText = tags.join(" ");
+        if (!`${allVarText} ${tagText}`.toLowerCase().includes(q)) return false;
       }
       return true;
     })
@@ -1481,7 +1631,7 @@ function renderMeta() {
   document.getElementById("zoneCount").textContent = total;
   document.getElementById("zoneTarget").textContent = target;
   document.getElementById("counterReadout").classList.toggle("over", total > target);
-  const filtered = state.rarity !== "ALL" || state.color !== "ALL" || state.type !== "ALL" || state.img !== "ALL";
+  const filtered = state.rarity !== "ALL" || state.color !== "ALL" || state.type !== "ALL" || state.customTag !== "ALL" || state.img !== "ALL";
   document.getElementById("btnOpenFilter").classList.toggle("active-filter", filtered);
 }
 
@@ -1496,6 +1646,7 @@ function buildFilterOptions() {
   const rarities = ["ALL", ...new Set(cards.map(c => detectRarity(c)).filter(Boolean))];
   const colors = ["ALL", ...new Set(cards.map(c => c.color || "無").filter(Boolean))];
   const types = ["ALL", ...new Set(cards.map(c => c.type || "その他").filter(Boolean))];
+  const customTags = ["ALL", ...getAllDefinedTags()];
   const rBox = document.getElementById("rarityChipList");
   rBox.innerHTML = "";
   rarities.forEach(rar => {
@@ -1523,6 +1674,15 @@ function buildFilterOptions() {
     b.onclick = () => { state.type = tp; buildFilterOptions(); render(); };
     tBox.appendChild(b);
   });
+  const tagBox = document.getElementById("customTagChipList");
+  tagBox.innerHTML = "";
+  customTags.forEach(tag => {
+    const b = document.createElement("button");
+    b.className = "chip" + (state.customTag === tag ? " selected" : "");
+    b.textContent = tag === "ALL" ? "すべて" : `#${tag}`;
+    b.onclick = () => { state.customTag = tag; buildFilterOptions(); render(); };
+    tagBox.appendChild(b);
+  });
   document.querySelectorAll("#imgChipList .chip").forEach(chip => {
     chip.classList.toggle("selected", chip.dataset.img === state.img);
   });
@@ -1538,13 +1698,22 @@ function openDetail(card, initialCopyIdx = 0, previewVariantId = null) {
   detailCopyIndex = Math.max(0, Math.min(initialCopyIdx, Math.max(0, inZone - 1)));
   const activeVariantId = previewVariantId || (inZone > 0 ? (copyIds[detailCopyIndex] || baseId) : baseId);
   const activeCard = map.get(activeVariantId) || canonical;
+  const tags = getTagsForCard(canonical);
+  const existingAllTags = getAllDefinedTags().filter(t => !tags.includes(t));
   document.getElementById("detailTitle").textContent = `${activeCard.name || canonical.name || ""} [${displayCardNumber(activeCard)}]`;
   let copySelectorHtml = "";
   if (inZone > 0) {
     copySelectorHtml = `<div style="font-size:12px;font-weight:800;margin-bottom:5px;">デッキ内の枚数ごとにレアリティを選択</div><div class="copy-tabs-row">${copyIds.map((vid, idx) => { const vCard = map.get(vid) || canonical; const vRarity = detectRarity(vCard); return `<button type="button" class="copy-tab ${idx === detailCopyIndex ? "active" : ""}" data-copy-idx="${idx}">${idx + 1}枚目 (${vRarity})</button>`; }).join("")}</div>`;
   }
   const variantStripHtml = `<div style="font-size:12px;font-weight:800;margin-bottom:4px;">レアリティ変更（${variants.length}種）</div><div class="variant-strip">${variants.map((v, vIdx) => { const isSelected = v.id === activeCard.id; const rLabel = detectRarity(v); return `<button type="button" class="variant-thumb ${isSelected ? "selected" : ""}" data-variant-id="${v.id}">${v.imageUrl ? `<img src="${v.imageUrl}" alt="${v.name || ""}" />` : ""}<span class="variant-label">${rLabel}${variants.length > 1 ? ` #${vIdx + 1}` : ""}</span></button>`; }).join("")}</div>`;
-  document.getElementById("detailBody").innerHTML = `${activeCard.imageUrl ? `<img class="preview-img" src="${activeCard.imageUrl}" alt="${activeCard.name || ""}" />` : ""}${copySelectorHtml}${variantStripHtml}<div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px;">レア: ${detectRarity(activeCard)} / 色: ${activeCard.color || "-"} / 種類: ${activeCard.type || "-"} / コスト: ${activeCard.cost ?? "-"}</div><p style="font-size:13px;line-height:1.6;margin:0 0 12px;">${activeCard.text || ""}</p><button class="sheet-btn" id="detailAdd">1枚追加（合計 ${cardTotal(baseId)} / ${MAX_PER_CARD}）</button>${inZone > 0 ? `<button class="sheet-btn secondary" id="detailRemove">現在の枠から1枚減らす（${inZone}枚中）</button>` : ""}`;
+  const tagPillsHtml = tags.length
+    ? tags.map(t => `<span class="card-tag-pill">#${t}<button type="button" class="card-tag-remove" data-remove-tag="${encodeURIComponent(t)}" title="タグを削除">×</button></span>`).join("")
+    : `<span style="font-size:11px;color:var(--text-secondary);">タグ未設定</span>`;
+  const quickAssignHtml = existingAllTags.length
+    ? `<div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px;">${existingAllTags.map(t => `<button type="button" class="mini-tag" data-quick-tag="${encodeURIComponent(t)}">+ #${t}</button>`).join("")}</div>`
+    : "";
+  const customTagBoxHtml = `<div class="card-tag-box"><div style="font-size:12px;font-weight:800;margin-bottom:6px;">このカードの自由タグ</div><div class="card-tag-list">${tagPillsHtml}</div>${quickAssignHtml}<div class="card-tag-form"><input type="text" class="text-input" id="newCardTagInput" placeholder="タグ名を入力（例：初動、除去）" /><button type="button" class="sheet-btn" id="btnAddCardTag" style="width:auto;margin:0;padding:0 14px;white-space:nowrap;">追加</button></div></div>`;
+  document.getElementById("detailBody").innerHTML = `${activeCard.imageUrl ? `<img class="preview-img" src="${activeCard.imageUrl}" alt="${activeCard.name || ""}" />` : ""}${copySelectorHtml}${variantStripHtml}${customTagBoxHtml}<div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px;">レア: ${detectRarity(activeCard)} / 色: ${activeCard.color || "-"} / 種類: ${activeCard.type || "-"} / コスト: ${activeCard.cost ?? "-"}</div><p style="font-size:13px;line-height:1.6;margin:0 0 12px;">${activeCard.text || ""}</p><button class="sheet-btn" id="detailAdd">1枚追加（合計 ${cardTotal(baseId)} / ${MAX_PER_CARD}）</button>${inZone > 0 ? `<button class="sheet-btn secondary" id="detailRemove">現在の枠から1枚減らす（${inZone}枚中）</button>` : ""}`;
   document.querySelectorAll("#detailBody [data-copy-idx]").forEach(btn => {
     btn.onclick = () => {
       openDetail(canonical, Number(btn.dataset.copyIdx));
@@ -1561,6 +1730,39 @@ function openDetail(card, initialCopyIdx = 0, previewVariantId = null) {
       }
     };
   });
+  document.querySelectorAll("#detailBody [data-remove-tag]").forEach(btn => {
+    btn.onclick = e => {
+      e.stopPropagation();
+      const t = decodeURIComponent(btn.dataset.removeTag);
+      removeTagFromCard(canonical, t);
+      openDetail(canonical, detailCopyIndex, activeCard.id);
+    };
+  });
+  document.querySelectorAll("#detailBody [data-quick-tag]").forEach(btn => {
+    btn.onclick = () => {
+      const t = decodeURIComponent(btn.dataset.quickTag);
+      addTagToCard(canonical, t);
+      openDetail(canonical, detailCopyIndex, activeCard.id);
+    };
+  });
+  const tagInput = document.getElementById("newCardTagInput");
+  const addTagBtn = document.getElementById("btnAddCardTag");
+  const submitTag = () => {
+    if (!tagInput) return;
+    const val = tagInput.value.trim();
+    if (!val) return;
+    addTagToCard(canonical, val);
+    openDetail(canonical, detailCopyIndex, activeCard.id);
+  };
+  if (addTagBtn) addTagBtn.onclick = submitTag;
+  if (tagInput) {
+    tagInput.addEventListener("keydown", e => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        submitTag();
+      }
+    });
+  }
   document.getElementById("detailAdd").onclick = () => {
     addToDeck(baseId, activeCard.id);
     const updatedQty = Number(deckData[zone]?.[baseId] || 0);
@@ -1581,13 +1783,19 @@ function openStats() {
   const map = new Map(cards.map(c => [c.id, c]));
   const costMap = {};
   const colorMap = {};
+  const tagMap = {};
   const total = zoneTotal(zone);
   Object.entries(deckData[zone] || {}).forEach(([id, n]) => {
-    const c = map.get(id) || {};
+    const qty = Number(n || 0);
+    if (qty <= 0) return;
+    const c = map.get(id) || { id };
     const kCost = c.cost ?? "?";
     const kCol = c.color || "無";
-    costMap[kCost] = (costMap[kCost] || 0) + Number(n || 0);
-    colorMap[kCol] = (colorMap[kCol] || 0) + Number(n || 0);
+    costMap[kCost] = (costMap[kCost] || 0) + qty;
+    colorMap[kCol] = (colorMap[kCol] || 0) + qty;
+    getTagsForCard(c).forEach(tag => {
+      tagMap[tag] = (tagMap[tag] || 0) + qty;
+    });
   });
   const maxCostCount = Math.max(1, ...Object.values(costMap));
   const costBars = Object.keys(costMap).sort((a, b) => Number(a) - Number(b)).map(k => {
@@ -1595,7 +1803,8 @@ function openStats() {
     return `<div class="bar-row"><span style="width:52px;">コスト ${k}</span><div class="bar-track"><div class="bar-fill" style="width:${pct}%"></div></div><span style="width:38px;text-align:right;">${costMap[k]}枚</span></div>`;
   }).join("") || "<div style='color:var(--text-secondary);'>カードがありません</div>";
   const colorHtml = Object.entries(colorMap).map(([k, v]) => `${k}: ${v}枚`).join(" / ") || "なし";
-  document.getElementById("statsContent").innerHTML = `<div style="margin-bottom:6px;"><strong>合計:</strong> ${total} / ${TARGET_COUNTS[zone]}枚</div><div style="margin-bottom:10px;"><strong>色内訳:</strong> ${colorHtml}</div><div style="font-weight:700;margin-bottom:6px;">コスト分布</div>${costBars}`;
+  const tagHtml = Object.entries(tagMap).map(([k, v]) => `#${k}: ${v}枚`).join(" / ") || "なし";
+  document.getElementById("statsContent").innerHTML = `<div style="margin-bottom:6px;"><strong>合計:</strong> ${total} / ${TARGET_COUNTS[zone]}枚</div><div style="margin-bottom:6px;"><strong>色内訳:</strong> ${colorHtml}</div><div style="margin-bottom:10px;"><strong>タグ内訳:</strong> ${tagHtml}</div><div style="font-weight:700;margin-bottom:6px;">コスト分布</div>${costBars}`;
   document.getElementById("statsOverlay").classList.add("open");
 }
 
@@ -1659,7 +1868,9 @@ function openShare() {
         const rarities = copyIds.map(vid => detectRarity(map.get(vid) || c));
         const uniqueRarities = [...new Set(rarities)].filter(r => r && r !== "その他");
         const rSuffix = uniqueRarities.length ? ` [${uniqueRarities.join("/")}]` : "";
-        out.push(`${n} × ${c.name} (${displayCardNumber(c)})${rSuffix}`);
+        const tags = getTagsForCard(c);
+        const tSuffix = tags.length ? ` {${tags.map(t => `#${t}`).join(",")}}` : "";
+        out.push(`${n} × ${c.name} (${displayCardNumber(c)})${rSuffix}${tSuffix}`);
       });
     }
   });
@@ -1689,7 +1900,7 @@ function importFromRecipeText(text) {
     if (!m) return;
     const qty = Number(m[1]);
     if (!qty || qty <= 0) return;
-    const namePart = m[2].replace(/\s*\[[^\]]+\]\s*/, "").trim();
+    const namePart = m[2].replace(/\s*\[[^\]]+\]\s*/g, "").replace(/\s*\{[^}]+\}\s*/g, "").trim();
     const idPart = (m[3] || "").trim().toUpperCase();
     const resolvedId = (idPart && byId.get(idPart)) || byName.get(namePart);
     if (resolvedId) {
@@ -1936,6 +2147,7 @@ function bind() {
     state.rarity = "ALL";
     state.color = "ALL";
     state.type = "ALL";
+    state.customTag = "ALL";
     state.img = "ALL";
     buildFilterOptions();
     render();
@@ -1976,6 +2188,7 @@ function bind() {
 
 async function boot() {
   bind();
+  restoreTags();
   restore();
   try {
     cards = await loadCardsOnly();
