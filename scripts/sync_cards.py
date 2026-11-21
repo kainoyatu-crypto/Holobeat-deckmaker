@@ -10,7 +10,7 @@ DATA_JSON = BASE_DIR / "data" / "cards.json"
 
 OFFICIAL_URL = os.environ.get(
     "HOROBEAT_OFFICIAL_URL",
-    "https://www.takaratomy.co.jp/products/horobeat-cardgame/cardlist/?same_name=hide",
+    "https://www.takaratomy.co.jp/products/horobeat-cardgame/cardlist/",
 )
 
 EXCLUDE_URL_KEYWORDS = (
