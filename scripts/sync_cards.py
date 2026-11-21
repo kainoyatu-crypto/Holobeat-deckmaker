@@ -125,6 +125,11 @@ def scrape_official_items():
                 break
 
         browser.close()
+            print("SCRAPED_COUNT:", len(items))
+    for it in items[:5]:
+        print("ITEM:", it.get("src"), "|", it.get("alt"))
+    return items
+
     return items
 
 
