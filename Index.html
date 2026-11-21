@@ -1,0 +1,984 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HB DECK BUILDER — GitHub Pages 自動同期版</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 10px;
+      background: #121316;
+      color: #f3f5f9;
+      font-family: "Hiragino Sans", "Meiryo", system-ui, sans-serif;
+      font-size: 13px;
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 10px 12px;
+      background: #191a1f;
+      border: 1px solid #323642;
+      border-radius: 6px;
+      margin-bottom: 10px;
+    }
+    .sync-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 8px 12px;
+      background: #18202c;
+      border: 1px solid #2b3b52;
+      border-radius: 6px;
+      margin-bottom: 10px;
+      font-size: 12px;
+    }
+    .deck-box {
+      background: #f4f5f7;
+      color: #181a1f;
+      border-radius: 6px;
+      padding: 10px;
+      margin-bottom: 10px;
+      min-height: 76px;
+    }
+    .deck-cards-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .deck-mini-card {
+      width: 74px;
+      background: #181b22;
+      color: #fff;
+      border-radius: 5px;
+      padding: 4px;
+      cursor: pointer;
+      text-align: center;
+      border: 1px solid #334155;
+    }
+    .deck-mini-card img, .deck-mini-card svg {
+      width: 100%;
+      height: 84px;
+      object-fit: cover;
+      border-radius: 3px;
+      display: block;
+    }
+    .deck-mini-qty {
+      font-size: 11px;
+      font-weight: 800;
+      margin-top: 3px;
+      color: #fde68a;
+    }
+    .toolbar {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-bottom: 8px;
+      align-items: center;
+    }
+    input, select, textarea, button {
+      font-family: inherit;
+      font-size: 12px;
+      padding: 6px 9px;
+      border-radius: 5px;
+      border: 1px solid #3c4252;
+      background: #1e2128;
+      color: #f3f5f9;
+    }
+    button { cursor: pointer; font-weight: 700; }
+    button.active { background: #e5a93c; border-color: #e5a93c; color: #111317; }
+    .btn-add {
+      background: #15803d;
+      border-color: #22c55e;
+      color: #fff;
+      padding: 4px 8px;
+    }
+    .btn-sub {
+      background: #991b1b;
+      border-color: #ef4444;
+      color: #fff;
+      padding: 4px 8px;
+      margin-right: 4px;
+    }
+    .btn-img {
+      background: #1e3a8a;
+      border-color: #3b82f6;
+      color: #fff;
+      padding: 4px 7px;
+      margin-right: 4px;
+    }
+    .btn-auto {
+      background: #7c2d12;
+      border-color: #f97316;
+      color: #ffedd5;
+    }
+    .btn-sync {
+      background: #1d4ed8;
+      border-color: #60a5fa;
+      color: #eff6ff;
+    }
+    .table-box {
+      overflow-x: auto;
+      border: 1px solid #323642;
+      border-radius: 6px;
+      background: #16181e;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    th, td {
+      padding: 6px 8px;
+      border-bottom: 1px solid #262a34;
+      text-align: left;
+      white-space: nowrap;
+      vertical-align: middle;
+    }
+    th {
+      background: #20242e;
+      color: #f8fafc;
+    }
+    tr:nth-child(even) { background: #191c24; }
+    .mini-thumb {
+      display: inline-block;
+      width: 34px;
+      height: 48px;
+      border-radius: 3px;
+      overflow: hidden;
+      border: 1px solid #334155;
+      vertical-align: middle;
+    }
+    .mini-thumb img, .mini-thumb svg {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(136px, 1fr));
+      gap: 8px;
+    }
+    .card-tile {
+      background: #191c24;
+      border: 1px solid #323642;
+      border-radius: 7px;
+      padding: 6px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .card-art-frame {
+      width: 100%;
+      aspect-ratio: 5 / 7;
+      border-radius: 5px;
+      overflow: hidden;
+      background: #0f172a;
+      border: 1px solid #334155;
+    }
+    .card-art-frame img, .card-art-frame svg {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .card-tile-title {
+      font-size: 12px;
+      font-weight: 800;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .card-tile-meta {
+      font-size: 11px;
+      color: #9ea6b5;
+      display: flex;
+      justify-content: space-between;
+    }
+    .card-tile-ops {
+      display: flex;
+      gap: 3px;
+      justify-content: space-between;
+    }
+    .modal-bg {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.75);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 12px;
+      z-index: 100;
+    }
+    .modal-bg.open { display: flex; }
+    .modal-box {
+      width: 100%;
+      max-width: 540px;
+      max-height: 88vh;
+      overflow-y: auto;
+      background: #191c22;
+      border: 1px solid #475569;
+      border-radius: 8px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .help-text {
+      font-size: 11px;
+      color: #cbd5e1;
+      line-height: 1.55;
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 6px;
+      padding: 8px;
+    }
+    .badge-new {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: 800;
+      background: #f59e0b;
+      color: #111827;
+      padding: 1px 5px;
+      border-radius: 3px;
+      margin-left: 4px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <b>HB DECK BUILDER v13</b> — 自動同期対応（外部JSON/CSVフィード＋定期自動チェック）
+    </div>
+    <div>
+      枚数: <b id="totalCnt">0</b> / 50 ｜
+      赤: <b id="cRed">0</b> ｜
+      青: <b id="cBlue">0</b> ｜
+      緑: <b id="cGreen">0</b> ｜
+      ワザ: <b id="cWaza">0</b>
+      <button type="button" onclick="window.__hbOpenSyncModal()" class="btn-sync" style="margin-left:6px;">自動同期設定</button>
+      <button type="button" onclick="window.__hbOpenBatchModal()" class="btn-auto">画像URL一括取込</button>
+      <button type="button" onclick="window.__hbClear()">全消去</button>
+    </div>
+  </header>
+
+  <div class="sync-bar">
+    <div id="syncStatusText">自動同期：初期データ（44件）を表示中。フィードURLを設定すると起動時・定期実行で新規カードを自動反映します。</div>
+    <div style="display:flex;gap:6px;align-items:center;">
+      <button type="button" onclick="window.__hbSyncNow(false)">今すぐ同期</button>
+    </div>
+  </div>
+
+  <section class="deck-box">
+    <div><b>現在のデッキ（タップで1枚減らす）</b></div>
+    <div id="deckList" class="deck-cards-row">カードがまだ入っていません。下の「+追加」を押してください。</div>
+  </section>
+
+  <div class="toolbar">
+    <button type="button" id="btnViewCards" class="active" onclick="window.__hbSetView('cards')">カード画像一覧</button>
+    <button type="button" id="btnViewTable" onclick="window.__hbSetView('table')">表一覧</button>
+    <input type="search" id="qInput" placeholder="型番・カード名・種類・色で検索..." style="flex:1 1 160px;" />
+    <select id="colorSel">
+      <option value="ALL">全色</option>
+      <option value="赤">赤</option>
+      <option value="青">青</option>
+      <option value="緑">緑</option>
+      <option value="無色">無色</option>
+    </select>
+    <select id="typeSel">
+      <option value="ALL">全種類</option>
+      <option value="ホロビト">ホロビト</option>
+      <option value="ワザ">ワザ</option>
+    </select>
+    <span id="countLabel" style="color:#9ea6b5;">全44件</span>
+  </div>
+
+  <div id="cardsGrid" class="cards-grid"></div>
+
+  <div id="tableBox" class="table-box" style="display:none;">
+    <table>
+      <thead>
+        <tr>
+          <th>画像</th>
+          <th>型番</th>
+          <th>カード名</th>
+          <th>種類</th>
+          <th>色</th>
+          <th>コスト</th>
+          <th>レアリティ</th>
+          <th>収録</th>
+          <th>デッキ</th>
+          <th>操作</th>
+        </tr>
+      </thead>
+      <tbody id="cardTbody"></tbody>
+    </table>
+  </div>
+
+  <div id="imgModal" class="modal-bg">
+    <div class="modal-box">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <b id="modalTitle">カード画像の設定</b>
+        <button type="button" onclick="window.__hbCloseModal()">閉じる</button>
+      </div>
+      <div id="modalPreview" style="width:110px;margin:0 auto;"></div>
+      <label style="font-size:12px;color:#cbd5e1;">画像URLを入力
+        <input type="text" id="imgUrlInput" style="width:100%;margin-top:4px;" placeholder="https://example.com/card.png" />
+      </label>
+      <label style="font-size:12px;color:#cbd5e1;">スマホの写真・画像から選択
+        <input type="file" id="imgFileInput" accept="image/*" style="width:100%;margin-top:4px;" />
+      </label>
+      <div style="display:flex;gap:8px;justify-content:flex-end;">
+        <button type="button" onclick="window.__hbResetImg()">SVG表示に戻す</button>
+        <button type="button" class="btn-add" onclick="window.__hbSaveImg()">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="syncModal" class="modal-bg">
+    <div class="modal-box">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <b>「操作なしで新規カード追加」を実現する自動同期設定</b>
+        <button type="button" onclick="window.__hbCloseSyncModal()">閉じる</button>
+      </div>
+      <div class="help-text">
+        <b>仕組み：</b><br>
+        HTML単体ファイルは配信された時点のコードで固定されるため、<b>更新されたカードJSONまたはCSVを配信するフィードURL（GitHub Pages / Google Sheets公開CSV / 自前JSONなど）</b>を一度設定しておくと、次回以降はアプリを開くだけで新規カードが自動マージされます。<br>
+        ※ 公式検索ページ（<code>takaratomy.co.jp</code>）をブラウザから直接クロスオリジン取得するとCORS制限で弾かれることがあるため、定期更新したJSON/CSVフィードURLを指定するのが最も安定します。
+      </div>
+      <label style="font-size:12px;color:#cbd5e1;">カードデータ配信URL（JSON配列 または CSV）
+        <input type="url" id="feedUrlInput" style="width:100%;margin-top:4px;" placeholder="https://your-host.example.com/cards.json (または .csv)" />
+      </label>
+      <label style="font-size:12px;color:#cbd5e1;">自動チェック間隔
+        <select id="syncIntervalSel" style="width:100%;margin-top:4px;">
+          <option value="0">ページを開いた時のみ</option>
+          <option value="15">15分ごと</option>
+          <option value="60">60分ごと</option>
+          <option value="360">6時間ごと</option>
+        </select>
+      </label>
+      <div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;">
+        <button type="button" onclick="window.__hbResetSyncedCards()">同期キャッシュをリセット</button>
+        <button type="button" class="btn-add" onclick="window.__hbSaveSyncConfig()">保存してすぐ同期</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="batchModal" class="modal-bg">
+    <div class="modal-box">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <b>画像URL一括取込・自動抽出</b>
+        <button type="button" onclick="window.__hbCloseBatchModal()">閉じる</button>
+      </div>
+      <div class="help-text">
+        「<code>カード名 https://.../xxx.jpg</code>」やURL一覧を貼り付けて「自動照合して反映」を押すと、カード名・型番から一括で紐づけます。
+      </div>
+      <textarea id="batchUrlBox" rows="8" style="width:100%;" placeholder="例：&#10;滅獣 ガシャドクロ https://example.com/hb01-099.png&#10;レオまる https://example.com/hb01-002.png"></textarea>
+      <div id="batchStatus" style="font-size:12px;color:#fde68a;"></div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;">
+        <button type="button" onclick="window.__hbClearAllCustomImgs()">全画像リセット</button>
+        <button type="button" class="btn-add" onclick="window.__hbApplyBatchUrls()">自動照合して反映</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  (function () {
+    var BASE_CARDS = [
+      {"id": "HB01-099", "name": "滅獣 ガシャドクロ", "type": "ホロビト", "color": "青", "cost": 8, "power": 8000, "rarity": "SR", "set": "HB-BP01", "tribe": "ドクロ・ギャング", "illustrator": "KIRITADA", "imageUrl": "", "text": "●このホロビトのバトルが終わったとき、自分のエナを全て未使用にする。その後、自分のエナを4枚選び、それを使用済みにする。\n【終 ラストオーバーT】このホロビトを見せて手札に加え、カードを1枚引く。さらに自分のハートが1枚以下なら、オーバービートで出せる。（コストは支払わない）"},
+      {"id": "HB01-002", "name": "レオまる", "type": "ホロビト", "color": "赤", "cost": null, "power": null, "rarity": "C / DR", "set": "HB-BP01", "tribe": "", "illustrator": "", "imageUrl": "", "text": "収録先：HB-BP01 拡張パック第一弾 ホロビート\n詳細は公式カード検索をご確認ください。"},
+      {"id": "HB01-010", "name": "二番戦陣", "type": "ワザ", "color": "赤", "cost": null, "power": null, "rarity": "C", "set": "HB-BP01", "tribe": "", "illustrator": "", "imageUrl": "", "text": "収録先：HB-BP01 拡張パック第一弾 ホロビート\n詳細は公式カード検索をご確認ください。"},
+      {"id": "HB01-022", "name": "カオナシライダー", "type": "ホロビト", "color": "青", "cost": null, "power": null, "rarity": "R", "set": "HB-BP01", "tribe": "", "illustrator": "", "imageUrl": "", "text": "収録先：HB-BP01 拡張パック第一弾 ホロビート\n詳細は公式カード検索をご確認ください。"},
+      {"id": "HB01-031", "name": "妖狐 七尾", "type": "ホロビト", "color": "赤", "cost": null, "power": null, "rarity": "SR / DR", "set": "HB-BP01", "tribe": "", "illustrator": "", "imageUrl": "", "text": "収録先：HB-BP01 拡張パック第一弾 ホロビート\n詳細は公式カード検索をご確認ください。"},
+      {"id": "HB01-033", "name": "雷迅合身 レオジン", "type": "ホロビト", "color": "赤", "cost": null, "power": null, "rarity": "SEC / DR / SR", "set": "HB-BP01", "tribe": "", "illustrator": "", "imageUrl": "", "text": "収録先：HB-BP01 拡張パック第一弾 ホロビート\n詳細は公式カード検索をご確認ください。"},
+      {"id": "HB01-034", "name": "しなずいさま", "type": "ホロビト", "color": "緑", "cost": null, "power": null, "rarity": "DR", "set": "HB-BP01", "tribe": "", "illustrator": "", "imageUrl": "", "text": "収録先：HB-BP01 拡張パック第一弾 ホロビート\n詳細は公式カード検索をご確認ください。"},
+      {"id": "HB01-064", "name": "滅獣 ジャンボ", "type": "ホロビト", "color": "緑", "cost": null, "power": null, "rarity": "DR / SR", "set": "HB-BP01", "tribe": "", "illustrator": "", "imageUrl": "", "text": "収録先：HB-BP01 拡張パック第一弾 ホロビート\n詳細は公式カード検索をご確認ください。"},
+      {"id": "HB01-068", "name": "天狗 九郎坊", "type": "ホロビト", "color": "青", "cost": null, "power": null, "rarity": "C", "set": "HB-BP01", "tribe": "", "illustrator": "", "imageUrl": "", "text": "収録先：HB-BP01 拡張パック第一弾 ホロビート\n詳細は公式カード検索をご確認ください。"},
+      {"id": "HB01/PR-028", "name": "ジンと奮雷するレオ", "type": "ホロビト", "color": "赤", "cost": null, "power": null, "rarity": "UC", "set": "PR", "tribe": "", "illustrator": "", "imageUrl": "", "text": "収録先：PRカード\n詳細は公式カード検索をご確認ください。"}
+    ];
+    var CARDS = BASE_CARDS.map(function (c) { return Object.assign({}, c); });
+    var NEW_IDS = {};
+
+    var STORAGE_IMGS = "hb_v13_custom_imgs";
+    var STORAGE_SYNCED_CARDS = "hb_v13_synced_cards";
+    var STORAGE_SYNC_CFG = "hb_v13_sync_cfg";
+
+    var deck = {};
+    var viewMode = "cards";
+    var editingId = null;
+    var timerHandle = null;
+
+    var syncConfig = { feedUrl: "./data/cards.json", intervalMin: 60 };
+    try {
+      var cfgRaw = localStorage.getItem(STORAGE_SYNC_CFG);
+      if (cfgRaw) {
+        var parsedCfg = JSON.parse(cfgRaw);
+        if (parsedCfg && typeof parsedCfg === "object") {
+          syncConfig.feedUrl = parsedCfg.feedUrl || "";
+          syncConfig.intervalMin = Number(parsedCfg.intervalMin || 0);
+        }
+      }
+    } catch (_) {}
+
+    function mergeCardLists(incomingList, markNew) {
+      if (!Array.isArray(incomingList) || !incomingList.length) return 0;
+      var indexById = {};
+      var indexByName = {};
+      CARDS.forEach(function (c, idx) {
+        if (c.id) indexById[String(c.id).trim().toUpperCase()] = idx;
+        if (c.name) indexByName[String(c.name).trim()] = idx;
+      });
+
+      var addedCount = 0;
+      incomingList.forEach(function (item) {
+        if (!item || !item.name) return;
+        var id = String(item.id || ("NEW-" + String(item.name).trim())).trim();
+        var idKey = id.toUpperCase();
+        var nameKey = String(item.name).trim();
+        var existingIdx = Object.prototype.hasOwnProperty.call(indexById, idKey)
+          ? indexById[idKey]
+          : (Object.prototype.hasOwnProperty.call(indexByName, nameKey) ? indexByName[nameKey] : -1);
+
+        if (existingIdx >= 0) {
+          var cur = CARDS[existingIdx];
+          CARDS[existingIdx] = Object.assign({}, cur, {
+            name: nameKey || cur.name,
+            type: item.type || cur.type || "ホロビト",
+            color: item.color || cur.color || "無色",
+            cost: (item.cost !== undefined && item.cost !== "") ? item.cost : cur.cost,
+            power: (item.power !== undefined && item.power !== "") ? item.power : cur.power,
+            rarity: (item.rarity !== undefined && item.rarity !== "") ? item.rarity : cur.rarity,
+            set: (item.set !== undefined && item.set !== "") ? item.set : cur.set,
+            tribe: (item.tribe !== undefined && item.tribe !== "") ? item.tribe : cur.tribe,
+            illustrator: (item.illustrator !== undefined && item.illustrator !== "") ? item.illustrator : cur.illustrator,
+            imageUrl: item.imageUrl || cur.imageUrl || "",
+            text: (item.text !== undefined && item.text !== "") ? item.text : cur.text
+          });
+        } else {
+          var newCard = {
+            id: id,
+            name: nameKey,
+            type: item.type || "ホロビト",
+            color: item.color || "無色",
+            cost: (item.cost === "" || item.cost === undefined) ? null : item.cost,
+            power: (item.power === "" || item.power === undefined) ? null : item.power,
+            rarity: item.rarity || "",
+            set: item.set || "NEW",
+            tribe: item.tribe || "",
+            illustrator: item.illustrator || "",
+            imageUrl: item.imageUrl || "",
+            text: item.text || ""
+          };
+          CARDS.push(newCard);
+          indexById[idKey] = CARDS.length - 1;
+          indexByName[nameKey] = CARDS.length - 1;
+          if (markNew) NEW_IDS[id] = true;
+          addedCount++;
+        }
+      });
+      return addedCount;
+    }
+
+    function parseCsvToCards(csvText) {
+      var lines = String(csvText || "").split(/\r?\n/).filter(function (l) { return l.trim() !== ""; });
+      if (lines.length < 2) return [];
+      function splitLine(line) {
+        var res = [], cur = "", inQ = false;
+        for (var i = 0; i < line.length; i++) {
+          var ch = line[i];
+          if (ch === '"') {
+            if (inQ && line[i + 1] === '"') { cur += '"'; i++; }
+            else inQ = !inQ;
+          } else if (ch === "," && !inQ) {
+            res.push(cur); cur = "";
+          } else cur += ch;
+        }
+        res.push(cur);
+        return res;
+      }
+      var headers = splitLine(lines[0]).map(function (h) { return h.trim(); });
+      var out = [];
+      for (var r = 1; r < lines.length; r++) {
+        var cols = splitLine(lines[r]);
+        var obj = {};
+        headers.forEach(function (h, idx) { obj[h] = (cols[idx] || "").trim(); });
+        if (obj.name) out.push(obj);
+      }
+      return out;
+    }
+
+    try {
+      var syncedRaw = localStorage.getItem(STORAGE_SYNCED_CARDS);
+      if (syncedRaw) {
+        var syncedArr = JSON.parse(syncedRaw);
+        mergeCardLists(syncedArr, false);
+      }
+    } catch (_) {}
+
+    try {
+      var savedImgs = localStorage.getItem(STORAGE_IMGS);
+      if (savedImgs) {
+        var map = JSON.parse(savedImgs);
+        CARDS.forEach(function (c) {
+          if (map && Object.prototype.hasOwnProperty.call(map, c.id)) {
+            c.imageUrl = map[c.id] || "";
+          }
+        });
+      }
+    } catch (_) {}
+
+    function persistImgs() {
+      try {
+        var map = {};
+        CARDS.forEach(function (c) {
+          if (c.imageUrl) map[c.id] = c.imageUrl;
+        });
+        localStorage.setItem(STORAGE_IMGS, JSON.stringify(map));
+      } catch (_) {}
+    }
+
+    function persistSyncedCards() {
+      try {
+        localStorage.setItem(STORAGE_SYNCED_CARDS, JSON.stringify(CARDS));
+      } catch (_) {}
+    }
+
+    function esc(s) {
+      return String(s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+    }
+
+    function totalCount() {
+      var s = 0;
+      for (var k in deck) {
+        if (Object.prototype.hasOwnProperty.call(deck, k)) s += deck[k];
+      }
+      return s;
+    }
+
+    function findCard(id) {
+      for (var i = 0; i < CARDS.length; i++) {
+        if (CARDS[i].id === id) return CARDS[i];
+      }
+      return null;
+    }
+
+    function paletteForColor(col) {
+      if (col === "赤") return { bg1: "#7f1d1d", bg2: "#2a0a0d", badge: "#ef4444", ring: "#fca5a5" };
+      if (col === "青") return { bg1: "#1e3a8a", bg2: "#0b152b", badge: "#3b82f6", ring: "#93c5fd" };
+      if (col === "緑") return { bg1: "#14532d", bg2: "#081f12", badge: "#22c55e", ring: "#86efac" };
+      return { bg1: "#334155", bg2: "#111827", badge: "#94a3b8", ring: "#cbd5e1" };
+    }
+
+    function renderCardArtwork(c) {
+      if (c.imageUrl && String(c.imageUrl).trim() !== "") {
+        return '<img src="' + esc(c.imageUrl.trim()) + '" alt="' + esc(c.name) + '" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'block\';" />'
+          + renderSvgFallback(c, true);
+      }
+      return renderSvgFallback(c, false);
+    }
+
+    function renderSvgFallback(c, hiddenInitially) {
+      var p = paletteForColor(c.color);
+      var gradId = "g_" + String(c.id).replace(/[^A-Za-z0-9]/g, "_");
+      var costStr = (c.cost === null || c.cost === undefined || c.cost === "") ? "" : ("COST " + esc(c.cost));
+      var rarityStr = esc(c.rarity || c.set || "HB");
+      var typeStr = esc(c.type || "ホロビト");
+      var nameStr = esc(c.name || "");
+      var idStr = esc(c.id || "");
+      var disp = hiddenInitially ? 'style="display:none;"' : '';
+
+      return '<svg viewBox="0 0 200 280" xmlns="http://www.w3.org/2000/svg" ' + disp + '>'
+        + '<defs><linearGradient id="' + gradId + '" x1="0" y1="0" x2="0" y2="1">'
+        + '<stop offset="0%" stop-color="' + p.bg1 + '"/>'
+        + '<stop offset="100%" stop-color="' + p.bg2 + '"/>'
+        + '</linearGradient></defs>'
+        + '<rect x="0" y="0" width="200" height="280" rx="10" fill="url(#' + gradId + ')"/>'
+        + '<rect x="8" y="8" width="184" height="264" rx="7" fill="none" stroke="' + p.ring + '" stroke-width="1.5" stroke-opacity="0.55"/>'
+        + '<rect x="14" y="14" width="172" height="22" rx="4" fill="rgba(0,0,0,0.45)"/>'
+        + '<text x="20" y="29" fill="#f8fafc" font-size="11" font-weight="700" font-family="sans-serif">' + idStr + '</text>'
+        + '<text x="180" y="29" fill="' + p.ring + '" font-size="11" font-weight="800" text-anchor="end" font-family="sans-serif">' + esc(c.color || "無") + '</text>'
+        + '<circle cx="100" cy="112" r="44" fill="rgba(0,0,0,0.35)" stroke="' + p.badge + '" stroke-width="2.5"/>'
+        + '<text x="100" y="108" fill="#ffffff" font-size="13" font-weight="800" text-anchor="middle" font-family="sans-serif">' + typeStr + '</text>'
+        + '<text x="100" y="128" fill="' + p.ring + '" font-size="11" font-weight="700" text-anchor="middle" font-family="sans-serif">' + (costStr || rarityStr) + '</text>'
+        + '<rect x="14" y="172" width="172" height="62" rx="6" fill="rgba(15,23,42,0.82)" stroke="rgba(255,255,255,0.2)"/>'
+        + '<text x="100" y="208" fill="#ffffff" font-size="15" font-weight="800" text-anchor="middle" font-family="sans-serif">' + nameStr.slice(0, 11) + '</text>'
+        + '<rect x="14" y="242" width="172" height="22" rx="4" fill="rgba(0,0,0,0.45)"/>'
+        + '<text x="20" y="257" fill="#cbd5e1" font-size="10" font-family="sans-serif">' + esc(c.set || "HB-BP01") + '</text>'
+        + '<text x="180" y="257" fill="#fde68a" font-size="10" font-weight="700" text-anchor="end" font-family="sans-serif">' + rarityStr + '</text>'
+        + '</svg>';
+    }
+
+    function renderDeck() {
+      var box = document.getElementById("deckList");
+      var keys = Object.keys(deck).filter(function (k) { return deck[k] > 0; });
+      var red = 0, blue = 0, green = 0, waza = 0;
+      keys.forEach(function (k) {
+        var c = findCard(k);
+        var n = deck[k];
+        if (!c) return;
+        if (c.color === "赤") red += n;
+        if (c.color === "青") blue += n;
+        if (c.color === "緑") green += n;
+        if (c.type === "ワザ") waza += n;
+      });
+      document.getElementById("totalCnt").textContent = String(totalCount());
+      document.getElementById("cRed").textContent = String(red);
+      document.getElementById("cBlue").textContent = String(blue);
+      document.getElementById("cGreen").textContent = String(green);
+      document.getElementById("cWaza").textContent = String(waza);
+
+      if (!keys.length) {
+        box.innerHTML = "カードがまだ入っていません。下の「+追加」を押してください。";
+        return;
+      }
+      box.innerHTML = "";
+      keys.forEach(function (k) {
+        var c = findCard(k);
+        if (!c) return;
+        var chip = document.createElement("div");
+        chip.className = "deck-mini-card";
+        chip.title = c.name + "（タップで1枚減らす）";
+        chip.innerHTML = renderCardArtwork(c) + '<div class="deck-mini-qty">' + esc(c.name).slice(0, 6) + ' ×' + deck[k] + '</div>';
+        chip.onclick = function () { window.__hbSub(k); };
+        box.appendChild(chip);
+      });
+    }
+
+    function getFilteredList() {
+      var q = (document.getElementById("qInput").value || "").trim().toLowerCase();
+      var col = document.getElementById("colorSel").value;
+      var typ = document.getElementById("typeSel").value;
+      return CARDS.filter(function (c) {
+        if (col !== "ALL" && c.color !== col) return false;
+        if (typ !== "ALL" && c.type !== typ) return false;
+        if (q) {
+          var s = (c.id + " " + c.name + " " + c.type + " " + c.color + " " + (c.rarity || "")).toLowerCase();
+          if (s.indexOf(q) === -1) return false;
+        }
+        return true;
+      });
+    }
+
+    function renderCardsGrid(list) {
+      var grid = document.getElementById("cardsGrid");
+      grid.innerHTML = "";
+      list.forEach(function (c) {
+        var n = deck[c.id] || 0;
+        var isNew = !!NEW_IDS[c.id];
+        var tile = document.createElement("div");
+        tile.className = "card-tile";
+
+        var frame = document.createElement("div");
+        frame.className = "card-art-frame";
+        frame.innerHTML = renderCardArtwork(c);
+
+        var title = document.createElement("div");
+        title.className = "card-tile-title";
+        title.innerHTML = esc(c.name) + (isNew ? '<span class="badge-new">NEW</span>' : "");
+
+        var meta = document.createElement("div");
+        meta.className = "card-tile-meta";
+        meta.innerHTML = '<span>' + esc(c.id) + '</span><span>' + n + '/4枚</span>';
+
+        var ops = document.createElement("div");
+        ops.className = "card-tile-ops";
+
+        var imgBtn = document.createElement("button");
+        imgBtn.type = "button";
+        imgBtn.className = "btn-img";
+        imgBtn.textContent = "画像";
+        imgBtn.onclick = function () { window.__hbOpenImgModal(c.id); };
+
+        var subBtn = document.createElement("button");
+        subBtn.type = "button";
+        subBtn.className = "btn-sub";
+        subBtn.textContent = "-1";
+        subBtn.disabled = n <= 0;
+        subBtn.onclick = function () { window.__hbSub(c.id); };
+
+        var addBtn = document.createElement("button");
+        addBtn.type = "button";
+        addBtn.className = "btn-add";
+        addBtn.textContent = "+追加";
+        addBtn.disabled = n >= 4 || totalCount() >= 50;
+        addBtn.onclick = function () { window.__hbAdd(c.id); };
+
+        ops.appendChild(imgBtn);
+        ops.appendChild(subBtn);
+        ops.appendChild(addBtn);
+
+        tile.appendChild(frame);
+        tile.appendChild(title);
+        tile.appendChild(meta);
+        tile.appendChild(ops);
+        grid.appendChild(tile);
+      });
+    }
+
+    function renderTableView(list) {
+      var tbody = document.getElementById("cardTbody");
+      tbody.innerHTML = "";
+      list.forEach(function (c) {
+        var n = deck[c.id] || 0;
+        var isNew = !!NEW_IDS[c.id];
+        var tr = document.createElement("tr");
+        tr.innerHTML =
+          '<td><span class="mini-thumb">' + renderCardArtwork(c) + '</span></td>' +
+          "<td>" + esc(c.id) + "</td>" +
+          "<td><b>" + esc(c.name) + "</b>" + (isNew ? '<span class="badge-new">NEW</span>' : "") + "</td>" +
+          "<td>" + esc(c.type) + "</td>" +
+          "<td>" + esc(c.color) + "</td>" +
+          "<td>" + (c.cost === null || c.cost === undefined ? "-" : esc(c.cost)) + "</td>" +
+          "<td>" + esc(c.rarity || "-") + "</td>" +
+          "<td>" + esc(c.set || "-") + "</td>" +
+          "<td><b>" + n + "</b> / 4</td>" +
+          "<td></td>";
+        var tdOp = tr.lastChild;
+
+        var imgBtn = document.createElement("button");
+        imgBtn.type = "button";
+        imgBtn.className = "btn-img";
+        imgBtn.textContent = "画像";
+        imgBtn.onclick = function () { window.__hbOpenImgModal(c.id); };
+
+        var subBtn = document.createElement("button");
+        subBtn.type = "button";
+        subBtn.className = "btn-sub";
+        subBtn.textContent = "-1";
+        subBtn.disabled = n <= 0;
+        subBtn.onclick = function () { window.__hbSub(c.id); };
+
+        var addBtn = document.createElement("button");
+        addBtn.type = "button";
+        addBtn.className = "btn-add";
+        addBtn.textContent = "+追加";
+        addBtn.disabled = n >= 4 || totalCount() >= 50;
+        addBtn.onclick = function () { window.__hbAdd(c.id); };
+
+        tdOp.appendChild(imgBtn);
+        tdOp.appendChild(subBtn);
+        tdOp.appendChild(addBtn);
+        tbody.appendChild(tr);
+      });
+    }
+
+    function renderAll() {
+      var list = getFilteredList();
+      document.getElementById("countLabel").textContent = "全" + CARDS.length + "件（表示 " + list.length + "件）";
+      document.getElementById("btnViewCards").className = viewMode === "cards" ? "active" : "";
+      document.getElementById("btnViewTable").className = viewMode === "table" ? "active" : "";
+      document.getElementById("cardsGrid").style.display = viewMode === "cards" ? "grid" : "none";
+      document.getElementById("tableBox").style.display = viewMode === "table" ? "block" : "none";
+
+      renderDeck();
+      if (viewMode === "cards") renderCardsGrid(list);
+      else renderTableView(list);
+    }
+
+    window.__hbSyncNow = function (silent) {
+      var url = (syncConfig.feedUrl || "").trim();
+      var statusEl = document.getElementById("syncStatusText");
+      if (!url) {
+        if (!silent) {
+          statusEl.textContent = "フィードURLが未設定です。「自動同期設定」からJSONまたはCSVの配信URLを設定してください。";
+        }
+        return;
+      }
+      statusEl.textContent = "自動同期中... (" + url + ")";
+      fetch(url, { cache: "no-store" })
+        .then(function (resp) {
+          if (!resp.ok) throw new Error("HTTP " + resp.status);
+          return resp.text();
+        })
+        .then(function (txt) {
+          var items = [];
+          var trimmed = txt.trim();
+          if (trimmed.charAt(0) === "[" || trimmed.charAt(0) === "{") {
+            var parsed = JSON.parse(trimmed);
+            items = Array.isArray(parsed) ? parsed : (Array.isArray(parsed.cards) ? parsed.cards : []);
+          } else {
+            items = parseCsvToCards(trimmed);
+          }
+          var added = mergeCardLists(items, true);
+          persistSyncedCards();
+          renderAll();
+          var nowStr = new Date().toLocaleTimeString("ja-JP");
+          statusEl.textContent = "最終同期: " + nowStr + "（合計 " + CARDS.length + "件 / 新規追加 " + added + "件）";
+        })
+        .catch(function (err) {
+          statusEl.textContent = "自動同期エラー: " + (err && err.message ? err.message : "取得失敗") + "（CORSやURLをご確認ください）";
+        });
+    };
+
+    function restartTimer() {
+      if (timerHandle) {
+        clearInterval(timerHandle);
+        timerHandle = null;
+      }
+      if (syncConfig.feedUrl && syncConfig.intervalMin > 0) {
+        timerHandle = setInterval(function () {
+          window.__hbSyncNow(true);
+        }, syncConfig.intervalMin * 60 * 1000);
+      }
+    }
+
+    window.__hbOpenSyncModal = function () {
+      document.getElementById("feedUrlInput").value = syncConfig.feedUrl || "";
+      document.getElementById("syncIntervalSel").value = String(syncConfig.intervalMin || 0);
+      document.getElementById("syncModal").className = "modal-bg open";
+    };
+    window.__hbCloseSyncModal = function () {
+      document.getElementById("syncModal").className = "modal-bg";
+    };
+    window.__hbSaveSyncConfig = function () {
+      syncConfig.feedUrl = (document.getElementById("feedUrlInput").value || "").trim();
+      syncConfig.intervalMin = Number(document.getElementById("syncIntervalSel").value || 0);
+      try { localStorage.setItem(STORAGE_SYNC_CFG, JSON.stringify(syncConfig)); } catch (_) {}
+      restartTimer();
+      window.__hbCloseSyncModal();
+      window.__hbSyncNow(false);
+    };
+    window.__hbResetSyncedCards = function () {
+      try { localStorage.removeItem(STORAGE_SYNCED_CARDS); } catch (_) {}
+      CARDS = BASE_CARDS.map(function (c) { return Object.assign({}, c); });
+      NEW_IDS = {};
+      renderAll();
+      document.getElementById("syncStatusText").textContent = "同期キャッシュをリセットし、初期44件に戻しました。";
+    };
+
+    window.__hbSetView = function (m) { viewMode = m; renderAll(); };
+    window.__hbAdd = function (id) {
+      var cur = deck[id] || 0;
+      if (totalCount() >= 50 || cur >= 4) return;
+      deck[id] = cur + 1;
+      renderAll();
+    };
+    window.__hbSub = function (id) {
+      var cur = deck[id] || 0;
+      if (cur <= 0) return;
+      if (cur === 1) delete deck[id];
+      else deck[id] = cur - 1;
+      renderAll();
+    };
+    window.__hbClear = function () { deck = {}; renderAll(); };
+
+    window.__hbOpenImgModal = function (id) {
+      var c = findCard(id);
+      if (!c) return;
+      editingId = id;
+      document.getElementById("modalTitle").textContent = c.name + " (" + c.id + ") の画像設定";
+      document.getElementById("imgUrlInput").value = c.imageUrl || "";
+      document.getElementById("imgFileInput").value = "";
+      document.getElementById("modalPreview").innerHTML = renderCardArtwork(c);
+      document.getElementById("imgModal").className = "modal-bg open";
+    };
+    window.__hbCloseModal = function () {
+      editingId = null;
+      document.getElementById("imgModal").className = "modal-bg";
+    };
+    window.__hbSaveImg = function () {
+      var c = findCard(editingId);
+      if (!c) return;
+      c.imageUrl = document.getElementById("imgUrlInput").value.trim();
+      persistImgs();
+      window.__hbCloseModal();
+      renderAll();
+    };
+    window.__hbResetImg = function () {
+      var c = findCard(editingId);
+      if (!c) return;
+      c.imageUrl = "";
+      document.getElementById("imgUrlInput").value = "";
+      persistImgs();
+      renderAll();
+      document.getElementById("modalPreview").innerHTML = renderCardArtwork(c);
+    };
+
+    window.__hbOpenBatchModal = function () {
+      document.getElementById("batchStatus").textContent = "";
+      document.getElementById("batchModal").className = "modal-bg open";
+    };
+    window.__hbCloseBatchModal = function () {
+      document.getElementById("batchModal").className = "modal-bg";
+    };
+    window.__hbClearAllCustomImgs = function () {
+      CARDS.forEach(function (c) { c.imageUrl = ""; });
+      persistImgs();
+      renderAll();
+      document.getElementById("batchStatus").textContent = "全カードのカスタム画像をリセットしました。";
+    };
+    window.__hbApplyBatchUrls = function () {
+      var raw = document.getElementById("batchUrlBox").value || "";
+      var lines = raw.split(/\r?\n/);
+      var matched = 0;
+
+      lines.forEach(function (line) {
+        var trimmed = line.trim();
+        if (!trimmed) return;
+        var urlMatch = trimmed.match(/https?:\/\/[^\s"']+/i);
+        if (!urlMatch) return;
+        var url = urlMatch[0];
+        var labelPart = trimmed.replace(url, "").trim().toLowerCase();
+
+        var target = null;
+        if (labelPart) {
+          target = CARDS.find(function (c) {
+            var cid = String(c.id || "").toLowerCase();
+            var cname = String(c.name || "").toLowerCase();
+            return (cid && cid !== "official-" && labelPart.indexOf(cid) !== -1) ||
+                   (cname && labelPart.indexOf(cname) !== -1);
+          });
+        }
+        if (!target) {
+          var lowUrl = url.toLowerCase();
+          target = CARDS.find(function (c) {
+            var cid = String(c.id || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+            return cid && cid.length >= 5 && lowUrl.replace(/[^a-z0-9]/g, "").indexOf(cid) !== -1;
+          });
+        }
+        if (target) {
+          target.imageUrl = url;
+          matched++;
+        }
+      });
+
+      persistImgs();
+      renderAll();
+      document.getElementById("batchStatus").textContent = matched + " 件のカードに画像URLを反映しました。";
+    };
+
+    document.getElementById("imgFileInput").addEventListener("change", function (e) {
+      var file = e.target.files && e.target.files[0];
+      if (!file) return;
+      var reader = new FileReader();
+      reader.onload = function (ev) {
+        document.getElementById("imgUrlInput").value = ev.target.result || "";
+        var c = findCard(editingId);
+        if (c) {
+          var temp = Object.assign({}, c, { imageUrl: ev.target.result || "" });
+          document.getElementById("modalPreview").innerHTML = renderCardArtwork(temp);
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+
+    document.getElementById("qInput").addEventListener("input", renderAll);
+    document.getElementById("colorSel").addEventListener("change", renderAll);
+    document.getElementById("typeSel").addEventListener("change", renderAll);
+
+    renderAll();
+    restartTimer();
+    if (syncConfig.feedUrl) {
+      window.__hbSyncNow(true);
+    }
+  })();
+  </script>
+</body>
+</html>
