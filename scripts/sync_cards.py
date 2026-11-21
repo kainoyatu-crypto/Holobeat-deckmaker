@@ -44,10 +44,10 @@ def load_existing_cards(path: Path) -> list[dict]:
     else:
         cards = []
 
-    # 過去のテスト同期で混入した仮レコード（OFFICIAL-xxx）を除去
+    # 仮名（Card 103 など）のゴミデータだけを除外し、正式カードは残す
     cleaned = [
         c for c in cards
-        if not str(c.get("id", "")).strip().upper().startswith("OFFICIAL-")
+        if not re.match(r"^Card\s+\d+$", str(c.get("name", "")).strip(), re.IGNORECASE)
     ]
     return cleaned
 
@@ -215,17 +215,23 @@ def scrape_official_items() -> list[dict]:
 
 
 def normalize_token(val: str) -> str:
-    # 全角英数字・記号のゆれや空白を吸収
     s = str(val or "").strip()
-    s = s.translate(str.maketrans("０１２３４５６７８９ＡＢＣＤＥＦＧＨＩＪＫＬＭＮＯＰＱＲＳＴＵＶＷＸＹＺａｂｃｄｅｆｇｈｉｊｋｌｍｎｏｐｑｒｓｔｕｖｗｘｙｚ－／",
-                                  "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-/"))
+    s = s.translate(str.maketrans(
+        "０１２３４５６７８９ＡＢＣＤＥＦＧＨＩＪＫＬＭＮＯＰＱＲＳＴＵＶＷＸＹＺａｂｃｄｅｆｇｈｉｊｋｌｍｎｏｐｑｒｓｔｕｖｗｘｙｚ－／",
+        "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-/",
+    ))
     return re.sub(r"\s+", "", s).upper()
 
 
-def merge_scraped_into_cards(existing_cards: list[dict], scraped_items: list[dict]) -> tuple[list[dict], int]:
-    matched_imgs = 0
+def extract_card_id_from_blob(blob: str) -> str:
+    m = re.search(r"(HB\d{2}(?:/PR)?-\d{3})", normalize_token(blob))
+    return m.group(1) if m else ""
 
-    # 長いカード名・型番から優先して誤爆を防ぐ
+
+def merge_scraped_into_cards(existing_cards: list[dict], scraped_items: list[dict]) -> tuple[list[dict], int, int]:
+    matched_imgs = 0
+    added_cards = 0
+
     indexed_cards = list(enumerate(existing_cards))
     indexed_cards.sort(key=lambda pair: len(normalize_token(pair[1].get("name", ""))), reverse=True)
 
@@ -234,17 +240,16 @@ def merge_scraped_into_cards(existing_cards: list[dict], scraped_items: list[dic
         if not src:
             continue
 
-        # 画像ファイル名も含めて照合対象にする（URLにHB01-010等が含まれる場合に対応）
         filename_part = Path(urlparse(src).path).stem
         blob = f"{row.get('alt', '')} {row.get('title', '')} {row.get('text', '')} {filename_part}"
         blob_norm = normalize_token(blob)
 
         matched_idx = None
 
-        # 1. 型番（ID）一致（例: HB01-010, HB01/PR-028）
+        # 1. 型番（ID）一致
         for idx, card in indexed_cards:
             cid_norm = normalize_token(card.get("id", ""))
-            if len(cid_norm) >= 4 and cid_norm in blob_norm:
+            if len(cid_norm) >= 4 and not cid_norm.startswith("OFFICIAL-") and cid_norm in blob_norm:
                 matched_idx = idx
                 break
 
@@ -259,19 +264,37 @@ def merge_scraped_into_cards(existing_cards: list[dict], scraped_items: list[dic
         if matched_idx is not None:
             existing_cards[matched_idx]["imageUrl"] = src
             matched_imgs += 1
+        else:
+            # ちゃんとしたカード名や型番が取れる場合のみ新規追加（仮名 Card xxx は作らない）
+            raw_name = (row.get("alt") or row.get("title") or "").strip()
+            if not raw_name or re.match(r"^Card\s+\d+$", raw_name, re.IGNORECASE):
+                continue
 
-    return existing_cards, matched_imgs
+            detected_id = extract_card_id_from_blob(blob) or f"OFFICIAL-{len(existing_cards) + added_cards + 1:03d}"
+            new_card = {
+                "id": detected_id,
+                "name": raw_name[:80],
+                "type": "",
+                "cost": 0,
+                "imageUrl": src,
+                "text": row.get("text", "")[:200],
+            }
+            existing_cards.append(new_card)
+            indexed_cards.append((len(existing_cards) - 1, new_card))
+            added_cards += 1
+
+    return existing_cards, matched_imgs, added_cards
 
 
 def main() -> None:
     existing_cards = load_existing_cards(DATA_JSON)
-    print(f"Loaded {len(existing_cards)} official cards from {DATA_JSON}")
+    print(f"Loaded {len(existing_cards)} cards from {DATA_JSON}")
 
     scraped_items = scrape_official_items()
-    updated_cards, matched_imgs = merge_scraped_into_cards(existing_cards, scraped_items)
+    updated_cards, matched_imgs, added_cards = merge_scraped_into_cards(existing_cards, scraped_items)
 
     save_cards(DATA_JSON, updated_cards)
-    print(f"Done. total_cards={len(updated_cards)}, matched_imgs={matched_imgs}")
+    print(f"Done. total_cards={len(updated_cards)}, matched_imgs={matched_imgs}, added_cards={added_cards}")
 
 
 if __name__ == "__main__":
