@@ -9,19 +9,26 @@
       --bg-base: #f4f5f7;
       --bg-surface: #ffffff;
       --bg-elevated: #eceef2;
-      --accent-amber: #e59400;
       --accent-emerald: #059669;
       --accent-rose: #e11d48;
       --text-primary: #111318;
       --text-secondary: #4b5563;
-      --border-hairline: rgba(17, 19, 24, 0.14);
+      --border-hairline: rgba(17, 19, 24, 0.15);
       --card-ratio: 63 / 88;
     }
 
     * {
       box-sizing: border-box;
       -webkit-tap-highlight-color: transparent;
+      -webkit-touch-callout: none;
       user-select: none;
+      -webkit-user-select: none;
+    }
+
+    input, textarea {
+      user-select: text;
+      -webkit-user-select: text;
+      -webkit-touch-callout: default;
     }
 
     html, body {
@@ -46,41 +53,42 @@
       background: var(--bg-surface);
     }
 
-    /* 上部バー（大きめロゴ＆操作ボタン） */
+    /* 1. スッキリさせた上部バー */
     .top-bar {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 10px 12px;
+      padding: 9px 12px;
       background: var(--bg-surface);
       border-bottom: 1px solid var(--border-hairline);
       flex-shrink: 0;
-      gap: 8px;
+      gap: 6px;
     }
 
     .logo-area {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
       min-width: 0;
+      flex: 1 1 auto;
     }
 
     .logo-mark {
-      font-size: 19px;
+      font-size: 16px;
       font-weight: 900;
-      letter-spacing: 0.04em;
+      letter-spacing: 0.02em;
       color: #000000;
       white-space: nowrap;
     }
 
     .help-dot {
-      width: 24px;
-      height: 24px;
+      width: 20px;
+      height: 20px;
       border-radius: 999px;
-      border: 1.5px solid var(--border-hairline);
+      border: 1px solid var(--border-hairline);
       background: var(--bg-elevated);
       color: var(--text-primary);
-      font-size: 13px;
+      font-size: 11px;
       font-weight: 900;
       display: grid;
       place-items: center;
@@ -90,7 +98,7 @@
 
     .top-actions {
       display: flex;
-      gap: 6px;
+      gap: 5px;
       flex-shrink: 0;
     }
 
@@ -98,9 +106,9 @@
       background: var(--bg-elevated);
       color: var(--text-primary);
       border: 1px solid var(--border-hairline);
-      border-radius: 10px;
-      padding: 7px 11px;
-      font-size: 12px;
+      border-radius: 8px;
+      padding: 6px 8px;
+      font-size: 11px;
       font-weight: 800;
       cursor: pointer;
       white-space: nowrap;
@@ -115,15 +123,15 @@
     .pill-btn.danger {
       background: #fff1f2;
       color: var(--accent-rose);
-      border-color: rgba(225, 29, 72, 0.28);
+      border-color: rgba(225, 29, 72, 0.3);
     }
 
-    /* デッキタブ＆枚数ストリップ */
+    /* 2. タブ＆枚数バー */
     .deck-meta-bar {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 8px 12px;
+      padding: 7px 12px;
       background: var(--bg-base);
       border-bottom: 1px solid var(--border-hairline);
       gap: 8px;
@@ -133,8 +141,8 @@
     .seg-tabs {
       display: inline-flex;
       background: var(--bg-elevated);
-      padding: 3px;
-      border-radius: 11px;
+      padding: 2px;
+      border-radius: 10px;
       border: 1px solid var(--border-hairline);
     }
 
@@ -142,9 +150,9 @@
       border: none;
       background: transparent;
       color: var(--text-secondary);
-      padding: 6px 13px;
+      padding: 6px 12px;
       border-radius: 8px;
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 800;
       cursor: pointer;
     }
@@ -152,7 +160,7 @@
     .seg-tab.active {
       background: var(--bg-surface);
       color: #000000;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
     }
 
     .counter-readout {
@@ -173,34 +181,43 @@
       color: var(--accent-rose);
     }
 
-    /* 中央デッキ表示エリア（10列・余白を詰めた全面表示） */
+    /* 3. 中央デッキ表示エリア（10列・空枠を大きく表示） */
     .deck-viewport {
       flex: 1 1 auto;
       min-height: 0;
-      margin: 0;
       background: var(--bg-base);
       padding: 6px;
       overflow-y: auto;
+      display: flex;
+      flex-direction: column;
     }
 
     .deck-grid {
+      flex: 1 1 auto;
       display: grid;
       grid-template-columns: repeat(10, 1fr);
       gap: 3px;
       align-content: start;
+      min-height: 100%;
     }
 
     .deck-empty {
       grid-column: 1 / -1;
+      height: 100%;
+      min-height: 220px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
       text-align: center;
       color: var(--text-secondary);
       font-size: 13px;
-      font-weight: 600;
-      line-height: 1.75;
-      padding: 36px 12px;
+      font-weight: 700;
+      line-height: 1.8;
+      padding: 24px 16px;
       background: var(--bg-surface);
-      border: 1px dashed var(--border-hairline);
-      border-radius: 10px;
+      border: 2px dashed rgba(17, 19, 24, 0.25);
+      border-radius: 14px;
     }
 
     .slot-tile {
@@ -219,6 +236,7 @@
       height: 100%;
       object-fit: cover;
       display: block;
+      pointer-events: none;
     }
 
     .fallback-card {
@@ -236,12 +254,12 @@
       overflow: hidden;
     }
 
-    /* 下部カードドック（横スクロール・しっかり大きめ） */
+    /* 4. 下部カードドック（横スクロール） */
     .dock-section {
       flex-shrink: 0;
       background: var(--bg-elevated);
       border-top: 1px solid var(--border-hairline);
-      padding: 8px 0 8px;
+      padding: 8px 0;
     }
 
     .dock-header {
@@ -265,7 +283,7 @@
 
     .dock-card {
       flex: 0 0 auto;
-      width: 78px;
+      width: 80px;
       aspect-ratio: var(--card-ratio);
       border-radius: 7px;
       overflow: hidden;
@@ -274,7 +292,7 @@
       box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
       position: relative;
       cursor: pointer;
-      transition: transform 0.12s ease;
+      transition: transform 0.1s ease;
     }
 
     .dock-card:active {
@@ -300,6 +318,7 @@
       font-weight: 900;
       padding: 0 5px;
       line-height: 18px;
+      pointer-events: none;
     }
 
     .dock-badge.max {
@@ -307,7 +326,22 @@
       color: #ffffff;
     }
 
-    /* 大きめ検索・ツールバー */
+    .dock-info-btn {
+      position: absolute;
+      bottom: 3px;
+      right: 3px;
+      background: rgba(255, 255, 255, 0.92);
+      color: #111318;
+      border: 1px solid rgba(17, 19, 24, 0.25);
+      border-radius: 5px;
+      font-size: 9px;
+      font-weight: 800;
+      padding: 1px 4px;
+      line-height: 13px;
+      cursor: pointer;
+    }
+
+    /* 5. 下部検索・ツールバー */
     .control-bar {
       display: flex;
       align-items: center;
@@ -338,7 +372,6 @@
       color: var(--text-primary);
       font-size: 15px;
       font-weight: 600;
-      user-select: text;
     }
 
     .clear-btn {
@@ -366,6 +399,34 @@
       background: #111318;
       color: #ffffff;
       border-color: #111318;
+    }
+
+    /* 画面中央に大きく出るクリア通知 */
+    .center-notice {
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+      z-index: 250;
+      background: rgba(17, 19, 24, 0.14);
+    }
+
+    .center-notice.show {
+      display: flex;
+    }
+
+    .center-notice-box {
+      background: rgba(17, 19, 24, 0.94);
+      color: #ffffff;
+      padding: 20px 32px;
+      border-radius: 18px;
+      font-size: 24px;
+      font-weight: 900;
+      letter-spacing: 0.04em;
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.28);
+      text-align: center;
     }
 
     /* モーダル */
@@ -465,12 +526,11 @@
       padding: 10px 12px;
       font-size: 13px;
       margin-bottom: 8px;
-      user-select: text;
     }
 
     .recipe-box {
       width: 100%;
-      height: 120px;
+      height: 115px;
       border-radius: 10px;
       background: var(--bg-base);
       color: var(--text-primary);
@@ -478,7 +538,6 @@
       padding: 10px;
       font-size: 12px;
       font-family: monospace;
-      user-select: text;
     }
 
     .saved-slot-item {
@@ -550,15 +609,15 @@
     .toast.show { opacity: 1; }
   </style>
 </head>
-<body>
+<body oncontextmenu="return false;">
   <div class="studio">
     <header class="top-bar">
       <div class="logo-area">
         <span class="logo-mark">HOROBEAT STUDIO</span>
-        <button class="help-dot" id="btnAbout" title="サイト情報・使い方">?</button>
+        <button class="help-dot" id="btnAbout" title="使い方・免責">?</button>
       </div>
       <div class="top-actions">
-        <button class="pill-btn" id="btnDecks">保存一覧</button>
+        <button class="pill-btn" id="btnDecks">保存</button>
         <button class="pill-btn" id="btnStats">分布</button>
         <button class="pill-btn primary" id="btnShare">出力</button>
         <button class="pill-btn danger" id="btnClear">クリア</button>
@@ -581,7 +640,7 @@
 
     <section class="dock-section">
       <div class="dock-header">
-        <span>CARD DOCK（タップ・上スワイプで追加 / 長押しで詳細）</span>
+        <span>CARD DOCK（タップ・上スワイプで追加 / ちょい長押しで詳細）</span>
         <span id="poolCountLabel">0件</span>
       </div>
       <div class="dock-scroll" id="dockScroll"></div>
@@ -598,6 +657,10 @@
     </footer>
   </div>
 
+  <div class="center-notice" id="centerNotice">
+    <div class="center-notice-box" id="centerNoticeText">クリアしました</div>
+  </div>
+
   <div class="toast" id="toast"></div>
 
   <!-- 絞り込み -->
@@ -607,6 +670,8 @@
         <span>カード絞り込み</span>
         <button class="sheet-close" data-close="filterOverlay">×</button>
       </div>
+      <div style="font-size:12px;color:var(--text-secondary);margin-bottom:6px;font-weight:700;">レアリティ</div>
+      <div class="chips" id="rarityChipList"></div>
       <div style="font-size:12px;color:var(--text-secondary);margin-bottom:6px;font-weight:700;">色</div>
       <div class="chips" id="colorChipList"></div>
       <div style="font-size:12px;color:var(--text-secondary);margin-bottom:6px;font-weight:700;">種類</div>
@@ -700,9 +765,9 @@
       </div>
       <div style="font-size:13px;color:var(--text-secondary);line-height:1.7;">
         <p style="margin-top:0;color:var(--text-primary);"><strong>基本操作：</strong><br>
-        ・下部のカードをタップまたは上スワイプでデッキに1枚追加（基準50枚）<br>
-        ・下部カードを長押しでカード画像・効果テキストを拡大表示<br>
-        ・デッキ内のカードをタップまたは下スワイプで1枚削除</p>
+        ・下部のカードをタップまたは上スワイプで追加（50枚基準）<br>
+        ・下部カードをちょい長押し（約0.26秒）または「詳細」で拡大表示<br>
+        ・デッキ内のカードをタップまたは下スワイプで削除</p>
         <p style="margin-bottom:0;">※ 本サイトは『ホロビートカードゲーム』の非公式ファンメイド・デッキ構築支援ツールです。掲載されているカード情報・画像の権利は各権利者に帰属します。</p>
       </div>
     </div>
@@ -711,20 +776,40 @@
   <script>
     const MAX_PER_CARD = 4;
     const TARGET_COUNTS = { main: 50, sub: 10 };
+    const LONG_PRESS_MS = 260;
     const SAVE_KEY = "horobeat_studio_deck_v1";
     const SLOTS_KEY = "horobeat_studio_slots_v1";
 
     let cards = [];
     let zone = "main";
     let deckData = { main: {}, sub: {} };
-    let state = { q: "", color: "ALL", type: "ALL", img: "ALL", sort: "id" };
+    let state = { q: "", rarity: "ALL", color: "ALL", type: "ALL", img: "ALL", sort: "id" };
+
+    function detectRarity(card) {
+      if (card.rarity) return String(card.rarity).trim().toUpperCase();
+      const hay = `${card.id || ""} ${card.type || ""} ${card.text || ""}`.toUpperCase();
+      for (const r of ["SEC", "DR", "SR", "RR", "R", "UC", "C", "PR"]) {
+        const re = new RegExp(`(^|[^A-Z])${r}([^A-Z]|$)`);
+        if (re.test(hay)) return r;
+      }
+      return "その他";
+    }
+
+    function showCenterNotice(msg) {
+      const wrap = document.getElementById("centerNotice");
+      const box = document.getElementById("centerNoticeText");
+      box.textContent = msg;
+      wrap.classList.add("show");
+      clearTimeout(showCenterNotice._t);
+      showCenterNotice._t = setTimeout(() => wrap.classList.remove("show"), 950);
+    }
 
     function toast(msg) {
       const el = document.getElementById("toast");
       el.textContent = msg;
       el.classList.add("show");
       clearTimeout(toast._timer);
-      toast._timer = setTimeout(() => el.classList.remove("show"), 1600);
+      toast._timer = setTimeout(() => el.classList.remove("show"), 1500);
     }
 
     function zoneTotal(z) {
@@ -846,12 +931,13 @@
       const q = state.q.trim().toLowerCase();
       return cards
         .filter(c => {
+          if (state.rarity !== "ALL" && detectRarity(c) !== state.rarity) return false;
           if (state.color !== "ALL" && (c.color || "無") !== state.color) return false;
           if (state.type !== "ALL" && (c.type || "その他") !== state.type) return false;
           if (state.img === "HAS" && !c.imageUrl) return false;
           if (state.img === "NONE" && c.imageUrl) return false;
           if (q) {
-            const text = `${c.id || ""} ${c.name || ""} ${c.text || ""}`.toLowerCase();
+            const text = `${c.id || ""} ${c.name || ""} ${c.text || ""} ${detectRarity(c)}`.toLowerCase();
             if (!text.includes(q)) return false;
           }
           return true;
@@ -883,6 +969,16 @@
           el.appendChild(badge);
         }
 
+        const infoBtn = document.createElement("button");
+        infoBtn.type = "button";
+        infoBtn.className = "dock-info-btn";
+        infoBtn.textContent = "詳細";
+        infoBtn.addEventListener("click", e => {
+          e.stopPropagation();
+          openDetail(card);
+        });
+        el.appendChild(infoBtn);
+
         let startX = 0, startY = 0, timer = null, didLong = false;
         el.addEventListener("touchstart", e => {
           startX = e.touches[0].clientX;
@@ -891,10 +987,15 @@
           timer = setTimeout(() => {
             didLong = true;
             openDetail(card);
-          }, 420);
+          }, LONG_PRESS_MS);
         }, { passive: true });
 
-        el.addEventListener("touchmove", () => clearTimeout(timer), { passive: true });
+        el.addEventListener("touchmove", e => {
+          const dx = Math.abs(e.touches[0].clientX - startX);
+          const dy = Math.abs(e.touches[0].clientY - startY);
+          if (dx > 12 || dy > 12) clearTimeout(timer);
+        }, { passive: true });
+
         el.addEventListener("touchend", e => {
           clearTimeout(timer);
           if (didLong) return;
@@ -905,7 +1006,10 @@
             addToDeck(card.id);
           }
         });
-        el.addEventListener("click", () => { if (!didLong) addToDeck(card.id); });
+
+        el.addEventListener("click", () => {
+          if (!didLong) addToDeck(card.id);
+        });
 
         scroll.appendChild(el);
       });
@@ -919,7 +1023,7 @@
       document.getElementById("zoneTarget").textContent = target;
       document.getElementById("counterReadout").classList.toggle("over", total > target);
 
-      const filtered = state.color !== "ALL" || state.type !== "ALL" || state.img !== "ALL";
+      const filtered = state.rarity !== "ALL" || state.color !== "ALL" || state.type !== "ALL" || state.img !== "ALL";
       document.getElementById("btnOpenFilter").classList.toggle("active-filter", filtered);
     }
 
@@ -930,8 +1034,19 @@
     }
 
     function buildFilterOptions() {
+      const rarities = ["ALL", ...new Set(cards.map(c => detectRarity(c)).filter(Boolean))];
       const colors = ["ALL", ...new Set(cards.map(c => c.color || "無").filter(Boolean))];
       const types = ["ALL", ...new Set(cards.map(c => c.type || "その他").filter(Boolean))];
+
+      const rBox = document.getElementById("rarityChipList");
+      rBox.innerHTML = "";
+      rarities.forEach(rar => {
+        const b = document.createElement("button");
+        b.className = "chip" + (state.rarity === rar ? " selected" : "");
+        b.textContent = rar === "ALL" ? "すべて" : rar;
+        b.onclick = () => { state.rarity = rar; buildFilterOptions(); render(); };
+        rBox.appendChild(b);
+      });
 
       const cBox = document.getElementById("colorChipList");
       cBox.innerHTML = "";
@@ -963,7 +1078,7 @@
       document.getElementById("detailBody").innerHTML = `
         ${card.imageUrl ? `<img class="preview-img" src="${card.imageUrl}" alt="${card.name || ""}">` : ""}
         <div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px;">
-          色: ${card.color || "-"} / 種類: ${card.type || "-"} / コスト: ${card.cost ?? "-"}
+          レア: ${detectRarity(card)} / 色: ${card.color || "-"} / 種類: ${card.type || "-"} / コスト: ${card.cost ?? "-"}
         </div>
         <p style="font-size:13px;line-height:1.6;margin:0 0 12px;">${card.text || ""}</p>
         <button class="sheet-btn" id="detailAdd">1枚追加（${cardTotal(card.id)} / ${MAX_PER_CARD}）</button>
@@ -1120,18 +1235,34 @@
       toast(`合計 ${importedCount}枚 を読み込みました`);
     }
 
-    function loadCardImageForCanvas(url) {
+    function loadCardImageWithTimeout(url, timeoutMs = 2500) {
       return new Promise(resolve => {
         if (!url) return resolve(null);
+        let settled = false;
+        const done = (val) => {
+          if (!settled) {
+            settled = true;
+            resolve(val);
+          }
+        };
+        const timer = setTimeout(() => done(null), timeoutMs);
+
         const tryLoad = (withCors) => {
           const img = new Image();
           if (withCors) img.crossOrigin = "anonymous";
-          img.onload = () => resolve(img);
+          img.onload = async () => {
+            try {
+              if (img.decode) await img.decode();
+            } catch (e) {}
+            clearTimeout(timer);
+            done(img);
+          };
           img.onerror = () => {
             if (withCors) {
               tryLoad(false);
             } else {
-              resolve(null);
+              clearTimeout(timer);
+              done(null);
             }
           };
           img.src = url;
@@ -1183,8 +1314,11 @@
         ctx.fillText(`MAIN ${zoneTotal("main")} / 50枚（10×5）`, canvas.width - pad, 41);
         ctx.textAlign = "left";
 
-        const loadedImgs = await Promise.all(expanded.map(c => loadCardImageForCanvas(c.imageUrl)));
+        const loadedImgs = await Promise.all(
+          expanded.map(c => loadCardImageWithTimeout(c.imageUrl, 2500))
+        );
 
+        let corsTainted = false;
         for (let idx = 0; idx < cols * rows; idx++) {
           const r = Math.floor(idx / cols);
           const c = idx % cols;
@@ -1203,7 +1337,7 @@
 
           const img = loadedImgs[idx];
           let drewImg = false;
-          if (img) {
+          if (img && (img.naturalWidth || img.width) > 0) {
             try {
               ctx.drawImage(img, x, y, cardW, cardH);
               drewImg = true;
@@ -1230,7 +1364,11 @@
         try {
           dataUrl = canvas.toDataURL("image/png");
         } catch (e) {
-          // 外部画像がCORS制限でCanvasを汚染した場合でもフォールバック枠で再描画
+          corsTainted = true;
+        }
+
+        if (corsTainted || !dataUrl) {
+          // 外部画像がCORS制限でCanvasを書き出せない場合、全カードをカード名枠で確実にPNG化
           ctx.fillStyle = "#ffffff";
           ctx.fillRect(0, headerH + pad, canvas.width, canvas.height - headerH - pad);
           for (let idx = 0; idx < cols * rows; idx++) {
@@ -1244,21 +1382,28 @@
             ctx.strokeRect(x + 1, y + 1, cardW - 2, cardH - 2);
             const card = expanded[idx];
             if (card) {
+              ctx.fillStyle = "#4b5563";
+              ctx.font = "bold 10px sans-serif";
+              ctx.fillText(String(card.id || "").slice(0, 14), x + 6, y + 18);
               ctx.fillStyle = "#111318";
-              ctx.font = "bold 11px sans-serif";
-              ctx.fillText(String(card.name || "").slice(0, 8), x + 6, y + 84);
+              ctx.font = "bold 12px sans-serif";
+              const name = String(card.name || "");
+              ctx.fillText(name.slice(0, 8), x + 6, y + 84);
+              if (name.length > 8) ctx.fillText(name.slice(8, 16), x + 6, y + 102);
             }
           }
           dataUrl = canvas.toDataURL("image/png");
         }
 
         wrap.innerHTML = `
-          <p style="font-size:12px;color:var(--text-secondary);margin:8px 0 4px;font-weight:700;">画像が生成されました（長押しで保存 / 下のボタンからも保存可能）</p>
+          <p style="font-size:12px;color:var(--text-secondary);margin:8px 0 4px;font-weight:700;">${corsTainted ? "外部画像サーバーの制限によりカード名枠で生成しました（長押しまたはボタンで保存）" : "画像が生成されました（長押しまたはボタンで保存）"}</p>
           <img class="generated-img" src="${dataUrl}" alt="デッキレシピ画像" />
           <a class="sheet-btn" href="${dataUrl}" download="${title.replace(/\s+/g, "_")}_10x5.png" style="display:block;text-align:center;text-decoration:none;">PNG画像をダウンロード</a>
         `;
         wrap.scrollIntoView({ behavior: "smooth", block: "nearest" });
         toast("デッキ画像を生成しました");
+      } catch (err) {
+        toast("画像生成中にエラーが発生しました");
       } finally {
         btn.disabled = false;
         btn.textContent = "デッキ画像を生成（10×5 / PNG保存用）";
@@ -1276,13 +1421,10 @@
       });
 
       document.getElementById("btnClear").onclick = () => {
-        if (!zoneTotal(zone)) return;
-        if (confirm("現在のデッキを空にしますか？")) {
-          deckData[zone] = {};
-          persist();
-          render();
-          toast("クリアしました");
-        }
+        deckData[zone] = {};
+        persist();
+        render();
+        showCenterNotice("クリアしました");
       };
 
       document.getElementById("btnAbout").onclick = () => document.getElementById("aboutOverlay").classList.add("open");
@@ -1331,6 +1473,7 @@
       });
 
       document.getElementById("btnResetFilters").onclick = () => {
+        state.rarity = "ALL";
         state.color = "ALL";
         state.type = "ALL";
         state.img = "ALL";
