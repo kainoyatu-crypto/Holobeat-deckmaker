@@ -222,7 +222,7 @@ html, body {
   text-align: center;
   overflow: hidden;
 }
-/* 余白パネル */
+/* 余白パネル（ゲージなし・下寄せ） */
 .deck-utility-panel {
   flex: 1 1 auto;
   min-height: 0;
@@ -232,34 +232,8 @@ html, body {
   padding: 8px 10px;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 6px;
-}
-.progress-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 11px;
-  font-weight: 800;
-}
-.progress-track {
-  flex: 1;
-  height: 8px;
-  background: var(--bg-elevated);
-  border-radius: 999px;
-  overflow: hidden;
-}
-.progress-fill {
-  height: 100%;
-  background: #111318;
-  border-radius: 999px;
-  transition: width 0.2s ease;
-}
-.progress-fill.done {
-  background: var(--accent-emerald);
-}
-.progress-fill.over {
-  background: var(--accent-rose);
 }
 .mini-chips-row {
   display: flex;
@@ -324,6 +298,13 @@ html, body {
   background: var(--bg-elevated);
   border-top: 1px solid var(--border-hairline);
   padding: 7px 0;
+}
+.dock-guide-bar {
+  padding: 0 12px 4px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.4;
 }
 .dock-header {
   display: flex;
@@ -768,15 +749,8 @@ html, body {
   <main class="deck-viewport">
     <!-- 10×5 枠グリッド -->
     <div class="deck-grid" id="deckGrid"></div>
-    <!-- 余白エリアの便利ウィジェット -->
+    <!-- 余白エリアの便利ウィジェット（ゲージなし・下寄せ） -->
     <div class="deck-utility-panel">
-      <div class="progress-row">
-        <span id="deckStatusLabel">あと 50 枚</span>
-        <div class="progress-track">
-          <div class="progress-fill" id="deckProgressFill" style="width:0%"></div>
-        </div>
-        <span id="deckPctLabel">0%</span>
-      </div>
       <div class="mini-chips-row" id="colorQuickChips"></div>
       <div class="focus-card-bar">
         <span class="focus-name" id="focusCardLabel">カード未選択</span>
@@ -790,8 +764,11 @@ html, body {
     </div>
   </main>
   <section class="dock-section">
+    <div class="dock-guide-bar">
+      デッキ内：タップ・下スワイプで1枚削除 / 長押しで拡大・レアリティ変更
+    </div>
     <div class="dock-header">
-      <span>タップ・上スワイプで追加 / 長押し・詳細で拡大表示 / 下スワイプで1枚削除</span>
+      <span>一覧：タップ・上スワイプで追加（ノーマル基準）/ 長押し・詳細でレアリティ変更</span>
       <span id="poolCountLabel">0件</span>
     </div>
     <div class="dock-scroll" id="dockScroll"></div>
@@ -919,9 +896,9 @@ html, body {
     </div>
     <div style="font-size:13px;color:var(--text-secondary);line-height:1.7;">
       <p style="margin-top:0;color:var(--text-primary);"><strong>操作方法：</strong><br>
-      ・タップ・上スワイプで追加<br>
-      ・長押し・詳細で拡大表示<br>
-      ・下スワイプで1枚削除（デッキ内のカードはタップでも拡大表示）</p>
+      ・一覧のタップ・上スワイプで追加（ノーマル基準）<br>
+      ・長押し・詳細で拡大表示およびレアリティ変更<br>
+      ・デッキ内のカードはタップ・下スワイプで1枚削除、長押しで拡大・レアリティ変更</p>
       <p style="margin-bottom:0;">※ 本サイトは『ホロビートカードゲーム』の非公式ファンメイド・デッキ構築支援ツールです。掲載されているカード情報・画像の権利は各権利者に帰属します。</p>
     </div>
   </div>
@@ -1082,13 +1059,25 @@ async function loadCardsOnly() {
 }
 
 function detectRarity(card) {
-  if (card.rarity) return String(card.rarity).trim().toUpperCase();
+  if (!card) return "N";
+  if (card.rarity) {
+    const r = String(card.rarity).trim().toUpperCase();
+    if (r === "NORMAL" || r === "NORM") return "N";
+    return r;
+  }
   const hay = `${card.id || ""} ${card.cardNumber || ""} ${card.type || ""} ${card.text || ""}`.toUpperCase();
-  for (const r of ["SEC", "DR", "SR", "RR", "R", "UC", "C", "PR"]) {
+  for (const r of ["SEC", "DR", "SR", "RR", "R", "UC", "C", "PR", "N"]) {
     const re = new RegExp(`(^|[^A-Z])${r}([^A-Z]|$)`);
     if (re.test(hay)) return r;
   }
-  return "その他";
+  return "N";
+}
+
+function isNormalVariant(card) {
+  const r = detectRarity(card);
+  if (r === "N" || r === "C") return true;
+  const hay = `${card?.id || ""} ${card?.cardNumber || ""} ${card?.name || ""}`.toLowerCase();
+  return hay.includes("normal") || hay.includes("ノーマル");
 }
 
 function displayCardNumber(card) {
@@ -1109,6 +1098,22 @@ function getCardVariants(card) {
   const matches = cards.filter(c => getBaseCardKey(c) === key);
   if (matches.length > 0) return matches;
   return [card];
+}
+
+function getCanonicalCard(card) {
+  const variants = getCardVariants(card);
+  return variants.find(v => isNormalVariant(v)) || variants[0] || card;
+}
+
+function getUniquePoolCards() {
+  const byKey = new Map();
+  cards.forEach(card => {
+    const key = getBaseCardKey(card);
+    if (!byKey.has(key)) {
+      byKey.set(key, getCanonicalCard(card));
+    }
+  });
+  return Array.from(byKey.values());
 }
 
 function ensureVariantsArray(z, baseId, count) {
@@ -1202,16 +1207,20 @@ function restore() {
 }
 
 function addToDeck(id, preferredVariantId = null) {
-  focusedCardId = id;
-  if (cardTotal(id) >= MAX_PER_CARD) {
+  const map = new Map(cards.map(c => [c.id, c]));
+  const rawCard = map.get(id);
+  const canonical = rawCard ? getCanonicalCard(rawCard) : { id };
+  const targetId = canonical.id;
+  focusedCardId = targetId;
+  if (cardTotal(targetId) >= MAX_PER_CARD) {
     toast(`同名カードは最大${MAX_PER_CARD}枚までです`);
     renderUtilityPanel();
     return;
   }
-  const nextQty = (deckData[zone][id] || 0) + 1;
-  deckData[zone][id] = nextQty;
-  const arr = ensureVariantsArray(zone, id, nextQty);
-  arr[nextQty - 1] = preferredVariantId || id;
+  const nextQty = (deckData[zone][targetId] || 0) + 1;
+  deckData[zone][targetId] = nextQty;
+  const arr = ensureVariantsArray(zone, targetId, nextQty);
+  arr[nextQty - 1] = preferredVariantId || targetId;
   persist();
   render();
 }
@@ -1298,26 +1307,43 @@ function renderDeck() {
     const { baseCard, displayCard, copyIndex } = entry;
     tile.className = "slot-tile";
     tile.appendChild(makeArt(displayCard));
-    let startY = 0;
-    let swipedDown = false;
+    let startX = 0, startY = 0, timer = null, didLong = false, moved = false;
     tile.addEventListener("touchstart", e => {
+      startX = e.touches[0].clientX;
       startY = e.touches[0].clientY;
-      swipedDown = false;
+      didLong = false;
+      moved = false;
+      timer = setTimeout(() => {
+        didLong = true;
+        focusedCardId = baseCard.id;
+        openDetail(baseCard, copyIndex, displayCard.id);
+      }, LONG_PRESS_MS);
+    }, { passive: true });
+    tile.addEventListener("touchmove", e => {
+      const dx = Math.abs(e.touches[0].clientX - startX);
+      const dy = Math.abs(e.touches[0].clientY - startY);
+      if (dx > 12 || dy > 12) {
+        moved = true;
+        clearTimeout(timer);
+      }
     }, { passive: true });
     tile.addEventListener("touchend", e => {
-      if (e.changedTouches[0].clientY - startY > 24) {
-        swipedDown = true;
+      clearTimeout(timer);
+      if (didLong) {
+        e.preventDefault();
+        return;
+      }
+      if (!moved) {
         e.preventDefault();
         removeFromDeck(baseCard.id);
       }
     });
     tile.addEventListener("click", () => {
-      if (swipedDown) {
-        swipedDown = false;
+      if (didLong) {
+        didLong = false;
         return;
       }
-      focusedCardId = baseCard.id;
-      openDetail(baseCard, copyIndex);
+      removeFromDeck(baseCard.id);
     });
     grid.appendChild(tile);
   }
@@ -1325,24 +1351,6 @@ function renderDeck() {
 
 function renderUtilityPanel() {
   const total = zoneTotal(zone);
-  const target = TARGET_COUNTS[zone];
-  const diff = target - total;
-  const pct = Math.min(100, Math.round((total / target) * 100));
-  const statusEl = document.getElementById("deckStatusLabel");
-  const fillEl = document.getElementById("deckProgressFill");
-  const pctEl = document.getElementById("deckPctLabel");
-  pctEl.textContent = `${pct}%`;
-  fillEl.style.width = `${pct}%`;
-  fillEl.classList.remove("done", "over");
-  if (diff > 0) {
-    statusEl.textContent = `あと ${diff} 枚`;
-  } else if (diff === 0) {
-    statusEl.textContent = `基準達成（${target}枚）`;
-    fillEl.classList.add("done");
-  } else {
-    statusEl.textContent = `超過 +${Math.abs(diff)} 枚`;
-    fillEl.classList.add("over");
-  }
   const map = new Map(cards.map(c => [c.id, c]));
   const colorCounts = {};
   Object.entries(deckData[zone] || {}).forEach(([id, n]) => {
@@ -1385,16 +1393,17 @@ function renderUtilityPanel() {
 
 function filteredPool() {
   const q = state.q.trim().toLowerCase();
-  return cards
+  return getUniquePoolCards()
     .filter(c => {
-      if (state.rarity !== "ALL" && detectRarity(c) !== state.rarity) return false;
+      const variants = getCardVariants(c);
+      if (state.rarity !== "ALL" && !variants.some(v => detectRarity(v) === state.rarity)) return false;
       if (state.color !== "ALL" && (c.color || "無") !== state.color) return false;
       if (state.type !== "ALL" && (c.type || "その他") !== state.type) return false;
-      if (state.img === "HAS" && !c.imageUrl) return false;
-      if (state.img === "NONE" && c.imageUrl) return false;
+      if (state.img === "HAS" && !variants.some(v => v.imageUrl)) return false;
+      if (state.img === "NONE" && variants.some(v => v.imageUrl)) return false;
       if (q) {
-        const text = `${c.id || ""} ${c.cardNumber || ""} ${c.name || ""} ${c.text || ""} ${detectRarity(c)}`.toLowerCase();
-        if (!text.includes(q)) return false;
+        const allVarText = variants.map(v => `${v.id || ""} ${v.cardNumber || ""} ${v.name || ""} ${v.text || ""} ${detectRarity(v)}`).join(" ");
+        if (!allVarText.toLowerCase().includes(q)) return false;
       }
       return true;
     })
@@ -1519,49 +1528,50 @@ function buildFilterOptions() {
   });
 }
 
-function openDetail(card, initialCopyIdx = 0) {
+function openDetail(card, initialCopyIdx = 0, previewVariantId = null) {
+  const canonical = getCanonicalCard(card);
+  const baseId = canonical.id;
   const map = new Map(cards.map(c => [c.id, c]));
-  const variants = getCardVariants(card);
-  const inZone = Number(deckData[zone]?.[card.id] || 0);
-  const copyIds = getDeckCopyIds(zone, card.id);
+  const variants = getCardVariants(canonical);
+  const inZone = Number(deckData[zone]?.[baseId] || 0);
+  const copyIds = getDeckCopyIds(zone, baseId);
   detailCopyIndex = Math.max(0, Math.min(initialCopyIdx, Math.max(0, inZone - 1)));
-  const activeVariantId = inZone > 0 ? (copyIds[detailCopyIndex] || card.id) : card.id;
-  const activeCard = map.get(activeVariantId) || card;
-  document.getElementById("detailTitle").textContent = `${activeCard.name || card.name || ""} [${displayCardNumber(activeCard)}]`;
+  const activeVariantId = previewVariantId || (inZone > 0 ? (copyIds[detailCopyIndex] || baseId) : baseId);
+  const activeCard = map.get(activeVariantId) || canonical;
+  document.getElementById("detailTitle").textContent = `${activeCard.name || canonical.name || ""} [${displayCardNumber(activeCard)}]`;
   let copySelectorHtml = "";
   if (inZone > 0) {
-    copySelectorHtml = `<div style="font-size:12px;font-weight:800;margin-bottom:5px;">デッキ内の枚数ごとにレアリティを選択</div><div class="copy-tabs-row">${copyIds.map((vid, idx) => { const vCard = map.get(vid) || card; const vRarity = detectRarity(vCard); return `<button type="button" class="copy-tab ${idx === detailCopyIndex ? "active" : ""}" data-copy-idx="${idx}">${idx + 1}枚目 (${vRarity})</button>`; }).join("")}</div>`;
+    copySelectorHtml = `<div style="font-size:12px;font-weight:800;margin-bottom:5px;">デッキ内の枚数ごとにレアリティを選択</div><div class="copy-tabs-row">${copyIds.map((vid, idx) => { const vCard = map.get(vid) || canonical; const vRarity = detectRarity(vCard); return `<button type="button" class="copy-tab ${idx === detailCopyIndex ? "active" : ""}" data-copy-idx="${idx}">${idx + 1}枚目 (${vRarity})</button>`; }).join("")}</div>`;
   }
-  const variantStripHtml = `<div style="font-size:12px;font-weight:800;margin-bottom:4px;">表示レアリティ / イラスト候補（${variants.length}種）</div><div class="variant-strip">${variants.map((v, vIdx) => { const isSelected = v.id === activeCard.id; const rLabel = detectRarity(v); return `<button type="button" class="variant-thumb ${isSelected ? "selected" : ""}" data-variant-id="${v.id}">${v.imageUrl ? `<img src="${v.imageUrl}" alt="${v.name || ""}" />` : ""}<span class="variant-label">${rLabel}${variants.length > 1 ? ` #${vIdx + 1}` : ""}</span></button>`; }).join("")}</div>`;
-  document.getElementById("detailBody").innerHTML = `${activeCard.imageUrl ? `<img class="preview-img" src="${activeCard.imageUrl}" alt="${activeCard.name || ""}" />` : ""}${copySelectorHtml}${variantStripHtml}<div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px;">レア: ${detectRarity(activeCard)} / 色: ${activeCard.color || "-"} / 種類: ${activeCard.type || "-"} / コスト: ${activeCard.cost ?? "-"}</div><p style="font-size:13px;line-height:1.6;margin:0 0 12px;">${activeCard.text || ""}</p><button class="sheet-btn" id="detailAdd">1枚追加（合計 ${cardTotal(card.id)} / ${MAX_PER_CARD}）</button>${inZone > 0 ? `<button class="sheet-btn secondary" id="detailRemove">現在の枠から1枚減らす（${inZone}枚中）</button>` : ""}`;
+  const variantStripHtml = `<div style="font-size:12px;font-weight:800;margin-bottom:4px;">レアリティ変更（${variants.length}種）</div><div class="variant-strip">${variants.map((v, vIdx) => { const isSelected = v.id === activeCard.id; const rLabel = detectRarity(v); return `<button type="button" class="variant-thumb ${isSelected ? "selected" : ""}" data-variant-id="${v.id}">${v.imageUrl ? `<img src="${v.imageUrl}" alt="${v.name || ""}" />` : ""}<span class="variant-label">${rLabel}${variants.length > 1 ? ` #${vIdx + 1}` : ""}</span></button>`; }).join("")}</div>`;
+  document.getElementById("detailBody").innerHTML = `${activeCard.imageUrl ? `<img class="preview-img" src="${activeCard.imageUrl}" alt="${activeCard.name || ""}" />` : ""}${copySelectorHtml}${variantStripHtml}<div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px;">レア: ${detectRarity(activeCard)} / 色: ${activeCard.color || "-"} / 種類: ${activeCard.type || "-"} / コスト: ${activeCard.cost ?? "-"}</div><p style="font-size:13px;line-height:1.6;margin:0 0 12px;">${activeCard.text || ""}</p><button class="sheet-btn" id="detailAdd">1枚追加（合計 ${cardTotal(baseId)} / ${MAX_PER_CARD}）</button>${inZone > 0 ? `<button class="sheet-btn secondary" id="detailRemove">現在の枠から1枚減らす（${inZone}枚中）</button>` : ""}`;
   document.querySelectorAll("#detailBody [data-copy-idx]").forEach(btn => {
     btn.onclick = () => {
-      openDetail(card, Number(btn.dataset.copyIdx));
+      openDetail(canonical, Number(btn.dataset.copyIdx));
     };
   });
   document.querySelectorAll("#detailBody [data-variant-id]").forEach(btn => {
     btn.onclick = () => {
       const chosenId = btn.dataset.variantId;
       if (inZone > 0) {
-        setDeckCopyVariant(zone, card.id, detailCopyIndex, chosenId);
-        openDetail(card, detailCopyIndex);
+        setDeckCopyVariant(zone, baseId, detailCopyIndex, chosenId);
+        openDetail(canonical, detailCopyIndex, chosenId);
       } else {
-        const picked = map.get(chosenId) || card;
-        openDetail(picked, 0);
+        openDetail(canonical, 0, chosenId);
       }
     };
   });
   document.getElementById("detailAdd").onclick = () => {
-    addToDeck(card.id, activeCard.id);
-    const updatedQty = Number(deckData[zone]?.[card.id] || 0);
-    openDetail(card, Math.max(0, updatedQty - 1));
+    addToDeck(baseId, activeCard.id);
+    const updatedQty = Number(deckData[zone]?.[baseId] || 0);
+    openDetail(canonical, Math.max(0, updatedQty - 1), activeCard.id);
   };
   const remBtn = document.getElementById("detailRemove");
   if (remBtn) {
     remBtn.onclick = () => {
-      removeFromDeck(card.id);
-      const nextQty = Number(deckData[zone]?.[card.id] || 0);
-      openDetail(card, Math.max(0, Math.min(detailCopyIndex, nextQty - 1)));
+      removeFromDeck(baseId);
+      const nextQty = Number(deckData[zone]?.[baseId] || 0);
+      openDetail(canonical, Math.max(0, Math.min(detailCopyIndex, nextQty - 1)));
     };
   }
   document.getElementById("detailOverlay").classList.add("open");
@@ -1683,8 +1693,9 @@ function importFromRecipeText(text) {
     const idPart = (m[3] || "").trim().toUpperCase();
     const resolvedId = (idPart && byId.get(idPart)) || byName.get(namePart);
     if (resolvedId) {
-      newDeck[currentTarget][resolvedId] = qty;
-      newDeck.variants[currentTarget][resolvedId] = Array.from({ length: qty }, () => resolvedId);
+      const canonical = getCanonicalCard(cards.find(c => c.id === resolvedId) || { id: resolvedId });
+      newDeck[currentTarget][canonical.id] = qty;
+      newDeck.variants[currentTarget][canonical.id] = Array.from({ length: qty }, () => canonical.id);
       importedCount += qty;
     }
   });
