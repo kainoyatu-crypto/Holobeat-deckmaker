@@ -19,7 +19,7 @@
 --border-hairline: rgba(17, 19, 24, 0.15);
 --card-ratio: 63 / 88;
 }
-￼ {
+*, *::before, *::after {
 box-sizing: border-box;
 -webkit-tap-highlight-color: transparent;
 -webkit-touch-callout: none;
@@ -944,12 +944,9 @@ z-index: 200;
 <button class="sheet-close" data-close="aboutOverlay">×</button>
 </div>
 <div style="font-size:13px;color:var(--text-secondary);line-height:1.7;">
-<p style="margin-top:0;color:var(--text-primary);"><strong>操作方法：</strong>
-
-・タップ・上スワイプで追加
-
-・長押し・詳細で拡大表示、レアリティ変更
-
+<p style="margin-top:0;color:var(--text-primary);"><strong>操作方法：</strong><br />
+・タップ・上スワイプで追加<br />
+・長押し・詳細で拡大表示、レアリティ変更<br />
 ・デッキ内のカードはタップ・下スワイプで1枚削除、長押しで拡大・レアリティ変更</p>
 <p style="margin-bottom:0;">※ 本サイトは『ホロビートカードゲーム』の非公式ファンメイド・デッキ構築支援ツールです。掲載されているカード情報・画像の権利は各権利者に帰属します。</p>
 </div>
@@ -1818,7 +1815,7 @@ const line = rawLine.trim();
 if (!line) return;
 if (line.includes("サブ")) { currentTarget = "sub"; return; }
 if (line.includes("メイン")) { currentTarget = "main"; return; }
-const m = line.match(/^(\d+)\s*[x×]\s*(.+?)(?:\s*[(（\）]]+)[)\）]])?$/i);
+const m = line.match(/^(\d+)\s*[x×]\s*(.+?)(?:\s*(（[\）]]+)[)\）]])?$/i);
 if (!m) return;
 const qty = Number(m[1]);
 if (!qty || qty <= 0) return;
