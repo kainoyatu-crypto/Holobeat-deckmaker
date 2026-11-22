@@ -2,8 +2,8 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>HORO BEAT STUDIO</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>HOROBEAT STUDIO</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet" />
@@ -34,23 +34,22 @@ min-height: 100dvh;
 display: flex;
 align-items: center;
 justify-content: center;
-padding: 18px 14px;
+padding: calc(16px + env(safe-area-inset-top)) 14px calc(16px + env(safe-area-inset-bottom));
 }
-/* 手書きラフの縦長フレームをイメージ */
 .top-frame {
 width: 100%;
 max-width: 390px;
-min-height: min(640px, calc(100dvh - 36px));
+min-height: min(650px, calc(100dvh - 36px));
 background: var(--paper);
 border: 1.5px solid var(--line);
 border-radius: 6px;
-padding: 20px 18px 24px;
+padding: 20px 18px 22px;
 display: flex;
 flex-direction: column;
 gap: 18px;
 box-shadow: 4px 4px 0 var(--line);
 }
-.site-title-box {
+.site-header {
 border-bottom: 1.5px solid var(--line);
 padding-bottom: 12px;
 text-align: center;
@@ -106,6 +105,55 @@ line-height: 1.5;
 border-top: 1px dashed var(--soft-line);
 padding-top: 10px;
 }
+.overlay {
+position: fixed;
+inset: 0;
+background: rgba(17, 17, 20, 0.45);
+display: none;
+align-items: center;
+justify-content: center;
+padding: 16px;
+z-index: 60;
+}
+.overlay.open {
+display: flex;
+}
+.modal-box {
+width: 100%;
+max-width: 360px;
+background: var(--paper);
+border: 1.5px solid var(--line);
+border-radius: 6px;
+padding: 16px;
+display: flex;
+flex-direction: column;
+gap: 12px;
+box-shadow: 4px 4px 0 var(--line);
+}
+.modal-head {
+display: flex;
+align-items: center;
+justify-content: space-between;
+font-size: 0.9rem;
+font-weight: 700;
+border-bottom: 1px solid var(--soft-line);
+padding-bottom: 8px;
+}
+.modal-close {
+background: var(--paper);
+color: var(--ink);
+border: 1px solid var(--line);
+border-radius: 4px;
+padding: 3px 8px;
+font-size: 0.75rem;
+font-weight: 700;
+cursor: pointer;
+}
+.modal-text {
+font-size: 0.8rem;
+line-height: 1.6;
+color: var(--muted);
+}
 .toast-bar {
 position: fixed;
 bottom: 14px;
@@ -129,18 +177,16 @@ opacity: 1;
 </head>
 <body>
 <main class="top-wrap">
-<section class="top-frame" aria-label="HORO BEAT STUDIO トップ">
-<header class="site-title-box">
-<h1 class="site-title">HORO BEAT STUDIO</h1>
+<section class="top-frame" aria-label="HOROBEAT STUDIO トップ">
+<header class="site-header">
+<h1 class="site-title">HOROBEAT STUDIO</h1>
 </header>
 
 <nav class="nav-stack" aria-label="メインメニュー">
-<!-- デッキ作成ページのファイル名に合わせて href を変更してください -->
-<a href="./deck.html" class="menu-box" id="linkDeckBuilder">
+<a href="./make.html" class="menu-box" id="linkDeckBuilder">
 デッキ作成
 </a>
 
-<!-- 入賞リストページのファイル名に合わせて href を変更してください -->
 <a href="./results.html" class="menu-box" id="linkResults">
 入賞リスト確認
 </a>
@@ -154,27 +200,65 @@ opacity: 1;
 </section>
 </main>
 
+<div class="overlay" id="infoOverlay" role="dialog" aria-modal="true" aria-labelledby="infoModalTitle">
+<div class="modal-box">
+<div class="modal-head">
+<span id="infoModalTitle">入賞リスト確認</span>
+<button type="button" class="modal-close" id="btnCloseInfo">閉じる</button>
+</div>
+<p class="modal-text" id="infoModalText">
+入賞リストページ（./results.html）はまだ準備中です。ページを追加するとこちらから開けるようになります。
+</p>
+</div>
+</div>
+
 <div class="toast-bar" id="toastBar"></div>
 
 <script>
 (function () {
 const toastBar = document.getElementById("toastBar");
+const infoOverlay = document.getElementById("infoOverlay");
+const btnCloseInfo = document.getElementById("btnCloseInfo");
 let toastTimer = null;
+
 function showToast(msg) {
 toastBar.textContent = msg;
 toastBar.classList.add("show");
 clearTimeout(toastTimer);
 toastTimer = setTimeout(function () {
 toastBar.classList.remove("show");
-}, 1800);
+}, 1600);
 }
 
-// もしリンク先ファイルがまだ用意されていない場合でも画面が真っ白にならないよう案内を出す補助
-document.getElementById("linkDeckBuilder").addEventListener("click", function () {
-showToast("デッキ作成画面へ移動します...");
+function openInfoModal() {
+infoOverlay.classList.add("open");
+}
+
+function closeInfoModal() {
+infoOverlay.classList.remove("open");
+}
+
+btnCloseInfo.addEventListener("click", closeInfoModal);
+infoOverlay.addEventListener("click", function (e) {
+if (e.target === infoOverlay) closeInfoModal();
 });
-document.getElementById("linkResults").addEventListener("click", function () {
-showToast("入賞リスト確認画面へ移動します...");
+
+document.getElementById("linkDeckBuilder").addEventListener("click", function () {
+showToast("デッキ作成へ移動します...");
+});
+
+// results.html が存在するか確認し、無ければ案内モーダルを表示（GitHub Pages等で404になるのを防ぐ補助）
+document.getElementById("linkResults").addEventListener("click", async function (e) {
+const targetHref = this.getAttribute("href");
+try {
+const res = await fetch(targetHref, { method: "HEAD", cache: "no-store" });
+if (!res.ok) {
+e.preventDefault();
+openInfoModal();
+}
+} catch (_) {
+// ローカルファイル（file://）など fetch できない環境では通常遷移を試行
+}
 });
 })();
 </script>
