@@ -8,12 +8,9 @@ from playwright.sync_api import sync_playwright
 BASE_DIR = Path(__file__).resolve().parent.parent
 DATA_JSON = BASE_DIR / "data" / "cards.json"
 
-OFFICIAL_URL = os.environ.get(
-    "HOROBEAT_OFFICIAL_URL",
-    "[https://www.takaratomy.co.jp/products/horobeat-cardgame/cardlist/](https://www.takaratomy.co.jp/products/horobeat-cardgame/cardlist/)",
-)
+DEFAULT_OFFICIAL_URL = "[https://www.takaratomy.co.jp/products/horobeat-cardgame/cardlist/](https://www.takaratomy.co.jp/products/horobeat-cardgame/cardlist/)"
 
-FETCH_DETAIL_PAGES = os.environ.get("FETCH_DETAIL_PAGES", "0").strip() in ("1", "true", "yes")
+FETCH_DETAIL_PAGES = os.environ.get("FETCH_DETAIL_PAGES", "0").strip().lower() in ("1", "true", "yes")
 
 EXCLUDE_URL_KEYWORDS = (
     "logo",
@@ -35,6 +32,34 @@ EXCLUDE_URL_KEYWORDS = (
 )
 
 COLOR_CANDIDATES = ("赤", "青", "緑", "黄", "紫", "黒", "白", "無")
+
+
+def sanitize_official_url(raw_url: str | None) -> str:
+    s = str(raw_url or "").strip()
+    if not s:
+        return DEFAULT_OFFICIAL_URL
+
+    # Markdownリンク [label](url) 形式になっていた場合は括弧内のURLを優先抽出
+    md_match = re.search(r"\]\((https?://[^\s\)]+)\)", s)
+    if md_match:
+        s = md_match.group(1).strip()
+    else:
+        # 余分な角括弧・丸括弧・クォーテーション・空白を除去
+        s = s.strip("<>\"'`[]() \t\r\n")
+
+    # 文字列中に https:// または http:// が含まれる場合、先頭からURL部分を切り出す
+    url_match = re.search(r"https?://[^\s\]\)\"'>]+", s)
+    if url_match:
+        s = url_match.group(0).rstrip(".,;]")
+
+    parsed = urlparse(s)
+    if parsed.scheme not in ("http", "https") or not parsed.netloc:
+        return DEFAULT_OFFICIAL_URL
+
+    return urlunparse(parsed)
+
+
+OFFICIAL_URL = sanitize_official_url(os.environ.get("HOROBEAT_OFFICIAL_URL"))
 
 
 def load_existing_cards(path: Path) -> list[dict]:
@@ -66,7 +91,7 @@ def save_cards(path: Path, cards: list[dict]) -> None:
 def resolve_image_url(raw_url: str, base_url: str) -> str:
     if not raw_url:
         return ""
-    u = raw_url.strip()
+    u = str(raw_url).strip().strip("<>\"'`[]()")
     if not u or u.startswith("data:") or u.startswith("blob:") or u.startswith("javascript:"):
         return ""
     full = urljoin(base_url, u)
@@ -247,7 +272,8 @@ def scroll_to_load_lazy_images(page) -> None:
 
 
 def build_page_url(base_url: str, page_num: int) -> str:
-    parsed = urlparse(base_url)
+    clean_base = sanitize_official_url(base_url)
+    parsed = urlparse(clean_base)
     qs = parse_qs(parsed.query)
     qs["page"] = [str(page_num)]
     new_query = urlencode(qs, doseq=True)
@@ -263,8 +289,11 @@ def enrich_items_from_detail_pages(context, items: list[dict]) -> None:
     fetched_map: dict[str, dict] = {}
     try:
         for url in detail_urls:
+            clean_detail_url = sanitize_official_url(url)
+            if not clean_detail_url:
+                continue
             try:
-                detail_page.goto(url, wait_until="domcontentloaded", timeout=30000)
+                detail_page.goto(clean_detail_url, wait_until="domcontentloaded", timeout=30000)
                 detail_page.wait_for_timeout(600)
                 body_text = detail_page.evaluate("() => document.body ? (document.body.innerText || '') : ''")
                 fetched_map[url] = parse_labeled_fields(body_text)
@@ -285,6 +314,8 @@ def enrich_items_from_detail_pages(context, items: list[dict]) -> None:
 def scrape_official_items() -> list[dict]:
     items: list[dict] = []
     seen_urls: set[str] = set()
+
+    print(f"Using OFFICIAL_URL: {OFFICIAL_URL}")
 
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
@@ -505,3 +536,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+```
