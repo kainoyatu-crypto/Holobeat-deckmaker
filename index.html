@@ -840,8 +840,8 @@ width: 100%;
 }
 .vbar-axis-row {
 display: flex;
-align-items: center;
-gap: 8px;
+flex-direction: column;
+gap: 4px;
 padding-top: 8px;
 }
 .vbar-axis-title {
@@ -849,9 +849,10 @@ font-size: 11px;
 font-weight: 900;
 color: var(--text-secondary);
 white-space: nowrap;
+text-align: center;
 }
 .vbar-xlabels {
-flex: 1 1 auto;
+width: 100%;
 display: flex;
 align-items: center;
 justify-content: space-around;
@@ -1741,8 +1742,9 @@ return String(displayCardNumber(a.card)).localeCompare(String(displayCardNumber(
 });
 return entries.map(entry => entry.card);
 }
-function renderDock() {
+function renderDock(resetScroll = false) {
 const scroll = document.getElementById("dockScroll");
+const prevScrollLeft = scroll.scrollLeft;
 const pool = filteredPool();
 document.getElementById("poolCountLabel").textContent = `${pool.length}件`;
 const frag = document.createDocumentFragment();
@@ -1836,7 +1838,7 @@ scroll.replaceChildren(emptyBox);
 return;
 }
 scroll.replaceChildren(frag);
-scroll.scrollLeft = 0;
+scroll.scrollLeft = resetScroll ? 0 : prevScrollLeft;
 }
 function renderMeta() {
 const total = zoneTotal(zone);
@@ -2014,7 +2016,7 @@ return `<div class="vbar-col"><span class="vbar-count">${totalForCost}</span><di
 }).join("");
 const labelsHtml = sortedCosts.map(k => `<div class="vbar-xlabel">${k}</div>`).join("");
 document.getElementById("statsContent").innerHTML = sortedCosts.length
-? `<div class="vbar-chart-wrap"><div class="vbar-columns">${colsHtml}</div><div class="vbar-axis-row"><span class="vbar-axis-title">コスト</span><div class="vbar-xlabels">${labelsHtml}</div></div></div>`
+? `<div class="vbar-chart-wrap"><div class="vbar-columns">${colsHtml}</div><div class="vbar-axis-row"><div class="vbar-xlabels">${labelsHtml}</div><span class="vbar-axis-title">コスト</span></div></div>`
 : `<div class="vbar-chart-wrap" style="align-items:center;justify-content:center;color:var(--text-secondary);">カードがありません</div>`;
 document.getElementById("statsOverlay").classList.add("open");
 }
@@ -2458,7 +2460,7 @@ function scheduleDockFilter() {
 if (_searchRaf) cancelAnimationFrame(_searchRaf);
 _searchRaf = requestAnimationFrame(() => {
 _searchRaf = null;
-renderDock();
+renderDock(true);
 });
 }
 searchInputEl.addEventListener("compositionstart", () => {
@@ -2477,7 +2479,7 @@ scheduleDockFilter();
 document.getElementById("btnClearSearch").onclick = () => {
 state.q = "";
 document.getElementById("searchInput").value = "";
-renderDock();
+renderDock(true);
 };
 document.getElementById("btnOpenFilter").onclick = () => {
 buildFilterOptions();
@@ -2508,7 +2510,7 @@ chip.onclick = () => {
 document.querySelectorAll("#sortChipList .chip").forEach(c => c.classList.remove("selected"));
 chip.classList.add("selected");
 state.sort = chip.dataset.sort;
-renderDock();
+renderDock(true);
 document.getElementById("sortOverlay").classList.remove("open");
 };
 });
