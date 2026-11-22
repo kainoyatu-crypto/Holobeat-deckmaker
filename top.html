@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>HOROBEAT STUDIO</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet" />
+<style>
+:root {
+--bg: #f4f4f6;
+--paper: #ffffff;
+--ink: #17171a;
+--muted: #666872;
+--line: #222429;
+--soft-line: #e2e4ea;
+--accent: #17171a;
+--accent-hover: #2d3038;
+--badge-bg: #f0f1f5;
+}
+* {
+box-sizing: border-box;
+margin: 0;
+padding: 0;
+}
+body {
+min-height: 100vh;
+background-color: var(--bg);
+background-image:
+linear-gradient(to right, rgba(23, 23, 26, 0.035) 1px, transparent 1px),
+linear-gradient(to bottom, rgba(23, 23, 26, 0.035) 1px, transparent 1px);
+background-size: 24px 24px;
+color: var(--ink);
+font-family: "Noto Sans JP", -apple-system, BlinkMacSystemFont, sans-serif;
+display: flex;
+justify-content: center;
+padding: 28px 16px 48px;
+}
+.frame {
+width: 100%;
+max-width: 460px;
+min-height: 620px;
+background: var(--paper);
+border: 2px solid var(--line);
+border-radius: 6px;
+box-shadow: 6px 6px 0 rgba(23, 23, 26, 0.14);
+padding: 26px 24px 32px;
+display: flex;
+flex-direction: column;
+gap: 24px;
+}
+.brand-header {
+border-bottom: 1.5px solid var(--line);
+padding-bottom: 14px;
+display: flex;
+align-items: baseline;
+justify-content: space-between;
+gap: 12px;
+}
+.brand-title {
+font-family: "Playfair Display", Georgia, serif;
+font-size: 1.35rem;
+font-weight: 700;
+letter-spacing: 0.06em;
+text-transform: uppercase;
+color: var(--ink);
+}
+.brand-sub {
+font-size: 0.72rem;
+color: var(--muted);
+letter-spacing: 0.04em;
+}
+.menu-list {
+display: flex;
+flex-direction: column;
+gap: 16px;
+}
+.menu-btn {
+width: 100%;
+text-align: left;
+background: var(--paper);
+color: var(--ink);
+border: 1.5px solid var(--line);
+border-radius: 4px;
+padding: 16px 18px;
+font-size: 1.05rem;
+font-weight: 700;
+letter-spacing: 0.04em;
+cursor: pointer;
+display: flex;
+align-items: center;
+justify-content: space-between;
+transition: transform 0.12s ease, background-color 0.12s ease, color 0.12s ease, box-shadow 0.12s ease;
+box-shadow: 3px 3px 0 var(--line);
+text-decoration: none;
+}
+.menu-btn:hover {
+background: var(--accent);
+color: var(--paper);
+transform: translate(-1px, -1px);
+box-shadow: 4px 4px 0 rgba(23, 23, 26, 0.35);
+}
+.menu-btn:active {
+transform: translate(2px, 2px);
+box-shadow: 1px 1px 0 var(--line);
+}
+.menu-btn .arrow {
+font-size: 1rem;
+opacity: 0.75;
+}
+.section-divider {
+border: 0;
+border-top: 1px dashed var(--soft-line);
+margin: 2px 0;
+}
+.preview-panel {
+display: none;
+flex-direction: column;
+gap: 12px;
+border: 1.5px solid var(--soft-line);
+border-radius: 4px;
+padding: 14px;
+background: #fafafa;
+}
+.preview-panel.is-open {
+display: flex;
+}
+.preview-head {
+display: flex;
+align-items: center;
+justify-content: space-between;
+gap: 8px;
+}
+.preview-title {
+font-size: 0.92rem;
+font-weight: 700;
+}
+.close-btn {
+background: var(--paper);
+border: 1px solid var(--line);
+border-radius: 3px;
+padding: 4px 10px;
+font-size: 0.78rem;
+cursor: pointer;
+color: var(--ink);
+}
+.close-btn:hover {
+background: var(--badge-bg);
+}
+.status-note {
+font-size: 0.78rem;
+color: var(--muted);
+line-height: 1.5;
+}
+.result-list {
+list-style: none;
+display: flex;
+flex-direction: column;
+gap: 10px;
+}
+.result-item {
+background: var(--paper);
+border: 1px solid var(--soft-line);
+border-radius: 4px;
+padding: 10px 12px;
+display: flex;
+flex-direction: column;
+gap: 4px;
+}
+.result-meta {
+display: flex;
+flex-wrap: wrap;
+align-items: center;
+gap: 6px;
+font-size: 0.75rem;
+color: var(--muted);
+}
+.badge {
+background: var(--badge-bg);
+border: 1px solid #d5d8e0;
+border-radius: 3px;
+padding: 1px 6px;
+font-weight: 700;
+color: var(--ink);
+font-size: 0.72rem;
+}
+.result-text {
+font-size: 0.86rem;
+line-height: 1.45;
+color: var(--ink);
+word-break: break-word;
+}
+.result-link {
+font-size: 0.75rem;
+color: var(--muted);
+text-decoration: underline;
+align-self: flex-start;
+margin-top: 2px;
+}
+@media (max-width: 480px) {
+body {
+padding: 16px 12px 32px;
+}
+.frame {
+min-height: 540px;
+padding: 20px 18px 26px;
+}
+}
+</style>
+</head>
+<body>
+<main class="frame" aria-label="HOROBEAT STUDIO トップページ">
+<header class="brand-header">
+<h1 class="brand-title">HOROBEAT STUDIO</h1>
+<span class="brand-sub">DECK & META</span>
+</header>
+<nav class="menu-list" aria-label="メインメニュー">
+<button type="button" class="menu-btn" id="btnDeckCreate">
+<span>デッキ作成</span>
+<span class="arrow" aria-hidden="true">→</span>
+</button>
+<button type="button" class="menu-btn" id="btnResultsCheck">
+<span>入賞リスト確認</span>
+<span class="arrow" aria-hidden="true">→</span>
+</button>
+</nav>
+<hr class="section-divider" />
+<section class="preview-panel" id="resultsPanel" aria-live="polite" aria-label="入賞リスト">
+<div class="preview-head">
+<h2 class="preview-title">入賞リスト</h2>
+<button type="button" class="close-btn" id="btnCloseResults">閉じる</button>
+</div>
+<p class="status-note" id="resultsStatus">読み込み待機中</p>
+<ul class="result-list" id="resultsList"></ul>
+</section>
+</main>
+<script>
+(function () {
+const FALLBACK_RESULTS = [
+{
+id: "sample-1",
+date: "2026-11-20",
+tournament: "ホロビート名人戦",
+rank: "優勝",
+sourceUrl: "",
+rawText: "本日のホロビート名人戦、優勝デッキレシピを公開しました。",
+verified: true
+},
+{
+id: "sample-2",
+date: "2026-11-18",
+tournament: "ホロビート大会",
+rank: "準優勝",
+sourceUrl: "",
+rawText: "ショップ大会 準優勝構築。序盤からテンポを取るビート型。",
+verified: false
+}
+];
+const btnDeckCreate = document.getElementById("btnDeckCreate");
+const btnResultsCheck = document.getElementById("btnResultsCheck");
+const btnCloseResults = document.getElementById("btnCloseResults");
+const resultsPanel = document.getElementById("resultsPanel");
+const resultsStatus = document.getElementById("resultsStatus");
+const resultsList = document.getElementById("resultsList");
+btnDeckCreate.addEventListener("click", function () {
+const candidates = ["./horobeat_deck_and_meta_site.html", "./deck.html", "./builder.html"];
+fetch(candidates[0], { method: "HEAD" })
+.then(function (res) {
+if (res.ok) {
+window.location.href = candidates[0];
+} else {
+window.location.href = candidates[1];
+}
+})
+.catch(function () {
+window.location.href = candidates[0];
+});
+});
+function renderResults(items, sourceLabel) {
+resultsList.innerHTML = "";
+resultsStatus.textContent = sourceLabel + "（" + items.length + "件）";
+if (!items || items.length === 0) {
+const emptyLi = document.createElement("li");
+emptyLi.className = "result-item";
+emptyLi.innerHTML = '<p class="result-text">表示できる入賞データがありません。</p>';
+resultsList.appendChild(emptyLi);
+return;
+}
+items.forEach(function (item) {
+const li = document.createElement("li");
+li.className = "result-item";
+const meta = document.createElement("div");
+meta.className = "result-meta";
+if (item.date) {
+const dateSpan = document.createElement("span");
+dateSpan.textContent = item.date;
+meta.appendChild(dateSpan);
+}
+if (item.tournament) {
+const tourSpan = document.createElement("span");
+tourSpan.className = "badge";
+tourSpan.textContent = item.tournament;
+meta.appendChild(tourSpan);
+}
+if (item.rank) {
+const rankSpan = document.createElement("span");
+rankSpan.className = "badge";
+rankSpan.textContent = item.rank;
+meta.appendChild(rankSpan);
+}
+const textP = document.createElement("p");
+textP.className = "result-text";
+textP.textContent = item.rawText || item.deckName || "";
+li.appendChild(meta);
+li.appendChild(textP);
+if (item.sourceUrl) {
+const linkA = document.createElement("a");
+linkA.className = "result-link";
+linkA.href = item.sourceUrl;
+linkA.target = "_blank";
+linkA.rel = "noopener noreferrer";
+linkA.textContent = "元ポストを開く";
+li.appendChild(linkA);
+}
+resultsList.appendChild(li);
+});
+}
+function loadTournamentResults() {
+resultsPanel.classList.add("is-open");
+resultsStatus.textContent = "データを読み込んでいます...";
+fetch("./data/tournament_results.json", { cache: "no-store" })
+.then(function (res) {
+if (!res.ok) {
+throw new Error("HTTP " + res.status);
+}
+return res.json();
+})
+.then(function (data) {
+const list = Array.isArray(data) ? data : (Array.isArray(data.items) ? data.items : []);
+renderResults(list, "data/tournament_results.json");
+})
+.catch(function () {
+renderResults(FALLBACK_RESULTS, "サンプル表示（./data/tournament_results.json 未配置）");
+});
+}
+btnResultsCheck.addEventListener("click", loadTournamentResults);
+btnCloseResults.addEventListener("click", function () {
+resultsPanel.classList.remove("is-open");
+});
+})();
+</script>
+</body>
+</html>
