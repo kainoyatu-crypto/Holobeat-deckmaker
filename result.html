@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>HOROBEAT STUDIO | 大会入賞結果</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet" />
+<style>
+:root {
+  --bg-base: #f4f5f7;
+  --bg-surface: #ffffff;
+  --bg-elevated: #eceef2;
+  --accent-emerald: #059669;
+  --accent-amber: #d97706;
+  --accent-rose: #e11d48;
+  --text-primary: #111318;
+  --text-secondary: #4b5563;
+  --border-hairline: rgba(17, 19, 24, 0.14);
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  min-height: 100dvh;
+  background: var(--bg-base);
+  color: var(--text-primary);
+  font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Noto Sans JP", sans-serif;
+}
+
+.page-shell {
+  max-width: 760px;
+  margin: 0 auto;
+  min-height: 100dvh;
+  background: var(--bg-surface);
+  border-left: 1px solid var(--border-hairline);
+  border-right: 1px solid var(--border-hairline);
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: calc(28px + env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+}
+
+.top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border-hairline);
+  gap: 8px;
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+
+.brand-wrap {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+}
+
+.brand-link {
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: 17px;
+  font-weight: 700;
+  color: #111318;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.page-sub {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.nav-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.nav-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border-hairline);
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  font-size: 12px;
+  font-weight: 800;
+  text-decoration: none;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.nav-btn.primary {
+  background: #111318;
+  color: #ffffff;
+  border-color: #111318;
+}
+
+.hero-summary {
+  padding: 14px 16px;
+  background: var(--bg-base);
+  border-bottom: 1px solid var(--border-hairline);
+}
+
+.summary-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+.summary-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 900;
+}
+
+.summary-meta {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.stat-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-hairline);
+  border-radius: 10px;
+  padding: 8px 10px;
+}
+
+.stat-label {
+  font-size: 10px;
+  font-weight: 800;
+  color: var(--text-secondary);
+}
+
+.stat-value {
+  font-size: 18px;
+  font-weight: 900;
+  color: var(--text-primary);
+  margin-top: 2px;
+}
+
+.filter-panel {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-hairline);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: var(--bg-surface);
+}
+
+.search-row {
+  display: flex;
+  gap: 8px;
+}
+
+.search-input {
+  flex: 1;
+  height: 38px;
+  border-radius: 10px;
+  border: 1px solid var(--border-hairline);
+  background: var(--bg-base);
+  padding: 0 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  outline: none;
+}
+
+.chip-scroll {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding-bottom: 2px;
+}
+
+.chip-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.filter-chip {
+  flex: 0 0 auto;
+  border: 1px solid var(--border-hairline);
+  background: var(--bg-base);
+  color: var(--text-primary);
+  border-radius: 999px;
+  padding: 5px 11px;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.filter-chip.active {
+  background: #111318;
+  color: #ffffff;
+  border-color: #111318;
+}
+
+.results-list {
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1;
+}
+
+.result-card {
+  border: 1px solid var(--border-hairline);
+  border-radius: 12px;
+  background: var(--bg-surface);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.result-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.badges {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+  border: 1px solid transparent;
+}
+
+.badge.tourney {
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+}
+
+.badge.rank {
+  background: #ecfdf5;
+  color: var(--accent-emerald);
+  border-color: rgba(5, 150, 105, 0.25);
+}
+
+.badge.unverified {
+  background: #fffbeb;
+  color: var(--accent-amber);
+  border-color: rgba(217, 119, 6, 0.25);
+}
+
+.badge.verified {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border-color: rgba(29, 78, 216, 0.22);
+}
+
+.result-date {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--text-secondary);
+}
+
+.result-text {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.65;
+  color: var(--text-primary);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.result-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-top: 4px;
+  border-top: 1px dashed var(--border-hairline);
+  flex-wrap: wrap;
+}
+
+.source-link {
+  font-size: 12px;
+  font-weight: 800;
+  color: #2563eb;
+  text-decoration: none;
+}
+
+.source-link:hover {
+  text-decoration: underline;
+}
+
+.card-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.mini-action {
+  border: 1px solid var(--border-hairline);
+  background: var(--bg-base);
+  color: var(--text-primary);
+  border-radius: 7px;
+  padding: 4px 9px;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.empty-box {
+  text-align: center;
+  padding: 36px 16px;
+  border: 1px dashed var(--border-hairline);
+  border-radius: 12px;
+  background: var(--bg-base);
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #111318;
+  color: #ffffff;
+  padding: 8px 16px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+  z-index: 50;
+  white-space: nowrap;
+}
+
+.toast.show {
+  opacity: 1;
+}
+</style>
+</head>
+<body>
+<div class="page-shell">
+  <header class="top-bar">
+    <div class="brand-wrap">
+      <a href="./index.html" class="brand-link">HOROBEAT STUDIO</a>
+      <span class="page-sub">大会入賞結果</span>
+    </div>
+    <nav class="nav-actions" aria-label="ページ移動">
+      <a href="./index.html" class="nav-btn">トップ</a>
+      <a href="./deck.html" class="nav-btn primary">デッキ作成</a>
+    </nav>
+  </header>
+
+  <section class="hero-summary">
+    <div class="summary-top">
+      <h1 class="summary-title">大会入賞結果まとめ</h1>
+      <span class="summary-meta" id="sourceStatusLabel">データ確認中...</span>
+    </div>
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">表示件数</div>
+        <div class="stat-value" id="statShown">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">総登録件数</div>
+        <div class="stat-value" id="statTotal">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">確認済み</div>
+        <div class="stat-value" id="statVerified">0</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="filter-panel">
+    <div class="search-row">
+      <input type="search" id="keywordInput" class="search-input" placeholder="大会名・順位・投稿内容・日付で検索" aria-label="検索" />
+      <button type="button" id="btnReset" class="nav-btn">リセット</button>
+    </div>
+    <div class="chip-scroll" id="tournamentChips" aria-label="大会絞り込み">
+      <button type="button" class="filter-chip active" data-tournament="ALL">すべての大会</button>
+      <button type="button" class="filter-chip" data-tournament="ホロビート名人戦">ホロビート名人戦</button>
+      <button type="button" class="filter-chip" data-tournament="ホロビート大会">ホロビート大会</button>
+    </div>
+    <div class="chip-scroll" id="rankChips" aria-label="順位絞り込み">
+      <button type="button" class="filter-chip active" data-rank="ALL">すべての順位</button>
+      <button type="button" class="filter-chip" data-rank="優勝">優勝</button>
+      <button type="button" class="filter-chip" data-rank="準優勝">準優勝</button>
+      <button type="button" class="filter-chip" data-rank="3位">3位</button>
+      <button type="button" class="filter-chip" data-rank="ベスト4">ベスト4</button>
+      <button type="button" class="filter-chip" data-rank="ベスト8">ベスト8</button>
+      <button type="button" class="filter-chip" data-rank="入賞">入賞</button>
+    </div>
+    <div class="chip-scroll" id="verifyChips" aria-label="確認状態絞り込み">
+      <button type="button" class="filter-chip active" data-verify="ALL">すべて</button>
+      <button type="button" class="filter-chip" data-verify="VERIFIED">確認済み</button>
+      <button type="button" class="filter-chip" data-verify="UNVERIFIED">未確認</button>
+    </div>
+  </section>
+
+  <main class="results-list" id="resultsList"></main>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+const VERIFIED_OVERRIDE_KEY = "horobeat_tournament_verified_v1";
+const DATA_CANDIDATES = [
+  "./data/tournament_results.json",
+  "data/tournament_results.json",
+  "./data/tournament_inbox.json",
+  "data/tournament_inbox.json"
+];
+
+let records = [];
+let verifiedOverrides = loadVerifiedOverrides();
+let filterState = {
+  q: "",
+  tournament: "ALL",
+  rank: "ALL",
+  verify: "ALL"
+};
+
+function escapeHtml(str) {
+  return String(str ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function showToast(msg) {
+  const el = document.getElementById("toast");
+  if (!el) return;
+  el.textContent = msg;
+  el.classList.add("show");
+  clearTimeout(showToast._timer);
+  showToast._timer = setTimeout(() => el.classList.remove("show"), 1800);
+}
+
+function loadVerifiedOverrides() {
+  try {
+    return JSON.parse(localStorage.getItem(VERIFIED_OVERRIDE_KEY) || "{}");
+  } catch {
+    return {};
+  }
+}
+
+function saveVerifiedOverrides() {
+  try {
+    localStorage.setItem(VERIFIED_OVERRIDE_KEY, JSON.stringify(verifiedOverrides));
+  } catch {}
+}
+
+function guessRankFallback(text) {
+  for (const r of ["優勝", "準優勝", "3位", "ベスト4", "ベスト8", "入賞"]) {
+    if (text.includes(r)) return r;
+  }
+  return "";
+}
+
+function normalizeRecord(item, idx) {
+  if (!item || typeof item !== "object") return null;
+  const rawText = String(item.rawText ?? item.text ?? "").trim();
+  if (!rawText) return null;
+  const sourceUrl = String(item.sourceUrl ?? item.url ?? "").trim();
+  const id = String(item.id || sourceUrl || `rec-${idx + 1}`);
+  const date = String(item.date || (item.postedAt ? String(item.postedAt).slice(0, 10) : "")).trim();
+  const tournament = String(
+    item.tournament || (rawText.includes("名人戦") ? "ホロビート名人戦" : "ホロビート大会")
+  ).trim();
+  const rank = String(item.rank || guessRankFallback(rawText)).trim();
+  const baseVerified = Boolean(item.verified);
+  const verified = Object.prototype.hasOwnProperty.call(verifiedOverrides, id)
+    ? Boolean(verifiedOverrides[id])
+    : baseVerified;
+
+  return {
+    id,
+    date,
+    tournament,
+    rank,
+    sourceUrl,
+    rawText,
+    verified,
+    updatedAt: String(item.updatedAt || item.collectedAt || "").trim()
+  };
+}
+
+function extractRecords(payload) {
+  let list = [];
+  if (Array.isArray(payload)) {
+    list = payload;
+  } else if (payload && typeof payload === "object") {
+    if (Array.isArray(payload.items)) list = payload.items;
+    else if (Array.isArray(payload.results)) list = payload.results;
+    else if (Array.isArray(payload.data)) list = payload.data;
+  }
+  return list.map((item, idx) => normalizeRecord(item, idx)).filter(Boolean);
+}
+
+function buildSampleResults() {
+  return [
+    {
+      id: "sample-1",
+      date: "2026-11-20",
+      tournament: "ホロビート名人戦",
+      rank: "優勝",
+      sourceUrl: "",
+      rawText: "【サンプル】本日のホロビート名人戦、優勝デッキでした。data/tournament_results.json が生成されると実際の収集結果が表示されます。",
+      verified: true,
+      updatedAt: ""
+    },
+    {
+      id: "sample-2",
+      date: "2026-11-18",
+      tournament: "ホロビート大会",
+      rank: "準優勝",
+      sourceUrl: "",
+      rawText: "【サンプル】公認店舗大会の準優勝レポート候補です。sync_tournaments.py 実行後に自動で更新されます。",
+      verified: false,
+      updatedAt: ""
+    }
+  ];
+}
+
+async function loadTournamentData() {
+  const statusEl = document.getElementById("sourceStatusLabel");
+  for (const path of DATA_CANDIDATES) {
+    try {
+      const res = await fetch(path, { cache: "no-store" });
+      if (!res.ok) continue;
+      const json = await res.json();
+      const parsed = extractRecords(json);
+      if (parsed.length > 0) {
+        statusEl.textContent = `出典: ${path}`;
+        return parsed;
+      }
+    } catch {}
+  }
+  statusEl.textContent = "サンプル表示中（data/tournament_results.json 未検出）";
+  return buildSampleResults();
+}
+
+function getFilteredRecords() {
+  const q = filterState.q.trim().toLowerCase();
+  return records
+    .filter(rec => {
+      if (filterState.tournament !== "ALL" && rec.tournament !== filterState.tournament) return false;
+      if (filterState.rank !== "ALL" && rec.rank !== filterState.rank) return false;
+      if (filterState.verify === "VERIFIED" && !rec.verified) return false;
+      if (filterState.verify === "UNVERIFIED" && rec.verified) return false;
+      if (q) {
+        const hay = `${rec.date} ${rec.tournament} ${rec.rank} ${rec.rawText} ${rec.sourceUrl}`.toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      return true;
+    })
+    .sort((a, b) => String(b.date || "").localeCompare(String(a.date || "")));
+}
+
+function renderResults() {
+  const listEl = document.getElementById("resultsList");
+  const filtered = getFilteredRecords();
+  const verifiedCount = records.filter(r => r.verified).length;
+
+  document.getElementById("statShown").textContent = String(filtered.length);
+  document.getElementById("statTotal").textContent = String(records.length);
+  document.getElementById("statVerified").textContent = String(verifiedCount);
+
+  if (filtered.length === 0) {
+    listEl.innerHTML = `
+      <div class="empty-box">
+        条件に一致する大会結果がありません。<br />
+        検索条件やフィルタをリセットしてご確認ください。
+      </div>
+    `;
+    return;
+  }
+
+  listEl.innerHTML = filtered.map(rec => {
+    const verifyBadge = rec.verified
+      ? `<span class="badge verified">確認済み</span>`
+      : `<span class="badge unverified">未確認</span>`;
+    const rankBadge = rec.rank
+      ? `<span class="badge rank">${escapeHtml(rec.rank)}</span>`
+      : "";
+    const safeUrl = /^https?:\/\//i.test(rec.sourceUrl) ? rec.sourceUrl : "";
+    const linkHtml = safeUrl
+      ? `<a class="source-link" href="${escapeHtml(safeUrl)}" target="_blank" rel="noopener noreferrer">元ポストを開く ↗</a>`
+      : `<span style="font-size:11px;color:var(--text-secondary);">URLなし</span>`;
+
+    return `
+      <article class="result-card" data-id="${escapeHtml(rec.id)}">
+        <div class="result-head">
+          <div class="badges">
+            <span class="badge tourney">${escapeHtml(rec.tournament || "ホロビート大会")}</span>
+            ${rankBadge}
+            ${verifyBadge}
+          </div>
+          <span class="result-date">${escapeHtml(rec.date || "日付未設定")}</span>
+        </div>
+        <p class="result-text">${escapeHtml(rec.rawText)}</p>
+        <div class="result-footer">
+          ${linkHtml}
+          <div class="card-actions">
+            <button type="button" class="mini-action" data-toggle-verify="${escapeHtml(rec.id)}">
+              ${rec.verified ? "未確認に戻す" : "確認済みにする"}
+            </button>
+            <button type="button" class="mini-action" data-copy-text="${escapeHtml(rec.id)}">
+              本文コピー
+            </button>
+          </div>
+        </div>
+      </article>
+    `;
+  }).join("");
+
+  listEl.querySelectorAll("[data-toggle-verify]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const targetId = btn.dataset.toggleVerify;
+      const rec = records.find(r => r.id === targetId);
+      if (!rec) return;
+      rec.verified = !rec.verified;
+      verifiedOverrides[targetId] = rec.verified;
+      saveVerifiedOverrides();
+      renderResults();
+      showToast(rec.verified ? "確認済みに更新しました" : "未確認に戻しました");
+    });
+  });
+
+  listEl.querySelectorAll("[data-copy-text]").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      const targetId = btn.dataset.copyText;
+      const rec = records.find(r => r.id === targetId);
+      if (!rec) return;
+      const shareBody = [
+        rec.date ? `[${rec.date}]` : "",
+        rec.tournament,
+        rec.rank ? `（${rec.rank}）` : "",
+        rec.rawText,
+        rec.sourceUrl
+      ].filter(Boolean).join("\n");
+      try {
+        await navigator.clipboard.writeText(shareBody);
+        showToast("結果をコピーしました");
+      } catch {
+        showToast("コピーに失敗しました");
+      }
+    });
+  });
+}
+
+function bindChips(containerId, stateKey, attrName) {
+  const container = document.getElementById(containerId);
+  container.querySelectorAll(".filter-chip").forEach(chip => {
+    chip.addEventListener("click", () => {
+      container.querySelectorAll(".filter-chip").forEach(c => c.classList.remove("active"));
+      chip.classList.add("active");
+      filterState[stateKey] = chip.dataset[attrName];
+      renderResults();
+    });
+  });
+}
+
+function bindEvents() {
+  document.getElementById("keywordInput").addEventListener("input", e => {
+    filterState.q = e.target.value;
+    renderResults();
+  });
+
+  document.getElementById("btnReset").addEventListener("click", () => {
+    filterState = { q: "", tournament: "ALL", rank: "ALL", verify: "ALL" };
+    document.getElementById("keywordInput").value = "";
+    document.querySelectorAll(".filter-chip").forEach(c => c.classList.remove("active"));
+    document.querySelector('#tournamentChips [data-tournament="ALL"]').classList.add("active");
+    document.querySelector('#rankChips [data-rank="ALL"]').classList.add("active");
+    document.querySelector('#verifyChips [data-verify="ALL"]').classList.add("active");
+    renderResults();
+  });
+
+  bindChips("tournamentChips", "tournament", "tournament");
+  bindChips("rankChips", "rank", "rank");
+  bindChips("verifyChips", "verify", "verify");
+}
+
+async function init() {
+  bindEvents();
+  records = await loadTournamentData();
+  renderResults();
+}
+
+init();
+</script>
+</body>
+</html>
