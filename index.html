@@ -13,12 +13,12 @@
 --paper: #ffffff;
 --sub: #ececef;
 --ink: #111114;
---muted: #666670;
+--muted: #52525b;
 --line: #222429;
 --soft-line: #dfe1e7;
 --accent: #111114;
 }
-* {
+*, *::before, *::after {
 box-sizing: border-box;
 margin: 0;
 padding: 0;
@@ -86,9 +86,11 @@ box-shadow: 2.5px 2.5px 0 var(--line);
 transition: transform 0.08s ease, background-color 0.14s ease, color 0.14s ease;
 cursor: pointer;
 }
-.menu-box:hover {
+.menu-box:hover,
+.menu-box:focus-visible {
 background: var(--accent);
 color: var(--paper);
+outline: none;
 }
 .menu-box:active {
 transform: translate(1.5px, 1.5px);
@@ -98,7 +100,7 @@ box-shadow: 1px 1px 0 var(--line);
 flex: 1;
 }
 .frame-note {
-font-size: 0.68rem;
+font-size: 0.72rem;
 color: var(--muted);
 text-align: center;
 line-height: 1.5;
@@ -144,19 +146,19 @@ background: var(--paper);
 color: var(--ink);
 border: 1px solid var(--line);
 border-radius: 4px;
-padding: 3px 8px;
-font-size: 0.75rem;
+padding: 4px 10px;
+font-size: 0.78rem;
 font-weight: 700;
 cursor: pointer;
 }
 .modal-text {
-font-size: 0.8rem;
-line-height: 1.6;
+font-size: 0.82rem;
+line-height: 1.65;
 color: var(--muted);
 }
 .toast-bar {
 position: fixed;
-bottom: 14px;
+bottom: calc(14px + env(safe-area-inset-bottom));
 left: 50%;
 transform: translateX(-50%);
 background: var(--accent);
@@ -169,6 +171,7 @@ z-index: 80;
 opacity: 0;
 pointer-events: none;
 transition: opacity 0.16s ease;
+white-space: nowrap;
 }
 .toast-bar.show {
 opacity: 1;
@@ -181,47 +184,43 @@ opacity: 1;
 <header class="site-header">
 <h1 class="site-title">HOROBEAT STUDIO</h1>
 </header>
-
 <nav class="nav-stack" aria-label="メインメニュー">
 <a href="./make.html" class="menu-box" id="linkDeckBuilder">
 デッキ作成
 </a>
-
 <a href="./results.html" class="menu-box" id="linkResults">
 入賞リスト確認
 </a>
 </nav>
-
 <div class="frame-spacer"></div>
-
 <footer class="frame-note">
 非公式ファンメイド支援ツール
 </footer>
 </section>
 </main>
-
 <div class="overlay" id="infoOverlay" role="dialog" aria-modal="true" aria-labelledby="infoModalTitle">
 <div class="modal-box">
 <div class="modal-head">
 <span id="infoModalTitle">入賞リスト確認</span>
-<button type="button" class="modal-close" id="btnCloseInfo">閉じる</button>
+<button type="button" class="modal-close" id="btnCloseInfo" aria-label="閉じる">閉じる</button>
 </div>
 <p class="modal-text" id="infoModalText">
 入賞リストページ（./results.html）はまだ準備中です。ページを追加するとこちらから開けるようになります。
 </p>
 </div>
 </div>
-
-<div class="toast-bar" id="toastBar"></div>
-
+<div class="toast-bar" id="toastBar" role="status" aria-live="polite"></div>
 <script>
 (function () {
 const toastBar = document.getElementById("toastBar");
 const infoOverlay = document.getElementById("infoOverlay");
 const btnCloseInfo = document.getElementById("btnCloseInfo");
+const linkDeckBuilder = document.getElementById("linkDeckBuilder");
+const linkResults = document.getElementById("linkResults");
 let toastTimer = null;
-
+let lastFocusedEl = null;
 function showToast(msg) {
+if (!toastBar) return;
 toastBar.textContent = msg;
 toastBar.classList.add("show");
 clearTimeout(toastTimer);
@@ -229,37 +228,63 @@ toastTimer = setTimeout(function () {
 toastBar.classList.remove("show");
 }, 1600);
 }
-
 function openInfoModal() {
+if (!infoOverlay) return;
+lastFocusedEl = document.activeElement;
 infoOverlay.classList.add("open");
+if (btnCloseInfo) btnCloseInfo.focus();
 }
-
 function closeInfoModal() {
+if (!infoOverlay) return;
 infoOverlay.classList.remove("open");
+if (lastFocusedEl && typeof lastFocusedEl.focus === "function") {
+lastFocusedEl.focus();
+lastFocusedEl = null;
 }
-
+}
+if (btnCloseInfo) {
 btnCloseInfo.addEventListener("click", closeInfoModal);
+}
+if (infoOverlay) {
 infoOverlay.addEventListener("click", function (e) {
 if (e.target === infoOverlay) closeInfoModal();
 });
-
-document.getElementById("linkDeckBuilder").addEventListener("click", function () {
+}
+document.addEventListener("keydown", function (e) {
+if (e.key === "Escape" && infoOverlay && infoOverlay.classList.contains("open")) {
+closeInfoModal();
+}
+});
+if (linkDeckBuilder) {
+linkDeckBuilder.addEventListener("click", function () {
 showToast("デッキ作成へ移動します...");
 });
-
-// results.html が存在するか確認し、無ければ案内モーダルを表示（GitHub Pages等で404になるのを防ぐ補助）
-document.getElementById("linkResults").addEventListener("click", async function (e) {
+}
+if (linkResults) {
+linkResults.addEventListener("click", async function (e) {
 const targetHref = this.getAttribute("href");
+if (!targetHref) return;
+if (window.location.protocol === "file:") return;
+e.preventDefault();
 try {
 const res = await fetch(targetHref, { method: "HEAD", cache: "no-store" });
-if (!res.ok) {
-e.preventDefault();
+if (res.ok) {
+window.location.href = targetHref;
+return;
+}
+} catch () {
+// HEAD非対応環境やネットワーク断時はGETフォールバックを試行
+try {
+const resGet = await fetch(targetHref, { method: "GET", cache: "no-store" });
+if (resGet.ok) {
+window.location.href = targetHref;
+return;
+}
+} catch () {}
+}
 openInfoModal();
-}
-} catch (_) {
-// ローカルファイル（file://）など fetch できない環境では通常遷移を試行
-}
 });
+}
 })();
 </script>
 </body>
