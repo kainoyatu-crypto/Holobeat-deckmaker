@@ -1,1 +1,875 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HOROBEAT STUDIO — イベントカレンダー＆地図</title>
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+    crossorigin=""
+  />
+  <style>
+    :root {
+      --bg-base: #f4f6fb;
+      --bg-surface: #ffffff;
+      --bg-subtle: #eef2f8;
+      --text-primary: #0f172a;
+      --text-secondary: #475569;
+      --border-hairline: #dbe2ee;
+      --accent: #2563eb;
+      --accent-soft: #eff6ff;
+      --ok: #16a34a;
+      --ok-soft: #dcfce7;
+      --warn: #d97706;
+      --warn-soft: #fef3c7;
+      --radius: 12px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Hiragino Sans", "Noto Sans JP", sans-serif;
+      background: var(--bg-base);
+      color: var(--text-primary);
+      line-height: 1.5;
+    }
+
+    .app-header {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      background: var(--bg-surface);
+      border-bottom: 1px solid var(--border-hairline);
+      padding: 12px 16px;
+    }
+
+    .header-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .brand-title {
+      font-size: 16px;
+      font-weight: 900;
+      margin: 0;
+    }
+
+    .brand-sub {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin: 0;
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .nav-btn {
+      text-decoration: none;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 7px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--border-hairline);
+      background: var(--bg-surface);
+      color: var(--text-primary);
+      cursor: pointer;
+    }
+
+    .nav-btn.primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #ffffff;
+    }
+
+    .main-wrap {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .panel {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-hairline);
+      border-radius: var(--radius);
+      padding: 14px;
+    }
+
+    .toolbar-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 10px;
+      align-items: end;
+    }
+
+    label {
+      display: block;
+      font-size: 11px;
+      font-weight: 800;
+      color: var(--text-secondary);
+      margin-bottom: 4px;
+    }
+
+    input, select, button {
+      font-family: inherit;
+      font-size: 13px;
+      border-radius: 8px;
+      border: 1px solid var(--border-hairline);
+      padding: 8px 10px;
+      background: var(--bg-surface);
+      color: var(--text-primary);
+    }
+
+    input, select {
+      width: 100%;
+    }
+
+    .pill-btn {
+      font-weight: 700;
+      cursor: pointer;
+      background: var(--bg-subtle);
+    }
+
+    .pill-btn.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #ffffff;
+    }
+
+    .view-tabs {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border-hairline);
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .view-tab-group {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .summary-text {
+      font-size: 12px;
+      color: var(--text-secondary);
+      font-weight: 700;
+    }
+
+    .split-grid {
+      display: grid;
+      grid-template-columns: 1.35fr 1fr;
+      gap: 14px;
+      align-items: start;
+    }
+
+    @media (max-width: 900px) {
+      .split-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .cal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+    }
+
+    .cal-month-label {
+      font-size: 15px;
+      font-weight: 900;
+    }
+
+    .cal-nav-group {
+      display: flex;
+      gap: 6px;
+    }
+
+    .cal-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 6px;
+    }
+
+    .cal-dow {
+      text-align: center;
+      font-size: 11px;
+      font-weight: 800;
+      color: var(--text-secondary);
+      padding: 4px 0;
+    }
+
+    .cal-cell {
+      min-height: 86px;
+      border: 1px solid var(--border-hairline);
+      border-radius: 8px;
+      padding: 6px;
+      background: var(--bg-surface);
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .cal-cell.muted {
+      background: var(--bg-subtle);
+      color: #94a3b8;
+    }
+
+    .cal-cell.selected {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+    }
+
+    .cal-day-num {
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .cal-event-chip {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 6px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .cal-event-chip.planned {
+      background: var(--ok-soft);
+      color: var(--ok);
+    }
+
+    #eventMap {
+      width: 100%;
+      height: 440px;
+      border-radius: 10px;
+      border: 1px solid var(--border-hairline);
+      z-index: 1;
+    }
+
+    .list-box {
+      max-height: 440px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .event-card {
+      border: 1px solid var(--border-hairline);
+      border-radius: 10px;
+      padding: 12px;
+      background: var(--bg-surface);
+    }
+
+    .badge {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 800;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      margin-right: 4px;
+    }
+
+    .badge.planned {
+      background: var(--ok-soft);
+      color: var(--ok);
+    }
+
+    .badge.review {
+      background: var(--warn-soft);
+      color: var(--warn);
+    }
+
+    .event-title {
+      margin: 6px 0 4px;
+      font-size: 14px;
+      font-weight: 900;
+    }
+
+    .event-meta {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .event-notes {
+      margin: 8px 0;
+      font-size: 12px;
+      color: var(--text-primary);
+      white-space: pre-wrap;
+    }
+
+    .event-actions {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+
+    .event-actions button,
+    .event-actions a {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 5px 9px;
+      border-radius: 7px;
+      border: 1px solid var(--border-hairline);
+      background: var(--bg-subtle);
+      color: var(--text-primary);
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    .toast {
+      position: fixed;
+      right: 16px;
+      bottom: 16px;
+      z-index: 50;
+      background: #0f172a;
+      color: #ffffff;
+      padding: 9px 14px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+
+    .toast.show {
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+  <header class="app-header">
+    <div class="header-inner">
+      <div class="brand">
+        <div>
+          <p class="brand-title">HOROBEAT STUDIO</p>
+          <p class="brand-sub">イベントカレンダー＆地図ページ</p>
+        </div>
+      </div>
+      <nav class="nav-links">
+        <a href="./index.html" class="nav-btn">デッキビルダー</a>
+        <a href="./results.html" class="nav-btn">大会記録・環境</a>
+        <a href="./events.html" class="nav-btn primary">イベント（カレンダー・地図）</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="main-wrap">
+    <section class="panel">
+      <div class="toolbar-grid">
+        <div>
+          <label for="filterArea">駅・エリア・店舗</label>
+          <input id="filterArea" type="text" placeholder="例: 立川、新宿、秋葉原" />
+        </div>
+        <div>
+          <label for="filterCategory">種別</label>
+          <select id="filterCategory">
+            <option value="">すべて</option>
+            <option value="名人戦">名人戦</option>
+            <option value="体験会">体験会</option>
+            <option value="店舗大会">店舗大会</option>
+            <option value="公式イベント">公式イベント</option>
+            <option value="X告知・レポート">X告知・レポート</option>
+          </select>
+        </div>
+        <div>
+          <label for="filterDate">基準日</label>
+          <input id="filterDate" type="date" value="2026-11-22" />
+        </div>
+        <div style="display:flex;gap:6px;">
+          <button type="button" id="btnLocateMe" class="pill-btn" style="flex:1;">現在地周辺</button>
+          <button type="button" id="btnReloadEvents" class="pill-btn">再読込</button>
+        </div>
+      </div>
+
+      <div class="view-tabs">
+        <div class="view-tab-group">
+          <button type="button" class="pill-btn active" data-view="both">カレンダー＋地図</button>
+          <button type="button" class="pill-btn" data-view="calendar">カレンダーのみ</button>
+          <button type="button" class="pill-btn" data-view="map">地図のみ</button>
+        </div>
+        <div id="summaryBar" class="summary-text">読込中...</div>
+      </div>
+    </section>
+
+    <section id="calendarBlock" class="panel">
+      <div class="split-grid">
+        <div>
+          <div class="cal-header">
+            <div class="cal-nav-group">
+              <button type="button" id="btnPrevMonth" class="pill-btn">◀ 前月</button>
+              <button type="button" id="btnThisMonth" class="pill-btn">2026年11月</button>
+              <button type="button" id="btnNextMonth" class="pill-btn">翌月 ▶</button>
+            </div>
+            <div id="calMonthTitle" class="cal-month-label">2026年11月</div>
+          </div>
+          <div id="calendarGrid" class="cal-grid"></div>
+        </div>
+
+        <div>
+          <h2 id="selectedDayHeading" style="margin:0 0 10px;font-size:14px;font-weight:900;">2026-11-22 のイベント</h2>
+          <div id="selectedDayList" class="list-box"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="mapBlock" class="panel">
+      <div class="split-grid">
+        <div id="eventMap"></div>
+        <div>
+          <h2 style="margin:0 0 10px;font-size:14px;font-weight:900;">絞り込み中のイベント一覧</h2>
+          <div id="filteredEventsList" class="list-box"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div id="toast" class="toast"></div>
+
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+    crossorigin=""
+  ></script>
+  <script>
+    const STORAGE_KEY = "horobeat_events_page_state_v1";
+    const FALLBACK_EVENTS = [
+      {
+        id: "hb-evt-2026-11-22-tachikawa",
+        title: "ホロビート 公認店舗イベント（立川周辺）",
+        category: "店舗大会",
+        date: "2026-11-22",
+        time: "14:00",
+        area: "立川",
+        venue: "立川駅周辺 取扱店",
+        lat: 35.6982,
+        lng: 139.4136,
+        status: "確認中",
+        sourceUrl: "https://www.takaratomy.co.jp/products/horobeat-cardgame/event/",
+        xSearchUrl: "https://x.com/search?q=%E3%83%9B%E3%83%AD%E3%83%93%E3%83%BC%E3%83%88%20%E7%AB%8B%E5%B7%9D%20%E5%A4%A7%E4%BC%9A&src=typed_query&f=live",
+        notes: "当日の開催・受付時間は各店舗の告知やX検索で確認してください。"
+      },
+      {
+        id: "hb-evt-2026-11-25-shinjuku",
+        title: "ホロビート 体験会・交流枠（新宿周辺）",
+        category: "体験会",
+        date: "2026-11-25",
+        time: "13:00",
+        area: "新宿",
+        venue: "新宿駅周辺 店舗",
+        lat: 35.6896,
+        lng: 139.7006,
+        status: "確認中",
+        sourceUrl: "https://www.takaratomy.co.jp/products/horobeat-cardgame/event/",
+        xSearchUrl: "https://x.com/search?q=%E3%83%9B%E3%83%AD%E3%83%93%E3%83%BC%E3%83%88%20%E6%96%B0%E5%AE%BF%20%E4%BD%93%E9%A8%93%E4%BC%9A&src=typed_query&f=live",
+        notes: "新宿エリアのイベント候補です。"
+      },
+      {
+        id: "hb-evt-2026-11-28-akihabara",
+        title: "ホロビート 店舗大会（秋葉原周辺）",
+        category: "名人戦",
+        date: "2026-11-28",
+        time: "15:00",
+        area: "秋葉原",
+        venue: "秋葉原駅周辺 取扱店",
+        lat: 35.6984,
+        lng: 139.7731,
+        status: "確認中",
+        sourceUrl: "https://www.c-labo.jp/tournament/filter/tcg:233/",
+        xSearchUrl: "https://x.com/search?q=%E3%83%9B%E3%83%AD%E3%83%93%E3%83%BC%E3%83%88%20%E7%A7%8B%E8%91%89%E5%8E%9F%20%E5%90%8D%E4%BA%BA%E6%88%A6&src=typed_query&f=live",
+        notes: "秋葉原エリアのイベント候補です。"
+      }
+    ];
+
+    const AREA_COORDS = {
+      "立川": [35.6982, 139.4136],
+      "新宿": [35.6896, 139.7006],
+      "秋葉原": [35.6984, 139.7731],
+      "渋谷": [35.6580, 139.7016],
+      "池袋": [35.7295, 139.7109],
+      "横浜": [35.4658, 139.6223],
+      "大阪": [34.7025, 135.4959],
+      "名古屋": [35.1709, 136.8816]
+    };
+
+    let eventsData = [];
+    let calYear = 2026;
+    let calMonth = 10; // 0-indexed: 10 = November
+    let selectedDay = "2026-11-22";
+    let viewMode = "both";
+    let map = null;
+    let markerGroup = null;
+
+    const showToast = (msg) => {
+      const el = document.getElementById("toast");
+      el.textContent = msg;
+      el.classList.add("show");
+      clearTimeout(showToast._t);
+      showToast._t = setTimeout(() => el.classList.remove("show"), 1800);
+    };
+
+    const loadState = () => {
+      try {
+        return JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
+      } catch {
+        return {};
+      }
+    };
+
+    const saveState = (st) => {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(st));
+      } catch {}
+    };
+
+    const esc = (s) =>
+      String(s ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+
+    const getCoords = (ev) => {
+      if (typeof ev.lat === "number" && typeof ev.lng === "number") {
+        return [ev.lat, ev.lng];
+      }
+      const hay = `${ev.area || ""} ${ev.venue || ""} ${ev.title || ""}`;
+      for (const [k, pair] of Object.entries(AREA_COORDS)) {
+        if (hay.includes(k)) return pair;
+      }
+      return AREA_COORDS["立川"];
+    };
+
+    const getFiltered = () => {
+      const areaQ = document.getElementById("filterArea").value.trim().toLowerCase();
+      const catQ = document.getElementById("filterCategory").value;
+      const st = loadState();
+      const planned = new Set(st.plannedIds || []);
+
+      return eventsData
+        .map((ev) => {
+          const [lat, lng] = getCoords(ev);
+          return {
+            ...ev,
+            lat,
+            lng,
+            planned: planned.has(ev.id) || ev.status === "参加予定"
+          };
+        })
+        .filter((ev) => {
+          if (catQ && ev.category !== catQ) return false;
+          if (areaQ) {
+            const hay = `${ev.area || ""} ${ev.venue || ""} ${ev.title || ""} ${ev.notes || ""}`.toLowerCase();
+            if (!hay.includes(areaQ)) return false;
+          }
+          return true;
+        });
+    };
+
+    window.togglePlanned = (id) => {
+      const st = loadState();
+      const set = new Set(st.plannedIds || []);
+      if (set.has(id)) {
+        set.delete(id);
+        showToast("参加予定を解除しました");
+      } else {
+        set.add(id);
+        showToast("参加予定に登録しました");
+      }
+      st.plannedIds = Array.from(set);
+      saveState(st);
+      render();
+    };
+
+    const renderCards = (targetEl, list) => {
+      if (!list.length) {
+        targetEl.innerHTML = `<div class="event-card"><div class="event-meta">表示できるイベントはありません。</div></div>`;
+        return;
+      }
+      targetEl.innerHTML = list
+        .map((ev) => {
+          const xUrl =
+            ev.xSearchUrl ||
+            `https://x.com/search?q=${encodeURIComponent(`ホロビート ${ev.area || ""} ${ev.category || ""}`.trim())}&src=typed_query&f=live`;
+          return `
+            <article class="event-card">
+              <div>
+                <span class="badge">${esc(ev.category || "イベント")}</span>
+                <span class="badge ${ev.planned ? "planned" : "review"}">${ev.planned ? "参加予定" : esc(ev.status || "未確認")}</span>
+              </div>
+              <h3 class="event-title">${esc(ev.title || "名称未設定")}</h3>
+              <div class="event-meta">${esc(ev.date || "")} ${esc(ev.time || "")} ｜ ${esc(ev.area || "未指定")}（${esc(ev.venue || "-")}）</div>
+              ${ev.notes ? `<p class="event-notes">${esc(ev.notes)}</p>` : ""}
+              <div class="event-actions">
+                <button type="button" onclick="togglePlanned('${esc(ev.id)}')">${ev.planned ? "予定解除" : "参加予定"}</button>
+                <button type="button" onclick="focusMap(${ev.lat}, ${ev.lng})">地図で表示</button>
+                <a href="${esc(xUrl)}" target="_blank" rel="noopener noreferrer">Xで検索</a>
+                ${ev.sourceUrl ? `<a href="${esc(ev.sourceUrl)}" target="_blank" rel="noopener noreferrer">詳細元</a>` : ""}
+              </div>
+            </article>
+          `;
+        })
+        .join("");
+    };
+
+    const renderCalendar = (filtered) => {
+      document.getElementById("calMonthTitle").textContent = `${calYear}年${calMonth + 1}月`;
+      const grid = document.getElementById("calendarGrid");
+      const dows = ["日", "月", "火", "水", "木", "金", "土"];
+      const byDate = new Map();
+      filtered.forEach((ev) => {
+        if (!ev.date) return;
+        if (!byDate.has(ev.date)) byDate.set(ev.date, []);
+        byDate.get(ev.date).push(ev);
+      });
+
+      const firstDow = new Date(calYear, calMonth, 1).getDay();
+      const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+      const prevDays = new Date(calYear, calMonth, 0).getDate();
+      const pad = (n) => String(n).padStart(2, "0");
+
+      let html = dows.map((d) => `<div class="cal-dow">${d}</div>`).join("");
+
+      for (let i = firstDow - 1; i >= 0; i--) {
+        const dNum = prevDays - i;
+        const m = calMonth === 0 ? 12 : calMonth;
+        const y = calMonth === 0 ? calYear - 1 : calYear;
+        html += `<div class="cal-cell muted" data-iso="${y}-${pad(m)}-${pad(dNum)}"><div class="cal-day-num">${dNum}</div></div>`;
+      }
+
+      for (let d = 1; d <= daysInMonth; d++) {
+        const iso = `${calYear}-${pad(calMonth + 1)}-${pad(d)}`;
+        const dayEvs = byDate.get(iso) || [];
+        const selClass = iso === selectedDay ? "selected" : "";
+        const chips = dayEvs
+          .slice(0, 3)
+          .map(
+            (ev) =>
+              `<div class="cal-event-chip ${ev.planned ? "planned" : ""}">${esc(ev.area ? `[${ev.area}] ` : "")}${esc(ev.title)}</div>`
+          )
+          .join("");
+        html += `
+          <div class="cal-cell ${selClass}" data-iso="${iso}">
+            <div class="cal-day-num">${d}</div>
+            ${chips}
+          </div>
+        `;
+      }
+
+      const used = firstDow + daysInMonth;
+      const tail = (7 - (used % 7)) % 7;
+      for (let t = 1; t <= tail; t++) {
+        const m = calMonth === 11 ? 1 : calMonth + 2;
+        const y = calMonth === 11 ? calYear + 1 : calYear;
+        html += `<div class="cal-cell muted" data-iso="${y}-${pad(m)}-${pad(t)}"><div class="cal-day-num">${t}</div></div>`;
+      }
+
+      grid.innerHTML = html;
+      grid.querySelectorAll(".cal-cell").forEach((el) => {
+        el.addEventListener("click", () => {
+          selectedDay = el.getAttribute("data-iso");
+          document.getElementById("filterDate").value = selectedDay;
+          render();
+        });
+      });
+
+      document.getElementById("selectedDayHeading").textContent = `${selectedDay} のイベント`;
+      renderCards(document.getElementById("selectedDayList"), byDate.get(selectedDay) || []);
+    };
+
+    const ensureMap = () => {
+      if (map || typeof L === "undefined") return;
+      map = L.map("eventMap").setView(AREA_COORDS["立川"], 10);
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        attribution: "&copy; OpenStreetMap contributors"
+      }).addTo(map);
+      markerGroup = L.layerGroup().addTo(map);
+    };
+
+    window.focusMap = (lat, lng) => {
+      if (viewMode === "calendar") applyViewMode("both");
+      ensureMap();
+      if (map) {
+        setTimeout(() => {
+          map.invalidateSize();
+          map.setView([lat, lng], 13);
+        }, 80);
+      }
+    };
+
+    const renderMapAndList = (filtered) => {
+      renderCards(document.getElementById("filteredEventsList"), filtered);
+      ensureMap();
+      if (!map || !markerGroup) return;
+
+      markerGroup.clearLayers();
+      const pts = [];
+      filtered.forEach((ev) => {
+        if (typeof ev.lat === "number" && typeof ev.lng === "number") {
+          const m = L.marker([ev.lat, ev.lng]).addTo(markerGroup);
+          m.bindPopup(`<strong>${esc(ev.title)}</strong><br/>${esc(ev.date)} ${esc(ev.time || "")}<br/>${esc(ev.area || "")}`);
+          pts.push([ev.lat, ev.lng]);
+        }
+      });
+
+      setTimeout(() => {
+        map.invalidateSize();
+        if (pts.length) {
+          map.fitBounds(pts, { padding: [24, 24], maxZoom: 13 });
+        }
+      }, 60);
+    };
+
+    const applyViewMode = (mode) => {
+      viewMode = mode;
+      document.querySelectorAll("[data-view]").forEach((btn) => {
+        btn.classList.toggle("active", btn.getAttribute("data-view") === mode);
+      });
+      const calBlock = document.getElementById("calendarBlock");
+      const mapBlock = document.getElementById("mapBlock");
+      calBlock.style.display = mode === "map" ? "none" : "block";
+      mapBlock.style.display = mode === "calendar" ? "none" : "block";
+      if (mode !== "calendar") {
+        renderMapAndList(getFiltered());
+      }
+    };
+
+    const render = () => {
+      const filtered = getFiltered();
+      const plannedCount = filtered.filter((e) => e.planned).length;
+      document.getElementById("summaryBar").textContent =
+        `表示中 ${filtered.length} 件 / 全 ${eventsData.length} 件（参加予定 ${plannedCount} 件）`;
+      renderCalendar(filtered);
+      if (viewMode !== "calendar") {
+        renderMapAndList(filtered);
+      }
+    };
+
+    const loadEvents = async () => {
+      try {
+        const res = await fetch("./data/events.json?_=" + Date.now());
+        if (res.ok) {
+          const json = await res.json();
+          if (Array.isArray(json) && json.length) {
+            eventsData = json;
+            render();
+            return;
+          }
+        }
+      } catch {}
+      eventsData = FALLBACK_EVENTS;
+      render();
+    };
+
+    document.querySelectorAll("[data-view]").forEach((btn) => {
+      btn.addEventListener("click", () => applyViewMode(btn.getAttribute("data-view")));
+    });
+
+    document.getElementById("btnPrevMonth").addEventListener("click", () => {
+      calMonth -= 1;
+      if (calMonth < 0) {
+        calMonth = 11;
+        calYear -= 1;
+      }
+      render();
+    });
+
+    document.getElementById("btnNextMonth").addEventListener("click", () => {
+      calMonth += 1;
+      if (calMonth > 11) {
+        calMonth = 0;
+        calYear += 1;
+      }
+      render();
+    });
+
+    document.getElementById("btnThisMonth").addEventListener("click", () => {
+      calYear = 2026;
+      calMonth = 10;
+      selectedDay = "2026-11-22";
+      document.getElementById("filterDate").value = selectedDay;
+      render();
+    });
+
+    document.getElementById("filterDate").addEventListener("change", (e) => {
+      if (!e.target.value) return;
+      selectedDay = e.target.value;
+      const [y, m] = selectedDay.split("-").map(Number);
+      if (y && m) {
+        calYear = y;
+        calMonth = m - 1;
+      }
+      render();
+    });
+
+    document.getElementById("filterArea").addEventListener("input", render);
+    document.getElementById("filterCategory").addEventListener("change", render);
+    document.getElementById("btnReloadEvents").addEventListener("click", () => {
+      loadEvents();
+      showToast("イベントデータを再読込しました");
+    });
+
+    document.getElementById("btnLocateMe").addEventListener("click", () => {
+      if (!navigator.geolocation) {
+        showToast("現在地取得に対応していません");
+        return;
+      }
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          if (viewMode === "calendar") applyViewMode("both");
+          ensureMap();
+          if (map) {
+            setTimeout(() => {
+              map.invalidateSize();
+              map.setView([pos.coords.latitude, pos.coords.longitude], 12);
+            }, 80);
+          }
+          showToast("現在地周辺に移動しました");
+        },
+        () => showToast("現在地を取得できませんでした")
+      );
+    });
+
+    applyViewMode("both");
+    loadEvents();
+  </script>
+</body>
+</html>
 
