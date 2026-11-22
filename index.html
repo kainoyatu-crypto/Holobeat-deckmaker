@@ -260,76 +260,86 @@ overflow: hidden;
 position: relative;
 z-index: 1;
 }
-.util-box {
+.sketch-panel {
 width: 100%;
-height: 54px;
-flex: 0 0 54px;
+flex-shrink: 0;
 background: var(--bg-surface);
 border: 1px solid var(--border-hairline);
-border-radius: 8px;
-padding: 6px 8px;
-overflow: hidden;
-box-shadow: none;
+border-radius: 10px;
+padding: 7px 9px;
 display: flex;
 flex-direction: column;
-justify-content: space-between;
+gap: 6px;
 }
-.util-row-label {
-font-size: 10px;
-font-weight: 800;
-color: var(--text-secondary);
-margin-bottom: 3px;
-line-height: 1.15;
-flex-shrink: 0;
-}
-.mini-chips-row {
+.sketch-line {
 display: flex;
-flex-wrap: nowrap;
-gap: 5px;
 align-items: center;
+gap: 6px;
+min-height: 24px;
 overflow-x: auto;
 overflow-y: hidden;
 scrollbar-width: none;
-min-height: 24px;
+flex-wrap: nowrap;
 }
-.mini-chips-row::-webkit-scrollbar { display: none; }
+.sketch-line::-webkit-scrollbar { display: none; }
+.sketch-prefix {
+font-size: 11px;
+font-weight: 900;
+color: var(--text-secondary);
+white-space: nowrap;
+flex-shrink: 0;
+}
 .mini-tag {
 background: var(--bg-base);
 border: 1px solid var(--border-hairline);
 color: var(--text-primary);
 border-radius: 7px;
-padding: 3px 8px;
+padding: 2px 7px;
 font-size: 11px;
 font-weight: 700;
 cursor: pointer;
 white-space: nowrap;
 flex: 0 0 auto;
+line-height: 1.35;
 }
 .mini-tag.active {
 background: #111318;
 color: #ffffff;
 border-color: #111318;
 }
-.mini-tag.civ-tag {
-background: #ecfdf5;
-border-color: rgba(5, 150, 105, 0.28);
-color: #064e3b;
+.mini-tag.color-tag {
+background: #f8fafc;
+border-color: rgba(17, 19, 24, 0.22);
+color: #111318;
 }
-.mini-tag.civ-tag.active {
+.mini-tag.color-tag.active {
 background: #059669;
 color: #ffffff;
 border-color: #059669;
 }
-.focus-card-bar {
-width: 100%;
-height: 40px;
-flex: 0 0 40px;
+.sketch-focus-row {
 display: flex;
 align-items: center;
 justify-content: space-between;
 gap: 8px;
+padding-top: 4px;
+border-top: 1px dashed var(--border-hairline);
+min-height: 28px;
+}
+.focus-name {
 font-size: 12px;
-padding: 6px 10px;
+font-weight: 900;
+color: var(--text-primary);
+overflow: hidden;
+text-overflow: ellipsis;
+white-space: nowrap;
+flex: 1;
+}
+.focus-controls {
+display: flex;
+align-items: center;
+gap: 5px;
+flex-shrink: 0;
 }
 .focus-name {
 font-weight: 900;
@@ -473,8 +483,8 @@ cursor: pointer;
 }
 .sub-btn {
 height: 42px;
-padding: 0 12px;
-border-radius: 12px;
+padding: 0 13px;
+border-radius: 999px;
 border: 1.5px solid var(--border-hairline);
 background: var(--bg-elevated);
 color: var(--text-primary);
@@ -806,11 +816,16 @@ z-index: 200;
 </div>
 <div class="deck-grid" id="deckGrid"></div>
 <div class="deck-utility-panel">
-<div class="util-box" id="civBox">
-<div class="util-row-label">文明</div>
-<div class="mini-chips-row" id="civQuickChips"></div>
+<div class="sketch-panel" id="sketchInfoBox">
+<div class="sketch-line" id="tagQuickLine">
+<span class="sketch-prefix">タグ：</span>
+<div class="mini-chips-row" id="tagQuickChips"></div>
 </div>
-<div class="util-box focus-card-bar" id="cardNameBar" aria-live="polite">
+<div class="sketch-line" id="colorQuickLine">
+<span class="sketch-prefix">色：</span>
+<div class="mini-chips-row" id="colorQuickChips"></div>
+</div>
+<div class="sketch-focus-row" id="cardNameBar" aria-live="polite">
 <span class="focus-name" id="focusCardLabel">カード未選択</span>
 <div class="focus-controls">
 <button class="step-btn" id="btnFocusMinus" title="1枚減らす">-</button>
@@ -820,10 +835,11 @@ z-index: 200;
 </div>
 </div>
 </div>
+</div>
 </main>
 <section class="dock-section">
 <div class="dock-header">
-<span>タップ・上スワイプで追加 / 長押し・詳細でレアリティ設定</span>
+<span>カードリスト（タップ・上スワイプで追加）</span>
 <span id="poolCountLabel">0件</span>
 </div>
 <div class="dock-scroll" id="dockScroll"></div>
@@ -959,12 +975,14 @@ const GRID_SLOTS_10X5 = 50;
 const LONG_PRESS_MS = 260;
 const SAVE_KEY = "horobeat_studio_deck_v1";
 const SLOTS_KEY = "horobeat_studio_slots_v1";
+const TAGS_KEY = "horobeat_studio_custom_tags_v1";
+let customTagsByCard = {};
 let cards = [];
 let zone = "main";
 let deckData = { main: {}, sub: {}, variants: { main: {}, sub: {} } };
 let focusedCardId = null;
 let detailCopyIndex = 0;
-let state = { q: "", rarity: "ALL", color: "ALL", civ: "ALL", type: "ALL", img: "ALL", sort: "id" };
+let state = { q: "", rarity: "ALL", color: "ALL", civ: "ALL", type: "ALL", tag: "ALL", img: "ALL", sort: "id" };
 function pickCardId(raw) {
 return String(
 raw?.id ??
@@ -1305,6 +1323,48 @@ const parsed = JSON.parse(saved);
 normalizeLoaded(parsed);
 }
 } catch (e) {}
+try {
+const rawTags = localStorage.getItem(TAGS_KEY);
+if (rawTags) {
+const parsedTags = JSON.parse(rawTags);
+if (parsedTags && typeof parsedTags === "object") {
+customTagsByCard = parsedTags;
+}
+}
+} catch (e) {}
+}
+function saveCustomTags() {
+try { localStorage.setItem(TAGS_KEY, JSON.stringify(customTagsByCard)); } catch (e) {}
+}
+function getCustomTagsForCard(card) {
+if (!card) return [];
+const key = getBaseCardKey(card);
+const arr = customTagsByCard?.[key];
+return Array.isArray(arr) ? arr.filter(Boolean) : [];
+}
+function addCustomTagToCard(card, rawTag) {
+if (!card) return;
+const tag = normalizeLabelValue(rawTag);
+if (!tag) return;
+const key = getBaseCardKey(card);
+const current = Array.isArray(customTagsByCard[key]) ? [...customTagsByCard[key]] : [];
+if (!current.includes(tag)) {
+current.push(tag);
+customTagsByCard[key] = current;
+saveCustomTags();
+render();
+}
+}
+function removeCustomTagFromCard(card, tagToRemove) {
+if (!card) return;
+const key = getBaseCardKey(card);
+const current = Array.isArray(customTagsByCard[key]) ? [...customTagsByCard[key]] : [];
+const next = current.filter(t => t !== tagToRemove);
+if (next.length > 0) customTagsByCard[key] = next;
+else delete customTagsByCard[key];
+if (state.tag === tagToRemove) state.tag = "ALL";
+saveCustomTags();
+render();
 }
 function addToDeck(id, preferredVariantId = null) {
 const map = new Map(cards.map(c => [c.id, c]));
@@ -1466,39 +1526,70 @@ removeFromDeck(baseCard.id);
 grid.appendChild(tile);
 }
 }
+function getCardTags(card) {
+if (!card) return [];
+const custom = getCustomTagsForCard(card);
+const rawTags = card.tags ?? card.keywords ?? card.role ?? card.tag ?? [];
+let list = [...custom];
+if (Array.isArray(rawTags)) list.push(...rawTags.map(t => normalizeLabelValue(t)).filter(Boolean));
+else if (typeof rawTags === "string" && rawTags.trim()) {
+list.push(...rawTags.split(/[,、/／・\s]+/).map(t => normalizeLabelValue(t)).filter(Boolean));
+}
+if (list.length === 0) {
+const hay = `${card.name || ""} ${card.type || ""} ${card.text || ""}`;
+if (/初動|ドロー|サーチ|手札補充|回収/.test(hay)) list.push("初動");
+if (/除去|破壊|バウンス|無効|妨害|盾|ブロッカー|トリガー/.test(hay)) list.push("防御/除去");
+if (/フィニッシャー|SA|スピードアタッカー|追加ターン|打点/.test(hay)) list.push("フィニッシャー");
+}
+return Array.from(new Set(list));
+}
 function renderUtilityPanel() {
 const map = new Map(cards.map(c => [c.id, c]));
-const civCounts = {};
+const tagCounts = {};
+const colorCounts = {};
 Object.entries(deckData[zone] || {}).forEach(([id, n]) => {
 const qty = Number(n || 0);
 if (qty <= 0) return;
 const c = map.get(id) || { id };
-const civ = c.civilization || "無";
-civCounts[civ] = (civCounts[civ] || 0) + qty;
+const col = c.color || "無";
+colorCounts[col] = (colorCounts[col] || 0) + qty;
+getCardTags(c).forEach(tg => {
+tagCounts[tg] = (tagCounts[tg] || 0) + qty;
 });
-const civRow = document.getElementById("civQuickChips");
-civRow.innerHTML = "";
-const civEntries = Object.entries(civCounts);
-if (civEntries.length === 0) {
-const emptyNote = document.createElement("span");
-emptyNote.style.fontSize = "11px";
-emptyNote.style.color = "var(--text-secondary)";
-emptyNote.style.whiteSpace = "nowrap";
-emptyNote.textContent = "デッキにカードを追加すると文明枚数が表示されます";
-civRow.appendChild(emptyNote);
-} else {
-civEntries.forEach(([civ, cnt]) => {
+});
+const tagRow = document.getElementById("tagQuickChips");
+tagRow.innerHTML = "";
+const allCustomTags = Object.values(customTagsByCard).flat().filter(Boolean);
+const defaultTags = ["初動", ...allCustomTags];
+const tagKeys = Array.from(new Set([...defaultTags, ...Object.keys(tagCounts)]));
+tagKeys.forEach(tg => {
+const cnt = tagCounts[tg] || 0;
 const btn = document.createElement("button");
 btn.type = "button";
-btn.className = "mini-tag civ-tag" + (state.civ === civ ? " active" : "");
-btn.textContent = `${civ}: ${cnt}`;
+btn.className = "mini-tag" + (state.tag === tg ? " active" : "");
+btn.textContent = `${tg} ${cnt}枚`;
 btn.onclick = () => {
-state.civ = state.civ === civ ? "ALL" : civ;
+state.tag = state.tag === tg ? "ALL" : tg;
 render();
 };
-civRow.appendChild(btn);
+tagRow.appendChild(btn);
 });
-}
+const colorRow = document.getElementById("colorQuickChips");
+colorRow.innerHTML = "";
+const defaultColors = ["赤", "青", "緑"];
+const colorKeys = Array.from(new Set([...defaultColors, ...Object.keys(colorCounts)]));
+colorKeys.forEach(col => {
+const cnt = colorCounts[col] || 0;
+const btn = document.createElement("button");
+btn.type = "button";
+btn.className = "mini-tag color-tag" + (state.color === col ? " active" : "");
+btn.textContent = `${col} ${cnt}枚`;
+btn.onclick = () => {
+state.color = state.color === col ? "ALL" : col;
+render();
+};
+colorRow.appendChild(btn);
+});
 const focusCard = focusedCardId ? map.get(focusedCardId) : null;
 const focusLabel = document.getElementById("focusCardLabel");
 const focusCount = document.getElementById("focusCountLabel");
@@ -1522,6 +1613,7 @@ if (state.rarity !== "ALL" && !variants.some(v => detectRarity(v) === state.rari
 if (state.color !== "ALL" && (c.color || "無") !== state.color) return false;
 if (state.civ !== "ALL" && (c.civilization || "無") !== state.civ) return false;
 if (state.type !== "ALL" && (c.type || "その他") !== state.type) return false;
+if (state.tag !== "ALL" && !variants.some(v => getCardTags(v).includes(state.tag))) return false;
 if (state.img === "HAS" && !variants.some(v => v.imageUrl)) return false;
 if (state.img === "NONE" && variants.some(v => v.imageUrl)) return false;
 if (q) {
@@ -1604,7 +1696,7 @@ document.getElementById("zoneLabel").textContent = zone === "main" ? "MAIN" : "S
 document.getElementById("zoneCount").textContent = total;
 document.getElementById("zoneTarget").textContent = target;
 document.getElementById("counterReadout").classList.toggle("over", total > target);
-const filtered = state.rarity !== "ALL" || state.color !== "ALL" || state.civ !== "ALL" || state.type !== "ALL" || state.img !== "ALL";
+const filtered = state.rarity !== "ALL" || state.color !== "ALL" || state.civ !== "ALL" || state.type !== "ALL" || state.tag !== "ALL" || state.img !== "ALL";
 document.getElementById("btnOpenFilter").classList.toggle("active-filter", filtered);
 }
 function render() {
@@ -1674,7 +1766,28 @@ if (inZone > 0) {
 copySelectorHtml = `<div style="font-size:12px;font-weight:800;margin-bottom:5px;">デッキ内の枚数ごとにレアリティを選択</div><div class="copy-tabs-row">${copyIds.map((vid, idx) => { const vCard = map.get(vid) || canonical; const vRarity = detectRarity(vCard); return `<button type="button" class="copy-tab ${idx === detailCopyIndex ? "active" : ""}" data-copy-idx="${idx}">${idx + 1}枚目 (${vRarity})</button>`; }).join("")}</div>`;
 }
 const variantStripHtml = `<div style="font-size:12px;font-weight:800;margin-bottom:4px;">レアリティ変更（${variants.length}種）</div><div class="variant-strip">${variants.map((v, vIdx) => { const isSelected = v.id === activeCard.id; const rLabel = detectRarity(v); return `<button type="button" class="variant-thumb ${isSelected ? "selected" : ""}" data-variant-id="${v.id}">${v.imageUrl ? `<img src="${v.imageUrl}" alt="${v.name || ""}" />` : ""}<span class="variant-label">${rLabel}${variants.length > 1 ? ` #${vIdx + 1}` : ""}</span></button>`; }).join("")}</div>`;
-document.getElementById("detailBody").innerHTML = `${activeCard.imageUrl ? `<img class="preview-img" src="${activeCard.imageUrl}" alt="${activeCard.name || ""}" />` : ""}${copySelectorHtml}${variantStripHtml}<div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px;">レア: ${detectRarity(activeCard)} / 色: ${activeCard.color || "-"} / 種類: ${activeCard.type || "-"} / コスト: ${activeCard.cost ?? "-"}</div><p style="font-size:13px;line-height:1.6;margin:0 0 12px;">${activeCard.text || ""}</p><button class="sheet-btn" id="detailAdd">1枚追加（合計 ${cardTotal(baseId)} / ${MAX_PER_CARD}）</button>${inZone > 0 ? `<button class="sheet-btn secondary" id="detailRemove">現在の枠から1枚減らす（${inZone}枚中）</button>` : ""}`;
+const cardCustomTags = getCustomTagsForCard(canonical);
+const tagEditorHtml = `<div style="background:var(--bg-base);border:1px solid var(--border-hairline);border-radius:10px;padding:10px;margin-bottom:12px;"><div style="font-size:12px;font-weight:800;margin-bottom:6px;">マイタグ設定</div><div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;">${cardCustomTags.length ? cardCustomTags.map(tg => `<span class="chip selected" style="padding:4px 10px;display:inline-flex;align-items:center;gap:6px;">${tg}<button type="button" data-del-tag="${tg}" style="background:none;border:none;color:#fff;font-weight:900;cursor:pointer;padding:0;font-size:13px;line-height:1;">×</button></span>`).join("") : `<span style="font-size:11px;color:var(--text-secondary);">タグ未設定（下の入力欄から追加できます）</span>`}</div><div style="display:flex;gap:6px;"><input type="text" id="newCardTagInput" class="text-input" placeholder="タグ名を入力（例：初動・キー・メタ）" style="margin:0;flex:1;padding:7px 10px;font-size:12px;" /><button type="button" id="btnAddCardTag" class="pill-btn primary" style="padding:0 12px;font-size:12px;">追加</button></div></div>`;
+document.getElementById("detailBody").innerHTML = `${activeCard.imageUrl ? `<img class="preview-img" src="${activeCard.imageUrl}" alt="${activeCard.name || ""}" />` : ""}${copySelectorHtml}${variantStripHtml}<div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px;">レア: ${detectRarity(activeCard)} / 色: ${activeCard.color || "-"} / 種類: ${activeCard.type || "-"} / コスト: ${activeCard.cost ?? "-"}</div><p style="font-size:13px;line-height:1.6;margin:0 0 12px;">${activeCard.text || ""}</p>${tagEditorHtml}<button class="sheet-btn" id="detailAdd">1枚追加（合計 ${cardTotal(baseId)} / ${MAX_PER_CARD}）</button>${inZone > 0 ? `<button class="sheet-btn secondary" id="detailRemove">現在の枠から1枚減らす（${inZone}枚中）</button>` : ""}`;
+const addTagFn = () => {
+const inp = document.getElementById("newCardTagInput");
+if (!inp || !inp.value.trim()) return;
+addCustomTagToCard(canonical, inp.value.trim());
+openDetail(canonical, detailCopyIndex, activeCard.id);
+};
+document.getElementById("btnAddCardTag").onclick = addTagFn;
+document.getElementById("newCardTagInput").addEventListener("keydown", e => {
+if (e.key === "Enter") {
+e.preventDefault();
+addTagFn();
+}
+});
+document.querySelectorAll("#detailBody [data-del-tag]").forEach(btn => {
+btn.onclick = () => {
+removeCustomTagFromCard(canonical, btn.dataset.delTag);
+openDetail(canonical, detailCopyIndex, activeCard.id);
+};
+});
 document.querySelectorAll("#detailBody [data-copy-idx]").forEach(btn => {
 btn.onclick = () => {
 openDetail(canonical, Number(btn.dataset.copyIdx));
@@ -2074,6 +2187,7 @@ state.rarity = "ALL";
 state.color = "ALL";
 state.civ = "ALL";
 state.type = "ALL";
+state.tag = "ALL";
 state.img = "ALL";
 buildFilterOptions();
 render();
