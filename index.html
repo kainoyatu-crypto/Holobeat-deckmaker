@@ -19,7 +19,7 @@
 --border-hairline: rgba(17, 19, 24, 0.15);
 --card-ratio: 63 / 88;
 }
-, ::before, ::after {
+*, *::before, *::after {
 box-sizing: border-box;
 -webkit-tap-highlight-color: transparent;
 -webkit-touch-callout: none;
@@ -289,12 +289,6 @@ font-weight: 900;
 color: var(--text-secondary);
 white-space: nowrap;
 flex-shrink: 0;
-}
-.mini-chips-row {
-display: flex;
-flex-wrap: nowrap;
-gap: 5px;
-align-items: center;
 }
 .mini-tag {
 background: var(--bg-base);
@@ -669,6 +663,25 @@ padding: 9px 11px;
 margin-bottom: 6px;
 gap: 8px;
 }
+.bar-row {
+display: flex;
+align-items: center;
+gap: 8px;
+margin-bottom: 6px;
+font-size: 12px;
+}
+.bar-track {
+flex: 1;
+height: 9px;
+background: var(--bg-elevated);
+border-radius: 999px;
+overflow: hidden;
+}
+.bar-fill {
+height: 100%;
+background: #111318;
+border-radius: 999px;
+}
 .preview-img {
 width: 210px;
 max-width: 60vw;
@@ -961,7 +974,7 @@ color: var(--text-primary);
 <div class="overlay" id="statsOverlay">
 <div class="sheet">
 <div class="sheet-head">
-<span>コスト分布</span>
+<span>デッキ内訳・コスト分布</span>
 <button class="sheet-close" data-close="statsOverlay">×</button>
 </div>
 <div id="statsContent" style="font-size:13px;line-height:1.7;"></div>
@@ -1269,7 +1282,7 @@ if (!card) return "UNKNOWN";
 const no = String(card.cardNumber || "").trim().toUpperCase();
 if (no) return ⁠NO:${no}⁠;
 const rawId = String(card.id || "").trim().toUpperCase();
-const stripped = rawId.replace(/(_[A-Z0-9]+)?(__\d+)?￼
+const stripped = rawId.replace(/([A-Z0-9]+)?(__\d+)?￼
 ￼
 ￼
 }
@@ -1737,27 +1750,23 @@ el.addEventListener("touchstart", e => {
 ￼
 ￼
 ￼
-￼
 timer = setTimeout(() => {
-if (!didSwipeUp) {
 ￼
 ￼
 ￼
 ￼
-}
 }, LONG_PRESS_MS);
 }, { passive: true });
+￼
 el.addEventListener("touchmove", e => {
 ￼
 ￼
 ￼
 ￼
-if (dySigned < -14 && Math.abs(dySigned) > dx * 1.15) {
+￼
+if (!didSwipeUp && dySigned < -18 && Math.abs(dySigned) > dx * 1.3) {
 ￼
 ￼
-￼
-￼
-} else if (Math.abs(dySigned) > 10) {
 ￼
 }
 }, { passive: true });
@@ -1767,13 +1776,13 @@ if (didLong || didSwipeUp) {
 ￼
 ￼
 ￼
-￼
 }
 ￼
 ￼
 ￼
-if (dySigned < -14 && Math.abs(dySigned) > dx * 1.15) {
 ￼
+￼
+if (isSwipeUp || isTap) {
 ￼
 ￼
 ￼
@@ -1782,11 +1791,9 @@ if (dySigned < -14 && Math.abs(dySigned) > dx * 1.15) {
 el.addEventListener("touchcancel", () => {
 ￼
 ￼
-￼
 }, { passive: true });
 el.addEventListener("click", () => {
-if (Date.now() < suppressClickUntil || didLong || didSwipeUp) {
-￼
+if (Date.now() < suppressClickUntil || didLong) {
 ￼
 ￼
 }
@@ -2059,7 +2066,7 @@ const line = rawLine.trim();
 if (!line) return;
 if (line.includes("サブ")) { currentTarget = "sub"; return; }
 if (line.includes("メイン")) { currentTarget = "main"; return; }
-const m = line.match(/^(\d+)\s[x×]\s(.+?)(?:\s(（[)）])?$/i);
+const m = line.match(/^(\d+)\s*[x×]\s*(.+?)(?:\s*(（[)）])?$/i);
 if (!m) return;
 const qty = Number(m[1]);
 if (!qty || qty <= 0) return;
@@ -2137,48 +2144,71 @@ btn.disabled = true;
 const prevLabel = btn.textContent;
 btn.textContent = "画像を生成中...";
 try {
-const expandedEntries = getExpandedZoneCards("main");
-const expanded = expandedEntries.map(e => e.displayCard);
+const mainCards = getExpandedZoneCards("main").map(e => e.displayCard);
+const subCards = getExpandedZoneCards("sub").map(e => e.displayCard);
 const cols = 10;
-const minRows = 5;
-const rows = Math.max(minRows, Math.ceil(expanded.length / cols));
-const cardW = 128;
+const mainRows = Math.max(5, Math.ceil(mainCards.length / cols));
+const hasSub = subCards.length > 0;
+const subRows = hasSub ? Math.max(1, Math.ceil(subCards.length / cols)) : 0;
+const cardW = 140;
 const cardH = Math.round(cardW * (88 / 63));
 const gap = 8;
 const pad = 22;
-const headerH = 64;
+const headerH = 62;
+const subHeaderH = hasSub ? 42 : 0;
+const mainBoxH = pad * 2 + mainRows * cardH + (mainRows - 1) * gap;
+const subBoxH = hasSub ? (pad + subRows * cardH + (subRows - 1) * gap + pad) : 0;
 const canvas = document.createElement("canvas");
 canvas.width = pad * 2 + cols * cardW + (cols - 1) * gap;
-canvas.height = headerH + pad + rows * cardH + (rows - 1) * gap + pad;
+canvas.height = headerH + mainBoxH + (hasSub ? subHeaderH + subBoxH : pad);
 const ctx = canvas.getContext("2d");
 if (!ctx) throw new Error("Canvas context unavailable");
-ctx.fillStyle = "#ffffff";
+ctx.fillStyle = "#f4f5f7";
 ctx.fillRect(0, 0, canvas.width, canvas.height);
 const titleInput = document.getElementById("exportTitleInput");
 const title = (titleInput && titleInput.value.trim()) || "HOROBEAT DECK";
+ctx.fillStyle = "#ffffff";
+ctx.fillRect(0, 0, canvas.width, headerH);
 ctx.fillStyle = "#000000";
 ctx.font = "bold 24px sans-serif";
-ctx.fillText(title, pad, 41);
+ctx.fillText(title, pad, 40);
 ctx.fillStyle = "#4b5563";
 ctx.font = "bold 16px sans-serif";
 ctx.textAlign = "right";
-ctx.fillText(⁠MAIN ${zoneTotal("main")} / 50枚（10×5）⁠, canvas.width - pad, 41);
+ctx.fillText(⁠MAIN ${zoneTotal("main")} / 50枚${hasSub ? ⁠  |  SUB ${zoneTotal("sub")}枚⁠ : ""}⁠, canvas.width - pad, 40);
 ctx.textAlign = "left";
+const mainPanelY = headerH + 6;
+const mainPanelH = mainBoxH - 6;
+ctx.fillStyle = "#ffffff";
+ctx.fillRect(pad - 6, mainPanelY, canvas.width - (pad - 6) * 2, mainPanelH);
+ctx.strokeStyle = "rgba(17, 19, 24, 0.16)";
+ctx.lineWidth = 1;
+ctx.strokeRect(pad - 6 + 0.5, mainPanelY + 0.5, canvas.width - (pad - 6) * 2 - 1, mainPanelH - 1);
+const allTargetCards = [...mainCards, ...subCards];
 const loadedImgs = await Promise.all(
-expanded.map(card => loadCardImageSafe(card && card.imageUrl, 2500))
+allTargetCards.map(card => loadCardImageSafe(card && card.imageUrl, 3000))
 );
 let usedFallback = false;
-for (let idx = 0; idx < cols * rows; idx++) {
+const drawGridSection = (cardsList, imgsList, totalSlots, startX, startY, allowGhost) => {
+for (let idx = 0; idx < totalSlots; idx++) {
 const r = Math.floor(idx / cols);
 const c = idx % cols;
-const x = pad + c * (cardW + gap);
-const y = headerH + r * (cardH + gap);
-const card = expanded[idx];
+const x = startX + c * (cardW + gap);
+const y = startY + r * (cardH + gap);
+const card = cardsList[idx];
 if (!card) {
-drawCardPlaceholder(ctx, { name: "", id: "" }, x, y, cardW, cardH);
+if (allowGhost) {
+ctx.save();
+ctx.fillStyle = "#f8f9fb";
+ctx.fillRect(x, y, cardW, cardH);
+ctx.strokeStyle = "rgba(17, 19, 24, 0.16)";
+ctx.lineWidth = 1;
+ctx.strokeRect(x + 0.5, y + 0.5, cardW - 1, cardH - 1);
+ctx.restore();
+}
 continue;
 }
-const img = loadedImgs[idx];
+const img = imgsList[idx];
 let drewPhoto = false;
 if (img) {
 try {
@@ -2193,29 +2223,45 @@ usedFallback = true;
 drawCardPlaceholder(ctx, card, x, y, cardW, cardH);
 }
 }
+};
+drawGridSection(mainCards, loadedImgs.slice(0, mainCards.length), cols * mainRows, pad, mainPanelY + 10, true);
+if (hasSub) {
+const subTitleY = mainPanelY + mainPanelH + 28;
+ctx.fillStyle = "#111318";
+ctx.font = "bold 17px sans-serif";
+ctx.fillText(⁠SUB / 調整枠 (${zoneTotal("sub")}枚)⁠, pad, subTitleY);
+const subPanelY = subTitleY + 10;
+ctx.fillStyle = "#ffffff";
+ctx.fillRect(pad - 6, subPanelY, canvas.width - (pad - 6) * 2, subRows * cardH + (subRows - 1) * gap + 20);
+ctx.strokeStyle = "rgba(17, 19, 24, 0.16)";
+ctx.lineWidth = 1;
+ctx.strokeRect(pad - 6 + 0.5, subPanelY + 0.5, canvas.width - (pad - 6) * 2 - 1, subRows * cardH + (subRows - 1) * gap + 19);
+drawGridSection(subCards, loadedImgs.slice(mainCards.length), subCards.length, pad, subPanelY + 10, false);
+}
 let dataUrl = "";
 try {
 dataUrl = canvas.toDataURL("image/png");
 } catch () {
 usedFallback = true;
-ctx.fillStyle = "#ffffff";
-ctx.fillRect(0, headerH + pad, canvas.width, canvas.height - headerH - pad);
-for (let idx = 0; idx < cols * rows; idx++) {
-const r = Math.floor(idx / cols);
-const c = idx % cols;
-const x = pad + c * (cardW + gap);
-const y = headerH + r * (cardH + gap);
-drawCardPlaceholder(ctx, expanded[idx] || { name: "", id: "" }, x, y, cardW, cardH);
+ctx.fillStyle = "#f4f5f7";
+ctx.fillRect(0, headerH, canvas.width, canvas.height - headerH);
+drawGridSection(mainCards, [], cols * mainRows, pad, mainPanelY + 10, true);
+if (hasSub) {
+const subTitleY = mainPanelY + mainPanelH + 28;
+ctx.fillStyle = "#111318";
+ctx.font = "bold 17px sans-serif";
+ctx.fillText(⁠SUB / 調整枠 (${zoneTotal("sub")}枚)⁠, pad, subTitleY);
+drawGridSection(subCards, [], subCards.length, pad, subTitleY + 20, false);
 }
 dataUrl = canvas.toDataURL("image/png");
 }
-const safeFileBase = (title.replace(/[^\w-一-龠ぁ-んァ-ヶ]/g, "") || "deck").slice(0, 40);
+const safeFileBase = (title.replace(/[^\w-一-龠ぁ-んァ-ヶ]/g, "_") || "deck").slice(0, 40);
 const noteText = usedFallback
 ? "外部画像が読み込めなかった枠はカード枠で生成しました（長押し、またはボタンから保存）"
-: "画像を生成しました（長押し、またはボタンから保存）";
-wrap.innerHTML = ⁠<p style="font-size:12px;color:var(--text-secondary);margin:8px 0 4px;font-weight:700;">${noteText}</p><img class="generated-img" src="${dataUrl}" alt="デッキレシピ画像" /><a class="sheet-btn" href="${dataUrl}" download="${safeFileBase}_10x5.png" style="display:block;text-align:center;text-decoration:none;">PNG画像をダウンロード</a>⁠;
+: "デッキリスト画像を生成しました（長押し、またはボタンから保存）";
+wrap.innerHTML = ⁠<p style="font-size:12px;color:var(--text-secondary);margin:8px 0 4px;font-weight:700;">${noteText}</p><img class="generated-img" src="${dataUrl}" alt="デッキリスト画像" /><a class="sheet-btn" href="${dataUrl}" download="${safeFileBase}_decklist.png" style="display:block;text-align:center;text-decoration:none;">PNG画像をダウンロード</a>⁠;
 wrap.scrollIntoView({ behavior: "smooth", block: "nearest" });
-toast("デッキ画像を生成しました");
+toast("デッキリスト画像を生成しました");
 } catch (err) {
 const reason = (err && err.message) ? err.message : String(err);
 console.error("generateDeckImage error:", err);
