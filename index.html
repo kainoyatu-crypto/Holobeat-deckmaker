@@ -797,7 +797,7 @@ z-index: 200;
 </div>
 <div class="top-actions">
 <button class="pill-btn" id="btnDecks">保存</button>
-<button class="pill-btn" id="btnStats">分布</button>
+<button class="pill-btn" id="btnStats">分析</button>
 <button class="pill-btn primary" id="btnShare">出力</button>
 <button class="pill-btn danger" id="btnClear">削除</button>
 </div>
@@ -1656,8 +1656,9 @@ focusedCardId = card.id;
 openDetail(card, 0);
 });
 el.appendChild(infoBtn);
-let startX = 0, startY = 0, timer = null, didLong = false;
+let startX = 0, startY = 0, timer = null, didLong = false, suppressClickUntil = 0;
 el.addEventListener("touchstart", e => {
+if (!e.touches || !e.touches[0]) return;
 startX = e.touches[0].clientX;
 startY = e.touches[0].clientY;
 didLong = false;
@@ -1665,27 +1666,44 @@ focusedCardId = card.id;
 renderUtilityPanel();
 timer = setTimeout(() => {
 didLong = true;
+suppressClickUntil = Date.now() + 500;
 focusedCardId = card.id;
 openDetail(card, 0);
 }, LONG_PRESS_MS);
 }, { passive: true });
 el.addEventListener("touchmove", e => {
+if (!e.touches || !e.touches[0]) return;
 const dx = Math.abs(e.touches[0].clientX - startX);
 const dy = Math.abs(e.touches[0].clientY - startY);
 if (dx > 12 || dy > 12) clearTimeout(timer);
 }, { passive: true });
 el.addEventListener("touchend", e => {
 clearTimeout(timer);
-if (didLong) return;
+if (didLong) {
+didLong = false;
+return;
+}
+if (!e.changedTouches || !e.changedTouches[0]) return;
 const dx = Math.abs(e.changedTouches[0].clientX - startX);
 const dy = e.changedTouches[0].clientY - startY;
-if (dy < -24 && dx < 30) {
+const isSwipeUp = dy < -24 && dx < 30;
+const isTap = dx < 12 && Math.abs(dy) < 12;
+if (isSwipeUp || isTap) {
 e.preventDefault();
+suppressClickUntil = Date.now() + 500;
 addToDeck(card.id);
 }
 });
+el.addEventListener("touchcancel", () => {
+clearTimeout(timer);
+didLong = false;
+}, { passive: true });
 el.addEventListener("click", () => {
-if (!didLong) addToDeck(card.id);
+if (Date.now() < suppressClickUntil || didLong) {
+didLong = false;
+return;
+}
+addToDeck(card.id);
 });
 scroll.appendChild(el);
 });
@@ -1820,9 +1838,20 @@ openDetail(canonical, Math.max(0, Math.min(detailCopyIndex, nextQty - 1)));
 }
 document.getElementById("detailOverlay").classList.add("open");
 }
+function civToBarColor(civLabel, colorLabel) {
+const srcText = `${civLabel || ""} ${colorLabel || ""}`;
+if (/赤|紅|炎|火/.test(srcText)) return "#e11d48";
+if (/青|蒼|水|海/.test(srcText)) return "#2563eb";
+if (/緑|翠|森|草|自然/.test(srcText)) return "#16a34a";
+if (/黄|金|光|雷/.test(srcText)) return "#eab308";
+if (/紫|闇|黒|影/.test(srcText)) return "#7c3aed";
+if (/白|銀|聖/.test(srcText)) return "#94a3b8";
+return "#4b5563";
+}
 function openStats() {
 const map = new Map(cards.map(c => [c.id, c]));
-const costMap = {};
+const costTotals = {};
+const costByCiv = {};
 const colorMap = {};
 const civMap = {};
 const total = zoneTotal(zone);
@@ -1830,21 +1859,41 @@ Object.entries(deckData[zone] || {}).forEach(([id, n]) => {
 const qty = Number(n || 0);
 if (qty <= 0) return;
 const c = map.get(id) || { id };
-const kCost = c.cost ?? "?";
+const kCost = (c.cost === null || c.cost === undefined || c.cost === "") ? "?" : String(c.cost);
 const kCol = c.color || "無";
-const kCiv = c.civilization || "無";
-costMap[kCost] = (costMap[kCost] || 0) + qty;
+const kCiv = c.civilization || c.color || "無";
+const barCol = civToBarColor(kCiv, kCol);
+costTotals[kCost] = (costTotals[kCost] || 0) + qty;
+if (!costByCiv[kCost]) costByCiv[kCost] = {};
+if (!costByCiv[kCost][kCiv]) costByCiv[kCost][kCiv] = { count: 0, color: barCol };
+costByCiv[kCost][kCiv].count += qty;
 colorMap[kCol] = (colorMap[kCol] || 0) + qty;
 civMap[kCiv] = (civMap[kCiv] || 0) + qty;
 });
-const maxCostCount = Math.max(1, ...Object.values(costMap));
-const costBars = Object.keys(costMap).sort((a, b) => Number(a) - Number(b)).map(k => {
-const pct = Math.round((costMap[k] / maxCostCount) * 100);
-return `<div class="bar-row"><span style="width:52px;">コスト ${k}</span><div class="bar-track"><div class="bar-fill" style="width:${pct}%"></div></div><span style="width:38px;text-align:right;">${costMap[k]}枚</span></div>`;
+const maxCostCount = Math.max(1, ...Object.values(costTotals));
+const sortedCosts = Object.keys(costTotals).sort((a, b) => {
+const na = Number(a), nb = Number(b);
+if (!Number.isNaN(na) && !Number.isNaN(nb)) return na - nb;
+if (!Number.isNaN(na)) return -1;
+if (!Number.isNaN(nb)) return 1;
+return a.localeCompare(b, "ja");
+});
+const costBars = sortedCosts.map(k => {
+const totalForCost = costTotals[k];
+const totalPct = Math.round((totalForCost / maxCostCount) * 100);
+const civEntries = Object.entries(costByCiv[k] || {});
+const segmentsHtml = civEntries.map(([civName, info]) => {
+const segWidthPct = totalForCost > 0 ? (info.count / totalForCost) * 100 : 0;
+return `<div title="${civName}: ${info.count}枚" style="width:${segWidthPct}%;height:100%;background:${info.color};"></div>`;
+}).join("");
+return `<div class="bar-row"><span style="width:62px;font-weight:700;">コスト ${k}</span><div class="bar-track" style="height:12px;display:flex;width:${totalPct}%;flex:none;max-width:100%;"><div style="display:flex;width:100%;height:100%;">${segmentsHtml}</div></div><span style="width:42px;text-align:right;font-weight:700;margin-left:auto;">${totalForCost}枚</span></div>`;
 }).join("") || "<div style='color:var(--text-secondary);'>カードがありません</div>";
+const civLegendHtml = Object.entries(civMap).map(([k, v]) => {
+const dotColor = civToBarColor(k, k);
+return `<span style="display:inline-flex;align-items:center;gap:4px;margin-right:10px;"><span style="width:10px;height:10px;border-radius:999px;background:${dotColor};display:inline-block;"></span>${k}: ${v}枚</span>`;
+}).join("") || "なし";
 const colorHtml = Object.entries(colorMap).map(([k, v]) => `${k}: ${v}枚`).join(" / ") || "なし";
-const civHtml = Object.entries(civMap).map(([k, v]) => `${k}: ${v}枚`).join(" / ") || "なし";
-document.getElementById("statsContent").innerHTML = `<div style="margin-bottom:6px;"><strong>合計:</strong> ${total} / ${TARGET_COUNTS[zone]}枚</div><div style="margin-bottom:6px;"><strong>色内訳:</strong> ${colorHtml}</div><div style="margin-bottom:10px;"><strong>文明内訳:</strong> ${civHtml}</div><div style="font-weight:700;margin-bottom:6px;">コスト分布</div>${costBars}`;
+document.getElementById("statsContent").innerHTML = `<div style="margin-bottom:6px;"><strong>合計:</strong> ${total} / ${TARGET_COUNTS[zone]}枚</div><div style="margin-bottom:6px;"><strong>色内訳:</strong> ${colorHtml}</div><div style="margin-bottom:10px;"><strong>文明内訳:</strong> ${civLegendHtml}</div><div style="font-weight:700;margin-bottom:6px;">コスト別枚数（文明カラー）</div>${costBars}`;
 document.getElementById("statsOverlay").classList.add("open");
 }
 function getSlots() {
