@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>HOROBEAT STUDIO — 公認大会まとめ</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -45,7 +45,10 @@
 
     .app-wrap {
       height: 100dvh;
-      padding: 6px;
+      padding-top: max(42px, calc(28px + env(safe-area-inset-top)));
+      padding-right: 6px;
+      padding-bottom: 0;
+      padding-left: 6px;
       display: flex;
       justify-content: center;
     }
@@ -55,8 +58,14 @@
       max-width: 960px;
       height: 100%;
       background: var(--surface);
-      border: 1.5px solid var(--line-strong);
-      border-radius: 10px;
+      border-top: 1.5px solid var(--line-strong);
+      border-right: 1.5px solid var(--line-strong);
+      border-left: 1.5px solid var(--line-strong);
+      border-bottom: none;
+      border-top-left-radius: 10px;
+      border-top-right-radius: 10px;
+      border-bottom-left-radius: 0;
+      border-bottom-right-radius: 0;
       overflow: hidden;
       display: flex;
       flex-direction: column;
@@ -361,8 +370,8 @@
     }
 
     .detail-area {
-      padding: 6px 10px;
-      height: 132px;
+      padding: 6px 10px calc(10px + env(safe-area-inset-bottom));
+      height: 146px;
       flex-shrink: 0;
       display: flex;
       flex-direction: column;
