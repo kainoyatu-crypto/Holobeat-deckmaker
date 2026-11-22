@@ -2025,7 +2025,9 @@ function openShare(triggerEl = null) {
   ["main", "sub"].forEach(z => {
     const entries = Object.entries(deckData[z] || {}).filter(([, n]) => Number(n) > 0);
     if (entries.length) {
-      out.push(z === "main" ? `\n■ メイン (${zoneTotal("main")}枚)` : `\n■ サブ (${zoneTotal("sub")}枚)`);
+      out.push(z === "main" ? `
+■ メイン (${zoneTotal("main")}枚)` : `
+■ サブ (${zoneTotal("sub")}枚)`);
       entries.forEach(([id, n]) => {
         const c = cardById.get(id) || { id, name: id };
         const copyIds = getDeckCopyIds(z, id);
@@ -2036,7 +2038,8 @@ function openShare(triggerEl = null) {
       });
     }
   });
-  document.getElementById("recipeText").value = out.join("\n");
+  document.getElementById("recipeText").value = out.join("
+");
   document.getElementById("generatedImgWrap").innerHTML = "";
   openOverlayById("shareOverlay", triggerEl);
 }
