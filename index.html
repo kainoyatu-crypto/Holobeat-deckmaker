@@ -1803,13 +1803,17 @@ openDetail(card, 0);
 }, LONG_PRESS_MS);
 }, { passive: true });
 let didSwipeUp = false;
+const isSwipeUpGesture = (dx, dySigned) => {
+const upDist = -dySigned;
+return upDist >= 6 && upDist >= dx * 0.25;
+};
 el.addEventListener("touchmove", e => {
 if (!e.touches || !e.touches[0]) return;
 const dx = Math.abs(e.touches[0].clientX - startX);
 const dySigned = e.touches[0].clientY - startY;
 const dy = Math.abs(dySigned);
-if (dx > 10 || dy > 10) clearTimeout(timer);
-if (!didSwipeUp && dySigned < -10 && dy >= dx * 0.5) {
+if (dx > 14 || dy > 8) clearTimeout(timer);
+if (!didSwipeUp && isSwipeUpGesture(dx, dySigned)) {
 didSwipeUp = true;
 suppressClickUntil = Date.now() + 500;
 if (e.cancelable) e.preventDefault();
@@ -1827,7 +1831,7 @@ if (!e.changedTouches || !e.changedTouches[0]) return;
 const dx = Math.abs(e.changedTouches[0].clientX - startX);
 const dySigned = e.changedTouches[0].clientY - startY;
 const dy = Math.abs(dySigned);
-const isSwipeUp = dySigned < -10 && dy >= dx * 0.5;
+const isSwipeUp = isSwipeUpGesture(dx, dySigned);
 const isTap = dx < 12 && dy < 12;
 if (isSwipeUp || isTap) {
 e.preventDefault();
