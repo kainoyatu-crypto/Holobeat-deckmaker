@@ -26,7 +26,7 @@ box-sizing: border-box;
 user-select: none;
 -webkit-user-select: none;
 }
-button, .pill-btn, .seg-tab, .step-btn, .mini-tag, .sub-btn, .chip, .copy-tab, .variant-thumb, .help-dot, .clear-btn, .sheet-close, .dialog-btn, .dialog-close {
+button, .pill-btn, .seg-tab, .step-btn, .mini-tag, .sub-btn, .chip, .copy-tab, .variant-thumb, .help-dot, .clear-btn, .sheet-close, .dialog-btn, .dialog-close, .logo-link {
 touch-action: manipulation;
 }
 input, textarea {
@@ -82,6 +82,17 @@ align-items: center;
 gap: 5px;
 min-width: 0;
 flex: 1 1 auto;
+}
+.logo-link {
+display: inline-flex;
+align-items: center;
+min-width: 0;
+text-decoration: none;
+color: #000000;
+cursor: pointer;
+}
+.logo-link:hover .logo-mark {
+text-decoration: underline;
 }
 .logo-mark {
 font-family: "Playfair Display", Georgia, serif;
@@ -347,20 +358,6 @@ min-height: 28px;
 }
 .focus-name {
 font-size: 12px;
-font-weight: 900;
-color: var(--text-primary);
-overflow: hidden;
-text-overflow: ellipsis;
-white-space: nowrap;
-flex: 1;
-}
-.focus-controls {
-display: flex;
-align-items: center;
-gap: 5px;
-flex-shrink: 0;
-}
-.focus-name {
 font-weight: 900;
 color: var(--text-primary);
 overflow: hidden;
@@ -883,7 +880,6 @@ font-size: 12px;
 font-weight: 900;
 color: var(--text-primary);
 }
-
 </style>
 </head>
 <body oncontextmenu="return false;">
@@ -891,7 +887,9 @@ color: var(--text-primary);
 <div class="title-top-spacer" aria-hidden="true"></div>
 <header class="top-bar">
 <div class="logo-area">
+<a href="./index.html" id="titleBackToTop" class="logo-link" title="トップページへ戻る">
 <span class="logo-mark">HOROBEAT STUDIO</span>
+</a>
 <button class="help-dot" id="btnAbout" title="使い方・免責">?</button>
 </div>
 <div class="top-actions">
@@ -2324,7 +2322,6 @@ dataUrl = canvas.toDataURL("image/png");
 canvasTainted = true;
 }
 if (canvasTainted) {
-// Keep the visually rendered canvas intact, and build a clean fallback PNG for download/preview
 const cleanCanvas = document.createElement("canvas");
 cleanCanvas.width = canvas.width;
 cleanCanvas.height = canvas.height;
@@ -2370,6 +2367,7 @@ if (!card) {
 cctx.fillStyle = "#f8f9fb";
 cctx.fillRect(x, y, cardW, cardH);
 cctx.strokeStyle = "rgba(17, 19, 24, 0.16)";
+cctx.lineWidth = 1;
 cctx.strokeRect(x + 0.5, y + 0.5, cardW - 1, cardH - 1);
 } else if (safeImgs[idx]) {
 cctx.drawImage(safeImgs[idx], x, y, cardW, cardH);
@@ -2420,6 +2418,13 @@ btn.textContent = prevLabel || "デッキ画像を生成（10×5 / PNG保存用�
 }
 }
 function bind() {
+const titleLink = document.getElementById("titleBackToTop");
+if (titleLink) {
+titleLink.addEventListener("click", e => {
+e.preventDefault();
+location.href = "./index.html";
+});
+}
 
 document.querySelectorAll(".seg-tab").forEach(btn => {
 btn.onclick = () => {
