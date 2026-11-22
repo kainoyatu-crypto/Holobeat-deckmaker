@@ -2560,16 +2560,19 @@ const studioEl = document.querySelector(".studio");
 if (!studioEl) return;
 const vv = window.visualViewport;
 let rafId = null;
-let lastH = 0;
-let lastTop = 0;
-const applyViewport = () => {
-rafId = null;
+let lastH = -1;
+let lastTop = -1;
+let trackUntil = 0;
+let stableFrames = 0;
+
+const applyViewport = (now = performance.now()) => {
 if (window.scrollX !== 0 || window.scrollY !== 0) {
 window.scrollTo(0, 0);
 }
 if (!vv) {
 studioEl.style.height = "100dvh";
 studioEl.style.transform = "translate3d(-50%, 0, 0)";
+rafId = null;
 return;
 }
 const h = Math.round(vv.height);
@@ -2579,30 +2582,55 @@ lastH = h;
 lastTop = top;
 studioEl.style.height = `${h}px`;
 studioEl.style.transform = `translate3d(-50%, ${top}px, 0)`;
+stableFrames = 0;
+} else {
+stableFrames += 1;
 }
-};
-const scheduleSync = () => {
-if (rafId !== null) return;
+
+if (now < trackUntil && stableFrames < 6) {
 rafId = requestAnimationFrame(applyViewport);
-};
-if (vv) {
-vv.addEventListener("resize", scheduleSync, { passive: true });
-vv.addEventListener("scroll", scheduleSync, { passive: true });
+} else {
+rafId = null;
 }
-window.addEventListener("resize", scheduleSync, { passive: true });
+};
+
+const kickTracking = (durationMs = 450) => {
+trackUntil = Math.max(trackUntil, performance.now() + durationMs);
+stableFrames = 0;
+if (rafId === null) {
+rafId = requestAnimationFrame(applyViewport);
+}
+};
+
+if (vv) {
+vv.addEventListener("resize", () => kickTracking(450), { passive: true });
+vv.addEventListener("scroll", () => kickTracking(450), { passive: true });
+}
+window.addEventListener("resize", () => kickTracking(450), { passive: true });
+window.addEventListener("scroll", () => {
+if (window.scrollX !== 0 || window.scrollY !== 0) {
+window.scrollTo(0, 0);
+}
+kickTracking(250);
+}, { passive: true });
+
 const searchEl = document.getElementById("searchInput");
 if (searchEl) {
-searchEl.addEventListener("focus", () => {
-scheduleSync();
-setTimeout(scheduleSync, 50);
-setTimeout(scheduleSync, 150);
-});
-searchEl.addEventListener("blur", () => {
-scheduleSync();
-setTimeout(scheduleSync, 50);
-setTimeout(scheduleSync, 150);
+searchEl.addEventListener("focus", () => kickTracking(500));
+searchEl.addEventListener("blur", () => kickTracking(500));
+searchEl.addEventListener("keydown", e => {
+if (e.key === "Enter") {
+searchEl.blur();
+kickTracking(500);
+}
 });
 }
+document.addEventListener("pointerdown", e => {
+if (searchEl && document.activeElement === searchEl && !e.target.closest(".search-wrap")) {
+kickTracking(500);
+}
+}, { passive: true });
+
 applyViewport();
 }
 async function boot() {
