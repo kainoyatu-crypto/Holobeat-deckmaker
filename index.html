@@ -19,7 +19,7 @@
 --border-hairline: rgba(17, 19, 24, 0.15);
 --card-ratio: 63 / 88;
 }
-*, *::before, *::after {
+, ::before, ::after {
 box-sizing: border-box;
 -webkit-tap-highlight-color: transparent;
 -webkit-touch-callout: none;
@@ -290,6 +290,12 @@ color: var(--text-secondary);
 white-space: nowrap;
 flex-shrink: 0;
 }
+.mini-chips-row {
+display: flex;
+flex-wrap: nowrap;
+gap: 5px;
+align-items: center;
+}
 .mini-tag {
 background: var(--bg-base);
 border: 1px solid var(--border-hairline);
@@ -342,20 +348,6 @@ align-items: center;
 gap: 5px;
 flex-shrink: 0;
 }
-.focus-name {
-font-weight: 900;
-color: var(--text-primary);
-overflow: hidden;
-text-overflow: ellipsis;
-white-space: nowrap;
-flex: 1;
-}
-.focus-controls {
-display: flex;
-align-items: center;
-gap: 5px;
-flex-shrink: 0;
-}
 .step-btn {
 width: 24px;
 height: 24px;
@@ -389,6 +381,7 @@ gap: 8px;
 overflow-x: auto;
 padding: 0 12px;
 scrollbar-width: none;
+touch-action: pan-x;
 }
 .dock-scroll::-webkit-scrollbar { display: none; }
 .dock-card {
@@ -403,7 +396,7 @@ box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 position: relative;
 cursor: pointer;
 transition: transform 0.1s ease;
-touch-action: manipulation;
+touch-action: pan-x;
 }
 .dock-card:active {
 transform: scale(0.95);
@@ -676,25 +669,6 @@ padding: 9px 11px;
 margin-bottom: 6px;
 gap: 8px;
 }
-.bar-row {
-display: flex;
-align-items: center;
-gap: 8px;
-margin-bottom: 6px;
-font-size: 12px;
-}
-.bar-track {
-flex: 1;
-height: 9px;
-background: var(--bg-elevated);
-border-radius: 999px;
-overflow: hidden;
-}
-.bar-fill {
-height: 100%;
-background: #111318;
-border-radius: 999px;
-}
 .preview-img {
 width: 210px;
 max-width: 60vw;
@@ -785,6 +759,82 @@ transition: opacity 0.2s;
 z-index: 200;
 }
 .toast.show { opacity: 1; }
+.vbar-chart-wrap {
+display: flex;
+flex-direction: column;
+height: 52dvh;
+min-height: 260px;
+width: 100%;
+padding: 8px 6px 4px;
+}
+.vbar-columns {
+flex: 1 1 auto;
+min-height: 0;
+display: flex;
+align-items: flex-end;
+justify-content: space-around;
+gap: 10px;
+padding: 22px 8px 10px;
+border-bottom: 2px solid var(--text-primary);
+}
+.vbar-col {
+flex: 1 1 0;
+max-width: 84px;
+height: 100%;
+display: flex;
+flex-direction: column;
+align-items: center;
+justify-content: flex-end;
+gap: 4px;
+}
+.vbar-count {
+font-size: 11px;
+font-weight: 900;
+color: var(--text-primary);
+line-height: 1.1;
+}
+.vbar-stack {
+width: 72%;
+min-width: 22px;
+max-width: 48px;
+display: flex;
+flex-direction: column-reverse;
+border: 1.5px solid #111318;
+border-radius: 4px 4px 0 0;
+overflow: hidden;
+background: var(--bg-base);
+}
+.vbar-seg {
+width: 100%;
+}
+.vbar-axis-row {
+display: flex;
+align-items: center;
+gap: 8px;
+padding-top: 8px;
+}
+.vbar-axis-title {
+font-size: 11px;
+font-weight: 900;
+color: var(--text-secondary);
+white-space: nowrap;
+}
+.vbar-xlabels {
+flex: 1 1 auto;
+display: flex;
+align-items: center;
+justify-content: space-around;
+gap: 10px;
+padding: 0 8px;
+}
+.vbar-xlabel {
+flex: 1 1 0;
+max-width: 84px;
+text-align: center;
+font-size: 12px;
+font-weight: 900;
+color: var(--text-primary);
+}
 </style>
 </head>
 <body oncontextmenu="return false;">
@@ -911,7 +961,7 @@ z-index: 200;
 <div class="overlay" id="statsOverlay">
 <div class="sheet">
 <div class="sheet-head">
-<span>デッキ内訳・コスト分布</span>
+<span>コスト分布</span>
 <button class="sheet-close" data-close="statsOverlay">×</button>
 </div>
 <div id="statsContent" style="font-size:13px;line-height:1.7;"></div>
@@ -1039,7 +1089,7 @@ if (extracted) return extracted;
 return "";
 }
 const s = String(val)
-.replace(/[【】\[\]（）()]/g, "")
+.replace(/[【】[]（）()]/g, "")
 .trim();
 if (!s) return "";
 if (["undefined", "null", "nan", "none", "unknown", "不明", "未設定", "-"].includes(s.toLowerCase())) {
@@ -1049,7 +1099,7 @@ return s;
 }
 function inferFromBracketPrefix(raw, kind) {
 const nameStr = String(raw?.name ?? raw?.title ?? raw?.cardName ?? "").trim();
-const match = nameStr.match(/^[【\[]([^】\]]+)[】\]]/);
+const match = nameStr.match(/^【[[】]]/);
 if (!match) return "";
 const token = match[1].trim();
 if (kind === "color" && /^(赤|青|緑|黄|紫|白|黒|無|多色|虹|火|水|自然|光|闇)/.test(token)) {
@@ -1104,7 +1154,7 @@ return "無";
 }
 function normalizeCardItem(raw, fallbackIndex = 0) {
 if (!raw || typeof raw !== "object") return null;
-const id = pickCardId(raw) || `CARD_${fallbackIndex + 1}`;
+const id = pickCardId(raw) || ⁠CARD_${fallbackIndex + 1}⁠;
 const cardNumber = String(
 raw.cardNumber ?? raw.card_no ?? raw.number ?? raw.no ?? raw.code ?? raw.id ?? id
 ).trim();
@@ -1157,7 +1207,7 @@ const base = card.id;
 const n = (seenIds.get(base) || 0) + 1;
 seenIds.set(base, n);
 if (n > 1) {
-return { ...card, id: `${base}__${n}` };
+return { ...card, id: ⁠${base}__${n}⁠ };
 }
 return card;
 });
@@ -1175,7 +1225,7 @@ for (const url of urls) {
 try {
 const res = await fetch(url, { cache: "no-store" });
 if (!res.ok) {
-lastErr = new Error(`${url} (HTTP ${res.status})`);
+lastErr = new Error(⁠${url} (HTTP ${res.status})⁠);
 continue;
 }
 const text = await res.text();
@@ -1184,7 +1234,7 @@ const parsed = extractCardsFromPayload(json);
 if (parsed.length > 0) {
 return parsed;
 }
-lastErr = new Error(`${url} (0件)`);
+lastErr = new Error(⁠${url} (0件)⁠);
 } catch (err) {
 lastErr = err;
 }
@@ -1198,9 +1248,9 @@ const r = String(card.rarity).trim().toUpperCase();
 if (r === "NORMAL" || r === "NORM") return "N";
 return r;
 }
-const hay = `${card.id || ""} ${card.cardNumber || ""} ${card.type || ""} ${card.text || ""}`.toUpperCase();
+const hay = ⁠${card.id || ""} ${card.cardNumber || ""} ${card.type || ""} ${card.text || ""}⁠.toUpperCase();
 for (const r of ["SEC", "DR", "SR", "RR", "R", "UC", "C", "PR", "N"]) {
-const re = new RegExp(`(^|[^A-Z])${r}([^A-Z]|$)`);
+const re = new RegExp(⁠(^|[^A-Z])${r}([^A-Z]|$)⁠);
 if (re.test(hay)) return r;
 }
 return "N";
@@ -1208,7 +1258,7 @@ return "N";
 function isNormalVariant(card) {
 const r = detectRarity(card);
 if (r === "N" || r === "C") return true;
-const hay = `${card?.id || ""} ${card?.cardNumber || ""} ${card?.name || ""}`.toLowerCase();
+const hay = ⁠${card?.id || ""} ${card?.cardNumber || ""} ${card?.name || ""}⁠.toLowerCase();
 return hay.includes("normal") || hay.includes("ノーマル");
 }
 function displayCardNumber(card) {
@@ -1217,577 +1267,616 @@ return card.cardNumber || card.id || "";
 function getBaseCardKey(card) {
 if (!card) return "UNKNOWN";
 const no = String(card.cardNumber || "").trim().toUpperCase();
-if (no) return `NO:${no}`;
+if (no) return ⁠NO:${no}⁠;
 const rawId = String(card.id || "").trim().toUpperCase();
-const stripped = rawId.replace(/(_[A-Z0-9]+)?(__\d+)?$/i, "");
-if (stripped) return `ID:${stripped}`;
-return `NAME:${String(card.name || "").trim()}`;
+const stripped = rawId.replace(/(_[A-Z0-9]+)?(__\d+)?￼
+￼
+￼
 }
 function getCardVariants(card) {
-const key = getBaseCardKey(card);
-const matches = cards.filter(c => getBaseCardKey(c) === key);
-if (matches.length > 0) return matches;
-return [card];
+￼
+￼
+￼
+￼
 }
 function getCanonicalCard(card) {
-const variants = getCardVariants(card);
-return variants.find(v => isNormalVariant(v)) || variants[0] || card;
+￼
+￼
+}
+￼
+function invalidatePoolCache() {
+￼
 }
 function getUniquePoolCards() {
-const byKey = new Map();
+￼
+￼
+￼
 cards.forEach(card => {
-const key = getBaseCardKey(card);
-if (!byKey.has(key)) {
-byKey.set(key, getCanonicalCard(card));
-}
+￼
+￼
+￼
 });
-return Array.from(byKey.values());
+variantsByKey.forEach((vars, key) => {
+￼
+￼
+￼
+￼
+￼
+￼
+￼
+￼
+￼
+byKey.set(key, {
+￼
+￼
+￼
+￼
+￼
+￼
+});
+});
+￼
+￼
 }
 function ensureVariantsArray(z, baseId, count) {
-if (!deckData.variants) deckData.variants = { main: {}, sub: {} };
-if (!deckData.variants[z]) deckData.variants[z] = {};
-const current = Array.isArray(deckData.variants[z][baseId]) ? [...deckData.variants[z][baseId]] : [];
+￼
+￼
+￼
 while (current.length < count) {
-current.push(baseId);
+￼
 }
 if (current.length > count) {
-current.length = count;
+￼
 }
-deckData.variants[z][baseId] = current;
-return current;
+￼
+￼
 }
 function getDeckCopyIds(z, baseId) {
-const qty = Math.max(0, Number(deckData[z]?.[baseId] || 0));
-if (qty <= 0) return [];
-return ensureVariantsArray(z, baseId, qty);
+￼
+￼
+￼
 }
 function setDeckCopyVariant(z, baseId, copyIdx, chosenId) {
-const qty = Math.max(0, Number(deckData[z]?.[baseId] || 0));
-if (qty <= 0 || copyIdx < 0 || copyIdx >= qty) return;
-const arr = ensureVariantsArray(z, baseId, qty);
-arr[copyIdx] = chosenId;
-deckData.variants[z][baseId] = arr;
-persist();
-render();
+￼
+￼
+￼
+￼
+￼
+￼
+￼
 }
 function toast(msg) {
-const el = document.getElementById("toast");
-el.textContent = msg;
-el.classList.add("show");
-clearTimeout(toast._timer);
-toast._timer = setTimeout(() => el.classList.remove("show"), 1800);
+￼
+￼
+￼
+￼
+￼
 }
 function zoneTotal(z) {
-return Object.values(deckData[z] || {}).reduce((sum, n) => sum + Number(n || 0), 0);
+￼
 }
 function cardTotal(id) {
-return Number(deckData.main?.[id] || 0) + Number(deckData.sub?.[id] || 0);
+￼
 }
 function persist() {
-try { localStorage.setItem(SAVE_KEY, JSON.stringify(deckData)); } catch (e) {}
+￼
 }
 function restore() {
 const normalizeLoaded = parsed => {
-const main = (parsed && parsed.main) || {};
-const sub = (parsed && parsed.sub) || {};
+￼
+￼
 const variants = {
-main: (parsed && parsed.variants && parsed.variants.main) || {},
-sub: (parsed && parsed.variants && parsed.variants.sub) || {}
+￼
+￼
 };
-deckData = { main, sub, variants };
+￼
 ["main", "sub"].forEach(z => {
 Object.entries(deckData[z]).forEach(([id, n]) => {
-const qty = Math.max(0, Number(n || 0));
+￼
 if (qty > 0) {
-ensureVariantsArray(z, id, qty);
+￼
 } else {
-delete deckData[z][id];
-delete deckData.variants[z][id];
+￼
+￼
 }
 });
 });
 };
-const urlParam = new URLSearchParams(location.search).get("deck");
+￼
 if (urlParam) {
 try {
-const decoded = JSON.parse(decodeURIComponent(escape(atob(urlParam))));
+￼
 if (decoded && typeof decoded === "object") {
-normalizeLoaded(decoded);
-return;
+￼
+￼
 }
 } catch (e) {}
 }
 try {
-const saved = localStorage.getItem(SAVE_KEY);
+￼
 if (saved) {
-const parsed = JSON.parse(saved);
-normalizeLoaded(parsed);
+￼
+￼
 }
 } catch (e) {}
 try {
-const rawTags = localStorage.getItem(TAGS_KEY);
+￼
 if (rawTags) {
-const parsedTags = JSON.parse(rawTags);
+￼
 if (parsedTags && typeof parsedTags === "object") {
-customTagsByCard = parsedTags;
+￼
 }
 }
 } catch (e) {}
 }
 function saveCustomTags() {
-try { localStorage.setItem(TAGS_KEY, JSON.stringify(customTagsByCard)); } catch (e) {}
+￼
 }
 function getCustomTagsForCard(card) {
-if (!card) return [];
-const key = getBaseCardKey(card);
-const arr = customTagsByCard?.[key];
-return Array.isArray(arr) ? arr.filter(Boolean) : [];
+￼
+￼
+￼
+￼
 }
 function addCustomTagToCard(card, rawTag) {
-if (!card) return;
-const tag = normalizeLabelValue(rawTag);
-if (!tag) return;
-const key = getBaseCardKey(card);
-const current = Array.isArray(customTagsByCard[key]) ? [...customTagsByCard[key]] : [];
+￼
+￼
+￼
+￼
+￼
 if (!current.includes(tag)) {
-current.push(tag);
-customTagsByCard[key] = current;
-saveCustomTags();
-render();
+￼
+￼
+￼
+￼
+￼
 }
 }
 function removeCustomTagFromCard(card, tagToRemove) {
-if (!card) return;
-const key = getBaseCardKey(card);
-const current = Array.isArray(customTagsByCard[key]) ? [...customTagsByCard[key]] : [];
-const next = current.filter(t => t !== tagToRemove);
-if (next.length > 0) customTagsByCard[key] = next;
-else delete customTagsByCard[key];
-if (state.tag === tagToRemove) state.tag = "ALL";
-saveCustomTags();
-render();
+￼
+￼
+￼
+￼
+￼
+￼
+￼
+￼
+￼
 }
 function addToDeck(id, preferredVariantId = null) {
-const map = new Map(cards.map(c => [c.id, c]));
-const rawCard = map.get(id);
-const canonical = rawCard ? getCanonicalCard(rawCard) : { id };
-const targetId = canonical.id;
-focusedCardId = targetId;
+￼
+￼
+￼
+￼
+￼
 if (cardTotal(targetId) >= MAX_PER_CARD) {
-toast(`同名カードは最大${MAX_PER_CARD}枚までです`);
-renderUtilityPanel();
-return;
+￼
+￼
+￼
 }
-const nextQty = (deckData[zone][targetId] || 0) + 1;
-deckData[zone][targetId] = nextQty;
-const arr = ensureVariantsArray(zone, targetId, nextQty);
-arr[nextQty - 1] = preferredVariantId || targetId;
-persist();
-render();
+￼
+￼
+￼
+￼
+￼
+￼
 }
 function removeFromDeck(id) {
-focusedCardId = id;
+￼
 if (!deckData[zone][id]) {
-renderUtilityPanel();
-return;
+￼
+￼
 }
-deckData[zone][id] -= 1;
+￼
 if (deckData[zone][id] <= 0) {
-delete deckData[zone][id];
-if (deckData.variants?.[zone]) delete deckData.variants[zone][id];
+￼
+￼
 } else {
-ensureVariantsArray(zone, id, deckData[zone][id]);
+￼
 }
-persist();
-render();
+￼
+￼
 }
 function makeFallback(card) {
-const div = document.createElement("div");
-div.className = "fallback-card";
-div.innerHTML = `<span style="opacity:.7;">${displayCardNumber(card)}</span><span style="font-weight:800;">${card.name || ""}</span><span style="opacity:.7;">${card.cost ?? ""}</span>`;
-return div;
+￼
+￼
+￼
+￼
 }
 function makeArt(card) {
 if (card.imageUrl) {
-const img = document.createElement("img");
-img.src = card.imageUrl;
-img.alt = card.name || displayCardNumber(card);
-img.loading = "lazy";
-img.onerror = () => img.replaceWith(makeFallback(card));
-return img;
+￼
+￼
+￼
+￼
+￼
+￼
 }
-return makeFallback(card);
+￼
 }
 function getSortedZoneEntries(z) {
-const map = new Map(cards.map(c => [c.id, c]));
-return Object.entries(deckData[z] || {})
-.filter(([, n]) => Number(n) > 0)
-.map(([id, n]) => ({ card: map.get(id) || { id, name: id }, n: Number(n) }))
+￼
+￼
+￼
+￼
 .sort((a, b) => {
-const ca = Number(a.card.cost ?? 99);
-const cb = Number(b.card.cost ?? 99);
-return ca !== cb ? ca - cb : String(displayCardNumber(a.card)).localeCompare(String(displayCardNumber(b.card)), "ja");
+￼
+￼
+￼
 });
 }
 function getExpandedZoneCards(z) {
-const map = new Map(cards.map(c => [c.id, c]));
-const items = getSortedZoneEntries(z);
-const expanded = [];
+￼
+￼
+￼
 items.forEach(({ card, n }) => {
-const copyIds = getDeckCopyIds(z, card.id);
+￼
 for (let i = 0; i < n; i++) {
-const chosenId = copyIds[i] || card.id;
+￼
 expanded.push({
-baseCard: card,
-displayCard: map.get(chosenId) || card,
-copyIndex: i
+￼
+￼
+￼
 });
 }
 });
-return expanded;
+￼
 }
 function renderDeck() {
-const grid = document.getElementById("deckGrid");
-grid.innerHTML = "";
-const expanded = getExpandedZoneCards(zone);
-const totalTiles = Math.max(GRID_SLOTS_10X5, Math.ceil(expanded.length / 10) * 10);
+￼
+￼
+￼
+￼
 for (let i = 0; i < totalTiles; i++) {
-const entry = expanded[i];
-const tile = document.createElement("div");
+￼
+￼
 if (!entry) {
-tile.className = "slot-tile ghost";
-grid.appendChild(tile);
-continue;
+￼
+￼
+￼
 }
-const { baseCard, displayCard, copyIndex } = entry;
-tile.className = "slot-tile";
-tile.appendChild(makeArt(displayCard));
-let startX = 0, startY = 0, timer = null, didLong = false, didSwipeDown = false, suppressClickUntil = 0;
+￼
+￼
+￼
+￼
 tile.addEventListener("touchstart", e => {
-if (!e.touches || !e.touches[0]) return;
-startX = e.touches[0].clientX;
-startY = e.touches[0].clientY;
-didLong = false;
-didSwipeDown = false;
-clearTimeout(timer);
+￼
+￼
+￼
+￼
+￼
+￼
 timer = setTimeout(() => {
 if (!didSwipeDown) {
-didLong = true;
-suppressClickUntil = Date.now() + 500;
-focusedCardId = baseCard.id;
-openDetail(baseCard, copyIndex, displayCard.id);
+￼
+￼
+￼
+￼
 }
 }, LONG_PRESS_MS);
 }, { passive: true });
 tile.addEventListener("touchmove", e => {
-if (!e.touches || !e.touches[0] || didSwipeDown || didLong) return;
-const dx = e.touches[0].clientX - startX;
-const dy = e.touches[0].clientY - startY;
+￼
+￼
+￼
 if (dy > 14 && dy > Math.abs(dx)) {
-clearTimeout(timer);
-didSwipeDown = true;
-suppressClickUntil = Date.now() + 500;
-removeFromDeck(baseCard.id);
+￼
+￼
+￼
+￼
 } else if (Math.abs(dx) > 10 || Math.abs(dy) > 10) {
-clearTimeout(timer);
+￼
 }
 }, { passive: true });
 tile.addEventListener("touchend", e => {
-clearTimeout(timer);
+￼
 if (didLong || didSwipeDown) {
-e.preventDefault();
-return;
+￼
+￼
 }
-const dx = e.changedTouches && e.changedTouches[0] ? Math.abs(e.changedTouches[0].clientX - startX) : 0;
-const dy = e.changedTouches && e.changedTouches[0] ? (e.changedTouches[0].clientY - startY) : 0;
+￼
+￼
 if (dy > 14 && dy > dx) {
-e.preventDefault();
-didSwipeDown = true;
-suppressClickUntil = Date.now() + 500;
-removeFromDeck(baseCard.id);
-return;
+￼
+￼
+￼
+￼
+￼
 }
 if (dx < 10 && Math.abs(dy) < 10) {
-e.preventDefault();
-suppressClickUntil = Date.now() + 500;
-removeFromDeck(baseCard.id);
+￼
+￼
+￼
 }
 });
 tile.addEventListener("touchcancel", () => {
-clearTimeout(timer);
+￼
 }, { passive: true });
 tile.addEventListener("click", () => {
 if (Date.now() < suppressClickUntil || didLong || didSwipeDown) {
-didLong = false;
-didSwipeDown = false;
-return;
+￼
+￼
+￼
 }
-removeFromDeck(baseCard.id);
+￼
 });
-grid.appendChild(tile);
+￼
 }
 }
 function getCardTags(card) {
-if (!card) return [];
-const custom = getCustomTagsForCard(card);
-const rawTags = card.tags ?? card.keywords ?? card.role ?? card.tag ?? [];
-let list = [...custom];
-if (Array.isArray(rawTags)) list.push(...rawTags.map(t => normalizeLabelValue(t)).filter(Boolean));
+￼
+￼
+￼
+￼
+￼
 else if (typeof rawTags === "string" && rawTags.trim()) {
 list.push(...rawTags.split(/[,、/／・\s]+/).map(t => normalizeLabelValue(t)).filter(Boolean));
 }
 if (list.length === 0) {
-const hay = `${card.name || ""} ${card.type || ""} ${card.text || ""}`;
-if (/初動|ドロー|サーチ|手札補充|回収/.test(hay)) list.push("初動");
-if (/除去|破壊|バウンス|無効|妨害|盾|ブロッカー|トリガー/.test(hay)) list.push("防御/除去");
-if (/フィニッシャー|SA|スピードアタッカー|追加ターン|打点/.test(hay)) list.push("フィニッシャー");
+￼
+￼
+￼
+￼
 }
-return Array.from(new Set(list));
+￼
 }
 function renderUtilityPanel() {
-const map = new Map(cards.map(c => [c.id, c]));
-const tagCounts = {};
-const colorCounts = {};
+￼
+￼
+￼
 Object.entries(deckData[zone] || {}).forEach(([id, n]) => {
-const qty = Number(n || 0);
-if (qty <= 0) return;
-const c = map.get(id) || { id };
-const col = c.color || "無";
-colorCounts[col] = (colorCounts[col] || 0) + qty;
+￼
+￼
+￼
+￼
+￼
 getCardTags(c).forEach(tg => {
-tagCounts[tg] = (tagCounts[tg] || 0) + qty;
+￼
 });
 });
-const tagRow = document.getElementById("tagQuickChips");
-tagRow.innerHTML = "";
-const allCustomTags = Object.values(customTagsByCard).flat().filter(Boolean);
-const defaultTags = ["初動", ...allCustomTags];
-const tagKeys = Array.from(new Set([...defaultTags, ...Object.keys(tagCounts)]));
+￼
+￼
+￼
+￼
+￼
 tagKeys.forEach(tg => {
-const cnt = tagCounts[tg] || 0;
-const btn = document.createElement("button");
-btn.type = "button";
-btn.className = "mini-tag" + (state.tag === tg ? " active" : "");
-btn.textContent = `${tg} ${cnt}枚`;
+￼
+￼
+￼
+￼
+￼
 btn.onclick = () => {
-state.tag = state.tag === tg ? "ALL" : tg;
-render();
+￼
+￼
 };
-tagRow.appendChild(btn);
+￼
 });
-const colorRow = document.getElementById("colorQuickChips");
-colorRow.innerHTML = "";
-const defaultColors = ["赤", "青", "緑"];
-const colorKeys = Array.from(new Set([...defaultColors, ...Object.keys(colorCounts)]));
+￼
+￼
+￼
+￼
 colorKeys.forEach(col => {
-const cnt = colorCounts[col] || 0;
-const btn = document.createElement("button");
-btn.type = "button";
-btn.className = "mini-tag color-tag" + (state.color === col ? " active" : "");
-btn.textContent = `${col} ${cnt}枚`;
+￼
+￼
+￼
+￼
+￼
 btn.onclick = () => {
-state.color = state.color === col ? "ALL" : col;
-render();
+￼
+￼
 };
-colorRow.appendChild(btn);
+￼
 });
-const focusCard = focusedCardId ? map.get(focusedCardId) : null;
-const focusLabel = document.getElementById("focusCardLabel");
-const focusCount = document.getElementById("focusCountLabel");
+￼
+￼
+￼
 if (focusCard) {
-const cardName = focusCard.name || displayCardNumber(focusCard) || "名称未設定";
-focusLabel.textContent = cardName;
-focusLabel.title = cardName;
-focusCount.textContent = `${cardTotal(focusCard.id)}/${MAX_PER_CARD}`;
+￼
+￼
+￼
+￼
 } else {
-focusLabel.textContent = "カード未選択";
-focusLabel.title = "カード未選択";
-focusCount.textContent = `0/${MAX_PER_CARD}`;
+￼
+￼
+￼
 }
 }
 function filteredPool() {
-const q = state.q.trim().toLowerCase();
-return getUniquePoolCards()
-.filter(c => {
-const variants = getCardVariants(c);
-if (state.rarity !== "ALL" && !variants.some(v => detectRarity(v) === state.rarity)) return false;
-if (state.color !== "ALL" && (c.color || "無") !== state.color) return false;
-if (state.civ !== "ALL" && (c.civilization || "無") !== state.civ) return false;
-if (state.type !== "ALL" && (c.type || "その他") !== state.type) return false;
-if (state.tag !== "ALL" && !variants.some(v => getCardTags(v).includes(state.tag))) return false;
-if (state.img === "HAS" && !variants.some(v => v.imageUrl)) return false;
-if (state.img === "NONE" && variants.some(v => v.imageUrl)) return false;
-if (q) {
-const allVarText = variants.map(v => `${v.id || ""} ${v.cardNumber || ""} ${v.name || ""} ${v.civilization || ""} ${v.text || ""} ${detectRarity(v)}`).join(" ");
-if (!allVarText.toLowerCase().includes(q)) return false;
-}
-return true;
-})
-.sort((a, b) => {
-if (state.sort === "cost_asc") return Number(a.cost ?? 99) - Number(b.cost ?? 99);
-if (state.sort === "cost_desc") return Number(b.cost ?? -1) - Number(a.cost ?? -1);
-if (state.sort === "name") return String(a.name || "").localeCompare(String(b.name || ""), "ja");
-return String(displayCardNumber(a)).localeCompare(String(displayCardNumber(b)), "ja");
+￼
+const entries = getUniquePoolCards().filter(entry => {
+￼
+￼
+￼
+￼
+￼
+￼
+￼
+￼
+￼
+￼
 });
+entries.sort((a, b) => {
+￼
+￼
+￼
+￼
+});
+￼
 }
 function renderDock() {
-const scroll = document.getElementById("dockScroll");
-scroll.innerHTML = "";
-const pool = filteredPool();
-document.getElementById("poolCountLabel").textContent = `${pool.length}件`;
+￼
+￼
+￼
+￼
 pool.forEach(card => {
-const el = document.createElement("div");
-el.className = "dock-card";
-el.appendChild(makeArt(card));
-const count = cardTotal(card.id);
+￼
+￼
+￼
+￼
 if (count > 0) {
-const badge = document.createElement("span");
-badge.className = "dock-badge" + (count >= MAX_PER_CARD ? " max" : "");
-badge.textContent = count;
-el.appendChild(badge);
+￼
+￼
+￼
+￼
 }
-const infoBtn = document.createElement("button");
-infoBtn.type = "button";
-infoBtn.className = "dock-info-btn";
-infoBtn.textContent = "詳細";
+￼
+￼
+￼
+￼
 infoBtn.addEventListener("click", e => {
-e.stopPropagation();
-focusedCardId = card.id;
-openDetail(card, 0);
+￼
+￼
+￼
 });
-el.appendChild(infoBtn);
-let startX = 0, startY = 0, timer = null, didLong = false, suppressClickUntil = 0;
+￼
+￼
 el.addEventListener("touchstart", e => {
-if (!e.touches || !e.touches[0]) return;
-startX = e.touches[0].clientX;
-startY = e.touches[0].clientY;
-didLong = false;
-focusedCardId = card.id;
-renderUtilityPanel();
+￼
+￼
+￼
+￼
+￼
+￼
+￼
 timer = setTimeout(() => {
-didLong = true;
-suppressClickUntil = Date.now() + 500;
-focusedCardId = card.id;
-openDetail(card, 0);
+if (!didSwipeUp) {
+￼
+￼
+￼
+￼
+}
 }, LONG_PRESS_MS);
 }, { passive: true });
 el.addEventListener("touchmove", e => {
-if (!e.touches || !e.touches[0]) return;
-const dx = Math.abs(e.touches[0].clientX - startX);
-const dy = Math.abs(e.touches[0].clientY - startY);
-if (dx > 12 || dy > 12) clearTimeout(timer);
+￼
+￼
+￼
+￼
+if (dySigned < -14 && Math.abs(dySigned) > dx * 1.15) {
+￼
+￼
+￼
+￼
+} else if (Math.abs(dySigned) > 10) {
+￼
+}
 }, { passive: true });
 el.addEventListener("touchend", e => {
-clearTimeout(timer);
-if (didLong) {
-didLong = false;
-return;
+￼
+if (didLong || didSwipeUp) {
+￼
+￼
+￼
+￼
 }
-if (!e.changedTouches || !e.changedTouches[0]) return;
-const dx = Math.abs(e.changedTouches[0].clientX - startX);
-const dy = e.changedTouches[0].clientY - startY;
-const isSwipeUp = dy < -24 && dx < 30;
-const isTap = dx < 12 && Math.abs(dy) < 12;
-if (isSwipeUp || isTap) {
-e.preventDefault();
-suppressClickUntil = Date.now() + 500;
-addToDeck(card.id);
+￼
+￼
+￼
+if (dySigned < -14 && Math.abs(dySigned) > dx * 1.15) {
+￼
+￼
+￼
+￼
 }
 });
 el.addEventListener("touchcancel", () => {
-clearTimeout(timer);
-didLong = false;
+￼
+￼
+￼
 }, { passive: true });
 el.addEventListener("click", () => {
-if (Date.now() < suppressClickUntil || didLong) {
-didLong = false;
-return;
+if (Date.now() < suppressClickUntil || didLong || didSwipeUp) {
+￼
+￼
+￼
 }
-addToDeck(card.id);
+￼
 });
-scroll.appendChild(el);
+￼
 });
+￼
+￼
 }
 function renderMeta() {
-const total = zoneTotal(zone);
-const target = TARGET_COUNTS[zone];
-document.getElementById("zoneLabel").textContent = zone === "main" ? "MAIN" : "SUB";
-document.getElementById("zoneCount").textContent = total;
-document.getElementById("zoneTarget").textContent = target;
-document.getElementById("counterReadout").classList.toggle("over", total > target);
-const filtered = state.rarity !== "ALL" || state.color !== "ALL" || state.civ !== "ALL" || state.type !== "ALL" || state.tag !== "ALL" || state.img !== "ALL";
-document.getElementById("btnOpenFilter").classList.toggle("active-filter", filtered);
+￼
+￼
+￼
+￼
+￼
+￼
+￼
+￼
 }
 function render() {
-renderMeta();
-renderDeck();
-renderUtilityPanel();
-renderDock();
+￼
+￼
+￼
+￼
 }
 function buildFilterOptions() {
-const rarities = ["ALL", ...new Set(cards.map(c => detectRarity(c)).filter(Boolean))];
-const colors = ["ALL", ...new Set(cards.map(c => c.color || "無").filter(Boolean))];
-const civs = ["ALL", ...new Set(cards.map(c => c.civilization || "無").filter(Boolean))];
-const types = ["ALL", ...new Set(cards.map(c => c.type || "その他").filter(Boolean))];
-const rBox = document.getElementById("rarityChipList");
-rBox.innerHTML = "";
+￼
+￼
+￼
+￼
+￼
+￼
 rarities.forEach(rar => {
-const b = document.createElement("button");
-b.className = "chip" + (state.rarity === rar ? " selected" : "");
-b.textContent = rar === "ALL" ? "すべて" : rar;
-b.onclick = () => { state.rarity = rar; buildFilterOptions(); render(); };
-rBox.appendChild(b);
+￼
+￼
+￼
+￼
+￼
 });
-const cBox = document.getElementById("colorChipList");
-cBox.innerHTML = "";
+￼
+￼
 colors.forEach(col => {
-const b = document.createElement("button");
-b.className = "chip" + (state.color === col ? " selected" : "");
-b.textContent = col === "ALL" ? "すべて" : col;
-b.onclick = () => { state.color = col; buildFilterOptions(); render(); };
-cBox.appendChild(b);
+￼
+￼
+￼
+￼
+￼
 });
-const civBox = document.getElementById("civChipList");
-civBox.innerHTML = "";
+￼
+￼
 civs.forEach(civ => {
-const b = document.createElement("button");
-b.className = "chip" + (state.civ === civ ? " selected" : "");
-b.textContent = civ === "ALL" ? "すべて" : civ;
-b.onclick = () => { state.civ = civ; buildFilterOptions(); render(); };
-civBox.appendChild(b);
+￼
+￼
+￼
+￼
+￼
 });
-const tBox = document.getElementById("typeChipList");
-tBox.innerHTML = "";
+￼
+￼
 types.forEach(tp => {
-const b = document.createElement("button");
-b.className = "chip" + (state.type === tp ? " selected" : "");
-b.textContent = tp === "ALL" ? "すべて" : tp;
-b.onclick = () => { state.type = tp; buildFilterOptions(); render(); };
-tBox.appendChild(b);
+￼
+￼
+￼
+￼
+￼
 });
 document.querySelectorAll("#imgChipList .chip").forEach(chip => {
-chip.classList.toggle("selected", chip.dataset.img === state.img);
+￼
 });
 }
 function openDetail(card, initialCopyIdx = 0, previewVariantId = null) {
-const canonical = getCanonicalCard(card);
-const baseId = canonical.id;
-const map = new Map(cards.map(c => [c.id, c]));
-const variants = getCardVariants(canonical);
-const inZone = Number(deckData[zone]?.[baseId] || 0);
-const copyIds = getDeckCopyIds(zone, baseId);
-detailCopyIndex = Math.max(0, Math.min(initialCopyIdx, Math.max(0, inZone - 1)));
-const activeVariantId = previewVariantId || (inZone > 0 ? (copyIds[detailCopyIndex] || baseId) : baseId);
-const activeCard = map.get(activeVariantId) || canonical;
-document.getElementById("detailTitle").textContent = `${activeCard.name || canonical.name || ""} [${displayCardNumber(activeCard)}]`;
-let copySelectorHtml = "";
+￼
+￼
+￼
+￼
+￼
+￼
+￼
+￼
+￼
+￼
+￼
 if (inZone > 0) {
-copySelectorHtml = `<div style="font-size:12px;font-weight:800;margin-bottom:5px;">デッキ内の枚数ごとにレアリティを選択</div><div class="copy-tabs-row">${copyIds.map((vid, idx) => { const vCard = map.get(vid) || canonical; const vRarity = detectRarity(vCard); return `<button type="button" class="copy-tab ${idx === detailCopyIndex ? "active" : ""}" data-copy-idx="${idx}">${idx + 1}枚目 (${vRarity})</button>`; }).join("")}</div>`;
+copySelectorHtml = `<div style="font-size:12px;font-weight:800;margin-bottom:5px;">デッキ内の枚数ごとにレアリティを選択</div><div class="copy-tabs-row">${copyIds.map((vid, idx) => { const vCard = map.get(vid) || canonical; const vRarity = detectRarity(vCard); return `<button type="button" class="copy-tab ${idx === detailCopyIndex ? "active" : ""}" data-copy-idx="${idx}">{idx + 1}枚目 ({vRarity})</button>`; }).join("")}</div>`;
 }
-const variantStripHtml = `<div style="font-size:12px;font-weight:800;margin-bottom:4px;">レアリティ変更（${variants.length}種）</div><div class="variant-strip">${variants.map((v, vIdx) => { const isSelected = v.id === activeCard.id; const rLabel = detectRarity(v); return `<button type="button" class="variant-thumb ${isSelected ? "selected" : ""}" data-variant-id="${v.id}">${v.imageUrl ? `<img src="${v.imageUrl}" alt="${v.name || ""}" />` : ""}<span class="variant-label">${rLabel}${variants.length > 1 ? ` #${vIdx + 1}` : ""}</span></button>`; }).join("")}</div>`;
+const variantStripHtml = `<div style="font-size:12px;font-weight:800;margin-bottom:4px;">レアリティ変更（${variants.length}種）</div><div class="variant-strip">${variants.map((v, vIdx) => { const isSelected = v.id === activeCard.id; const rLabel = detectRarity(v); return `<button type="button" class="variant-thumb ${isSelected ? "selected" : ""}" data-variant-id="${v.id}">{v.imageUrl ? ⁠<img src="${v.imageUrl}" alt="${v.name || ""}" />⁠ : ""}<span class="variant-label">￼{variants.length > 1 ? ⁠ #${vIdx + 1}⁠ : ""}</span></button>⁠; }).join("")}</div>⁠;
 const cardCustomTags = getCustomTagsForCard(canonical);
-const tagEditorHtml = `<div style="background:var(--bg-base);border:1px solid var(--border-hairline);border-radius:10px;padding:10px;margin-bottom:12px;"><div style="font-size:12px;font-weight:800;margin-bottom:6px;">マイタグ設定</div><div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;">${cardCustomTags.length ? cardCustomTags.map(tg => `<span class="chip selected" style="padding:4px 10px;display:inline-flex;align-items:center;gap:6px;">${tg}<button type="button" data-del-tag="${tg}" style="background:none;border:none;color:#fff;font-weight:900;cursor:pointer;padding:0;font-size:13px;line-height:1;">×</button></span>`).join("") : `<span style="font-size:11px;color:var(--text-secondary);">タグ未設定（下の入力欄から追加できます）</span>`}</div><div style="display:flex;gap:6px;"><input type="text" id="newCardTagInput" class="text-input" placeholder="タグ名を入力（例：初動・キー・メタ）" style="margin:0;flex:1;padding:7px 10px;font-size:12px;" /><button type="button" id="btnAddCardTag" class="pill-btn primary" style="padding:0 12px;font-size:12px;">追加</button></div></div>`;
-document.getElementById("detailBody").innerHTML = `${activeCard.imageUrl ? `<img class="preview-img" src="${activeCard.imageUrl}" alt="${activeCard.name || ""}" />` : ""}${copySelectorHtml}${variantStripHtml}<div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px;">レア: ${detectRarity(activeCard)} / 色: ${activeCard.color || "-"} / 種類: ${activeCard.type || "-"} / コスト: ${activeCard.cost ?? "-"}</div><p style="font-size:13px;line-height:1.6;margin:0 0 12px;">${activeCard.text || ""}</p>${tagEditorHtml}<button class="sheet-btn" id="detailAdd">1枚追加（合計 ${cardTotal(baseId)} / ${MAX_PER_CARD}）</button>${inZone > 0 ? `<button class="sheet-btn secondary" id="detailRemove">現在の枠から1枚減らす（${inZone}枚中）</button>` : ""}`;
+const tagEditorHtml = ⁠<div style="background:var(--bg-base);border:1px solid var(--border-hairline);border-radius:10px;padding:10px;margin-bottom:12px;"><div style="font-size:12px;font-weight:800;margin-bottom:6px;">マイタグ設定</div><div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;">${cardCustomTags.length ? cardCustomTags.map(tg => ⁠<span class="chip selected" style="padding:4px 10px;display:inline-flex;align-items:center;gap:6px;">{tg}<button type="button" data-del-tag="${tg}" style="background:none;border:none;color:#fff;font-weight:900;cursor:pointer;padding:0;font-size:13px;line-height:1;">×</button></span>`).join("") : `<span style="font-size:11px;color:var(--text-secondary);">タグ未設定（下の入力欄から追加できます）</span>`}</div><div style="display:flex;gap:6px;"><input type="text" id="newCardTagInput" class="text-input" placeholder="タグ名を入力（例：初動・キー・メタ）" style="margin:0;flex:1;padding:7px 10px;font-size:12px;" /><button type="button" id="btnAddCardTag" class="pill-btn primary" style="padding:0 12px;font-size:12px;">追加</button></div></div>`;
+document.getElementById("detailBody").innerHTML = `${activeCard.imageUrl ? `<img class="preview-img" src="{activeCard.imageUrl}" alt="{activeCard.name || ""}" />` : ""}${copySelectorHtml}${variantStripHtml}<div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px;">レア: ${detectRarity(activeCard)} / 色: ${activeCard.color || "-"} / 種類: ${activeCard.type || "-"} / コスト: ${activeCard.cost ?? "-"}</div><p style="font-size:13px;line-height:1.6;margin:0 0 12px;">${activeCard.text || ""}</p>${tagEditorHtml}<button class="sheet-btn" id="detailAdd">1枚追加（合計 ${cardTotal(baseId)} / ${MAX_PER_CARD}）</button>${inZone > 0 ? `<button class="sheet-btn secondary" id="detailRemove">現在の枠から1枚減らす（{inZone}枚中）</button>⁠ : ""}⁠;
 const addTagFn = () => {
 const inp = document.getElementById("newCardTagInput");
 if (!inp || !inp.value.trim()) return;
@@ -1839,7 +1928,7 @@ openDetail(canonical, Math.max(0, Math.min(detailCopyIndex, nextQty - 1)));
 document.getElementById("detailOverlay").classList.add("open");
 }
 function civToBarColor(civLabel, colorLabel) {
-const srcText = `${civLabel || ""} ${colorLabel || ""}`;
+const srcText = ⁠${civLabel || ""} ${colorLabel || ""}⁠;
 if (/赤|紅|炎|火/.test(srcText)) return "#e11d48";
 if (/青|蒼|水|海/.test(srcText)) return "#2563eb";
 if (/緑|翠|森|草|自然/.test(srcText)) return "#16a34a";
@@ -1851,24 +1940,18 @@ return "#4b5563";
 function openStats() {
 const map = new Map(cards.map(c => [c.id, c]));
 const costTotals = {};
-const costByCiv = {};
-const colorMap = {};
-const civMap = {};
-const total = zoneTotal(zone);
+const costByColor = {};
 Object.entries(deckData[zone] || {}).forEach(([id, n]) => {
 const qty = Number(n || 0);
 if (qty <= 0) return;
 const c = map.get(id) || { id };
 const kCost = (c.cost === null || c.cost === undefined || c.cost === "") ? "?" : String(c.cost);
-const kCol = c.color || "無";
-const kCiv = c.civilization || c.color || "無";
-const barCol = civToBarColor(kCiv, kCol);
+const kCol = c.color || c.civilization || "無";
+const barCol = civToBarColor(c.civilization, kCol);
 costTotals[kCost] = (costTotals[kCost] || 0) + qty;
-if (!costByCiv[kCost]) costByCiv[kCost] = {};
-if (!costByCiv[kCost][kCiv]) costByCiv[kCost][kCiv] = { count: 0, color: barCol };
-costByCiv[kCost][kCiv].count += qty;
-colorMap[kCol] = (colorMap[kCol] || 0) + qty;
-civMap[kCiv] = (civMap[kCiv] || 0) + qty;
+if (!costByColor[kCost]) costByColor[kCost] = {};
+if (!costByColor[kCost][kCol]) costByColor[kCost][kCol] = { count: 0, color: barCol };
+costByColor[kCost][kCol].count += qty;
 });
 const maxCostCount = Math.max(1, ...Object.values(costTotals));
 const sortedCosts = Object.keys(costTotals).sort((a, b) => {
@@ -1878,22 +1961,20 @@ if (!Number.isNaN(na)) return -1;
 if (!Number.isNaN(nb)) return 1;
 return a.localeCompare(b, "ja");
 });
-const costBars = sortedCosts.map(k => {
+const colsHtml = sortedCosts.map(k => {
 const totalForCost = costTotals[k];
-const totalPct = Math.round((totalForCost / maxCostCount) * 100);
-const civEntries = Object.entries(costByCiv[k] || {});
-const segmentsHtml = civEntries.map(([civName, info]) => {
-const segWidthPct = totalForCost > 0 ? (info.count / totalForCost) * 100 : 0;
-return `<div title="${civName}: ${info.count}枚" style="width:${segWidthPct}%;height:100%;background:${info.color};"></div>`;
+const stackPct = Math.max(8, Math.round((totalForCost / maxCostCount) * 100));
+const segEntries = Object.entries(costByColor[k] || {});
+const segsHtml = segEntries.map(([colName, info]) => {
+const segH = totalForCost > 0 ? (info.count / totalForCost) * 100 : 0;
+return ⁠<div class="vbar-seg" title="${colName}: ${info.count}枚" style="height:${segH}%;background:${info.color};"></div>⁠;
 }).join("");
-return `<div class="bar-row"><span style="width:62px;font-weight:700;">コスト ${k}</span><div class="bar-track" style="height:12px;display:flex;width:${totalPct}%;flex:none;max-width:100%;"><div style="display:flex;width:100%;height:100%;">${segmentsHtml}</div></div><span style="width:42px;text-align:right;font-weight:700;margin-left:auto;">${totalForCost}枚</span></div>`;
-}).join("") || "<div style='color:var(--text-secondary);'>カードがありません</div>";
-const civLegendHtml = Object.entries(civMap).map(([k, v]) => {
-const dotColor = civToBarColor(k, k);
-return `<span style="display:inline-flex;align-items:center;gap:4px;margin-right:10px;"><span style="width:10px;height:10px;border-radius:999px;background:${dotColor};display:inline-block;"></span>${k}: ${v}枚</span>`;
-}).join("") || "なし";
-const colorHtml = Object.entries(colorMap).map(([k, v]) => `${k}: ${v}枚`).join(" / ") || "なし";
-document.getElementById("statsContent").innerHTML = `<div style="margin-bottom:6px;"><strong>合計:</strong> ${total} / ${TARGET_COUNTS[zone]}枚</div><div style="margin-bottom:6px;"><strong>色内訳:</strong> ${colorHtml}</div><div style="margin-bottom:10px;"><strong>文明内訳:</strong> ${civLegendHtml}</div><div style="font-weight:700;margin-bottom:6px;">コスト別枚数（文明カラー）</div>${costBars}`;
+return ⁠<div class="vbar-col"><span class="vbar-count">${totalForCost}</span><div class="vbar-stack" style="height:${stackPct}%;">${segsHtml}</div></div>⁠;
+}).join("");
+const labelsHtml = sortedCosts.map(k => ⁠<div class="vbar-xlabel">${k}</div>⁠).join("");
+document.getElementById("statsContent").innerHTML = sortedCosts.length
+? ⁠<div class="vbar-chart-wrap"><div class="vbar-columns">${colsHtml}</div><div class="vbar-axis-row"><span class="vbar-axis-title">コスト</span><div class="vbar-xlabels">${labelsHtml}</div></div></div>⁠
+: ⁠<div class="vbar-chart-wrap" style="align-items:center;justify-content:center;color:var(--text-secondary);">カードがありません</div>⁠;
 document.getElementById("statsOverlay").classList.add("open");
 }
 function getSlots() {
@@ -1906,7 +1987,7 @@ function renderSavedSlots() {
 const box = document.getElementById("savedSlotList");
 const list = getSlots();
 if (!list.length) {
-box.innerHTML = `<div style="font-size:12px;color:var(--text-secondary);text-align:center;padding:16px 0;">保存済みデッキはまだありません</div>`;
+box.innerHTML = ⁠<div style="font-size:12px;color:var(--text-secondary);text-align:center;padding:16px 0;">保存済みデッキはまだありません</div>⁠;
 return;
 }
 box.innerHTML = "";
@@ -1914,7 +1995,7 @@ list.forEach((slot, idx) => {
 const mCount = Object.values(slot.deck?.main || {}).reduce((a, b) => a + Number(b || 0), 0);
 const row = document.createElement("div");
 row.className = "saved-slot-item";
-row.innerHTML = `<div style="min-width:0;"><div style="font-size:13px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${slot.name}</div><div style="font-size:11px;color:var(--text-secondary);">メイン ${mCount}枚 / ${slot.updatedAt || ""}</div></div><div style="display:flex;gap:5px;flex-shrink:0;"><button class="pill-btn primary" data-load="${idx}">読込</button><button class="pill-btn danger" data-del="${idx}">削除</button></div>`;
+row.innerHTML = ⁠<div style="min-width:0;"><div style="font-size:13px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${slot.name}</div><div style="font-size:11px;color:var(--text-secondary);">メイン ${mCount}枚 / ${slot.updatedAt || ""}</div></div><div style="display:flex;gap:5px;flex-shrink:0;"><button class="pill-btn primary" data-load="${idx}">読込</button><button class="pill-btn danger" data-del="${idx}">削除</button></div>⁠;
 box.appendChild(row);
 });
 box.querySelectorAll("[data-load]").forEach(btn => {
@@ -1926,7 +2007,7 @@ if (!deckData.variants) deckData.variants = { main: {}, sub: {} };
 persist();
 render();
 document.getElementById("decksOverlay").classList.remove("open");
-toast(`「${target.name}」を読み込みました`);
+toast(⁠「${target.name}」を読み込みました⁠);
 };
 });
 box.querySelectorAll("[data-del]").forEach(btn => {
@@ -1942,18 +2023,18 @@ toast("削除しました");
 function openShare() {
 const map = new Map(cards.map(c => [c.id, c]));
 const title = document.getElementById("exportTitleInput").value.trim() || "HOROBEAT DECK";
-const out = [`【${title}】`];
+const out = [⁠【${title}】⁠];
 ["main", "sub"].forEach(z => {
 const entries = Object.entries(deckData[z] || {}).filter(([, n]) => Number(n) > 0);
 if (entries.length) {
-out.push(z === "main" ? `\n■ メイン (${zoneTotal("main")}枚)` : `\n■ サブ (${zoneTotal("sub")}枚)`);
+out.push(z === "main" ? ⁠\n■ メイン (${zoneTotal("main")}枚)⁠ : ⁠\n■ サブ (${zoneTotal("sub")}枚)⁠);
 entries.forEach(([id, n]) => {
 const c = map.get(id) || { id, name: id };
 const copyIds = getDeckCopyIds(z, id);
 const rarities = copyIds.map(vid => detectRarity(map.get(vid) || c));
 const uniqueRarities = [...new Set(rarities)].filter(r => r && r !== "その他");
-const rSuffix = uniqueRarities.length ? ` [${uniqueRarities.join("/")}]` : "";
-out.push(`${n} × ${c.name} (${displayCardNumber(c)})${rSuffix}`);
+const rSuffix = uniqueRarities.length ? ⁠ [${uniqueRarities.join("/")}]⁠ : "";
+out.push(⁠${n} × ${c.name} (${displayCardNumber(c)})${rSuffix}⁠);
 });
 }
 });
@@ -1978,11 +2059,11 @@ const line = rawLine.trim();
 if (!line) return;
 if (line.includes("サブ")) { currentTarget = "sub"; return; }
 if (line.includes("メイン")) { currentTarget = "main"; return; }
-const m = line.match(/^(\d+)\s*[x×]\s*(.+?)(?:\s*[(（]([^()（）]+)[)）])?$/i);
+const m = line.match(/^(\d+)\s[x×]\s(.+?)(?:\s(（[)）])?$/i);
 if (!m) return;
 const qty = Number(m[1]);
 if (!qty || qty <= 0) return;
-const namePart = m[2].replace(/\s*\[[^\]]+\]\s*/g, "").trim();
+const namePart = m[2].replace(/\s*[[^]]+]\s*/g, "").trim();
 const idPart = (m[3] || "").trim().toUpperCase();
 const resolvedId = (idPart && byId.get(idPart)) || byName.get(namePart);
 if (resolvedId) {
@@ -2000,7 +2081,7 @@ deckData = newDeck;
 persist();
 render();
 document.getElementById("shareOverlay").classList.remove("open");
-toast(`合計 ${importedCount}枚 を読み込みました`);
+toast(⁠合計 ${importedCount}枚 を読み込みました⁠);
 }
 function loadCardImageSafe(url, timeoutMs = 2500) {
 return new Promise(resolve => {
@@ -2018,7 +2099,7 @@ img.crossOrigin = "anonymous";
 img.onload = async () => {
 try {
 if (typeof img.decode === "function") await img.decode();
-} catch (_) {}
+} catch () {}
 clearTimeout(timer);
 done((img.naturalWidth || img.width) > 0 ? img : null);
 };
@@ -2081,7 +2162,7 @@ ctx.fillText(title, pad, 41);
 ctx.fillStyle = "#4b5563";
 ctx.font = "bold 16px sans-serif";
 ctx.textAlign = "right";
-ctx.fillText(`MAIN ${zoneTotal("main")} / 50枚（10×5）`, canvas.width - pad, 41);
+ctx.fillText(⁠MAIN ${zoneTotal("main")} / 50枚（10×5）⁠, canvas.width - pad, 41);
 ctx.textAlign = "left";
 const loadedImgs = await Promise.all(
 expanded.map(card => loadCardImageSafe(card && card.imageUrl, 2500))
@@ -2103,7 +2184,7 @@ if (img) {
 try {
 ctx.drawImage(img, x, y, cardW, cardH);
 drewPhoto = true;
-} catch (_) {
+} catch () {
 drewPhoto = false;
 }
 }
@@ -2115,7 +2196,7 @@ drawCardPlaceholder(ctx, card, x, y, cardW, cardH);
 let dataUrl = "";
 try {
 dataUrl = canvas.toDataURL("image/png");
-} catch (_) {
+} catch () {
 usedFallback = true;
 ctx.fillStyle = "#ffffff";
 ctx.fillRect(0, headerH + pad, canvas.width, canvas.height - headerH - pad);
@@ -2128,17 +2209,17 @@ drawCardPlaceholder(ctx, expanded[idx] || { name: "", id: "" }, x, y, cardW, car
 }
 dataUrl = canvas.toDataURL("image/png");
 }
-const safeFileBase = (title.replace(/[^\w-一-龠ぁ-んァ-ヶ]/g, "_") || "deck").slice(0, 40);
+const safeFileBase = (title.replace(/[^\w-一-龠ぁ-んァ-ヶ]/g, "") || "deck").slice(0, 40);
 const noteText = usedFallback
 ? "外部画像が読み込めなかった枠はカード枠で生成しました（長押し、またはボタンから保存）"
 : "画像を生成しました（長押し、またはボタンから保存）";
-wrap.innerHTML = `<p style="font-size:12px;color:var(--text-secondary);margin:8px 0 4px;font-weight:700;">${noteText}</p><img class="generated-img" src="${dataUrl}" alt="デッキレシピ画像" /><a class="sheet-btn" href="${dataUrl}" download="${safeFileBase}_10x5.png" style="display:block;text-align:center;text-decoration:none;">PNG画像をダウンロード</a>`;
+wrap.innerHTML = ⁠<p style="font-size:12px;color:var(--text-secondary);margin:8px 0 4px;font-weight:700;">${noteText}</p><img class="generated-img" src="${dataUrl}" alt="デッキレシピ画像" /><a class="sheet-btn" href="${dataUrl}" download="${safeFileBase}_10x5.png" style="display:block;text-align:center;text-decoration:none;">PNG画像をダウンロード</a>⁠;
 wrap.scrollIntoView({ behavior: "smooth", block: "nearest" });
 toast("デッキ画像を生成しました");
 } catch (err) {
 const reason = (err && err.message) ? err.message : String(err);
 console.error("generateDeckImage error:", err);
-toast(`エラー: ${reason}`);
+toast(⁠エラー: ${reason}⁠);
 } finally {
 btn.disabled = false;
 btn.textContent = prevLabel || "デッキ画像を生成（10×5 / PNG保存用）";
@@ -2202,19 +2283,38 @@ renderSavedSlots();
 document.getElementById("decksOverlay").classList.add("open");
 };
 document.getElementById("btnSaveSlot").onclick = () => {
-const name = document.getElementById("deckNameInput").value.trim() || `デッキ ${getSlots().length + 1}`;
+const name = document.getElementById("deckNameInput").value.trim() || ⁠デッキ ${getSlots().length + 1}⁠;
 const list = getSlots();
 const now = new Date();
-const stamp = `${now.getMonth() + 1}/${now.getDate()} ${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+const stamp = ⁠${now.getMonth() + 1}/${now.getDate()} ${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}⁠;
 list.unshift({ name, updatedAt: stamp, deck: JSON.parse(JSON.stringify(deckData)) });
 setSlots(list.slice(0, 20));
 document.getElementById("deckNameInput").value = "";
 renderSavedSlots();
 toast("デッキを保存しました");
 };
-document.getElementById("searchInput").addEventListener("input", e => {
-state.q = e.target.value;
+let _searchRaf = null;
+let _isComposingSearch = false;
+const searchInputEl = document.getElementById("searchInput");
+function scheduleDockFilter() {
+if (_searchRaf) cancelAnimationFrame(_searchRaf);
+_searchRaf = requestAnimationFrame(() => {
+_searchRaf = null;
 renderDock();
+});
+}
+searchInputEl.addEventListener("compositionstart", () => {
+_isComposingSearch = true;
+});
+searchInputEl.addEventListener("compositionend", e => {
+_isComposingSearch = false;
+state.q = e.target.value;
+scheduleDockFilter();
+});
+searchInputEl.addEventListener("input", e => {
+state.q = e.target.value;
+if (_isComposingSearch) return;
+scheduleDockFilter();
 });
 document.getElementById("btnClearSearch").onclick = () => {
 state.q = "";
@@ -2261,7 +2361,7 @@ toast("レシピをコピーしました");
 };
 document.getElementById("btnCopyLink").onclick = async () => {
 const b64 = btoa(unescape(encodeURIComponent(JSON.stringify(deckData))));
-const link = `${location.origin}${location.pathname}?deck=${encodeURIComponent(b64)}`;
+const link = ⁠${location.origin}${location.pathname}?deck=${encodeURIComponent(b64)}⁠;
 await navigator.clipboard.writeText(link);
 toast("共有URLをコピーしました");
 };
@@ -2280,6 +2380,7 @@ bind();
 restore();
 try {
 cards = await loadCardsOnly();
+invalidatePoolCache();
 } catch (e) {
 cards = [];
 toast("カードデータの読み込みに失敗しました");
