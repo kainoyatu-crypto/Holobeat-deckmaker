@@ -1803,7 +1803,7 @@ const dx = Math.abs(e.touches[0].clientX - startX);
 const dySigned = e.touches[0].clientY - startY;
 const dy = Math.abs(dySigned);
 if (dx > 12 || dy > 12) clearTimeout(timer);
-if (!didSwipeUp && dySigned < -12 && Math.abs(dySigned) >= dx * 0.75) {
+if (!didSwipeUp && dySigned < -12 && dy >= dx) {
 didSwipeUp = true;
 suppressClickUntil = Date.now() + 500;
 if (e.cancelable) e.preventDefault();
@@ -1821,7 +1821,7 @@ if (!e.changedTouches || !e.changedTouches[0]) return;
 const dx = Math.abs(e.changedTouches[0].clientX - startX);
 const dySigned = e.changedTouches[0].clientY - startY;
 const dy = Math.abs(dySigned);
-const isSwipeUp = dySigned < -12 && dy >= dx * 0.75;
+const isSwipeUp = dySigned < -12 && dy >= dx;
 const isTap = dx < 12 && dy < 12;
 if (isSwipeUp || isTap) {
 e.preventDefault();
