@@ -4,6 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>HOROBEAT STUDIO — イベントカレンダー＆地図</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet" />
   <link
     rel="stylesheet"
     href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
@@ -12,250 +15,437 @@
   />
   <style>
     :root {
-      --bg-base: #f4f6fb;
+      --bg-canvas: #f8fafc;
       --bg-surface: #ffffff;
-      --bg-subtle: #eef2f8;
-      --text-primary: #0f172a;
-      --text-secondary: #475569;
-      --border-hairline: #dbe2ee;
+      --bg-elevated: #f1f5f9;
+      --ink-primary: #0f172a;
+      --ink-secondary: #475569;
+      --ink-muted: #94a3b8;
+      --line-subtle: rgba(15, 23, 42, 0.08);
+      --line-strong: rgba(15, 23, 42, 0.14);
+      --brand-start: #2563eb;
+      --brand-end: #4f46e5;
       --accent: #2563eb;
-      --accent-soft: #eff6ff;
-      --ok: #16a34a;
-      --ok-soft: #dcfce7;
-      --warn: #d97706;
-      --warn-soft: #fef3c7;
-      --radius: 12px;
+      --accent-soft: rgba(37, 99, 235, 0.1);
+      --success: #059669;
+      --success-soft: rgba(5, 150, 105, 0.12);
+      --amber: #d97706;
+      --amber-soft: rgba(217, 119, 6, 0.12);
+      --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.04), 0 4px 12px rgba(15, 23, 42, 0.03);
+      --shadow-md: 0 10px 25px -5px rgba(15, 23, 42, 0.07), 0 4px 10px -6px rgba(15, 23, 42, 0.04);
+      --radius-xl: 20px;
+      --radius-lg: 14px;
+      --radius-md: 10px;
+      --radius-pill: 9999px;
     }
 
     * {
       box-sizing: border-box;
     }
 
-    body {
+    html, body {
       margin: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Hiragino Sans", "Noto Sans JP", sans-serif;
-      background: var(--bg-base);
-      color: var(--text-primary);
-      line-height: 1.5;
+      padding: 0;
+      background: radial-gradient(circle at top right, rgba(79, 70, 229, 0.06), transparent 45%),
+                  radial-gradient(circle at top left, rgba(37, 99, 235, 0.07), transparent 40%),
+                  var(--bg-canvas);
+      color: var(--ink-primary);
+      font-family: "Inter", "Noto Sans JP", -apple-system, BlinkMacSystemFont, sans-serif;
+      line-height: 1.55;
+      -webkit-font-smoothing: antialiased;
     }
 
-    .app-header {
+    .topbar {
       position: sticky;
       top: 0;
-      z-index: 20;
-      background: var(--bg-surface);
-      border-bottom: 1px solid var(--border-hairline);
-      padding: 12px 16px;
+      z-index: 40;
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      background: rgba(255, 255, 255, 0.86);
+      border-bottom: 1px solid var(--line-subtle);
     }
 
-    .header-inner {
-      max-width: 1200px;
+    .topbar-inner {
+      max-width: 1240px;
       margin: 0 auto;
+      padding: 12px 18px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 12px;
+      gap: 14px;
       flex-wrap: wrap;
     }
 
-    .brand {
+    .brand-group {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 12px;
+    }
+
+    .brand-mark {
+      width: 36px;
+      height: 36px;
+      border-radius: 11px;
+      background: linear-gradient(135deg, var(--brand-start), var(--brand-end));
+      display: grid;
+      place-items: center;
+      color: #ffffff;
+      font-weight: 900;
+      font-size: 15px;
+      letter-spacing: -0.03em;
+      box-shadow: 0 6px 14px rgba(37, 99, 235, 0.25);
     }
 
     .brand-title {
-      font-size: 16px;
-      font-weight: 900;
       margin: 0;
+      font-size: 15px;
+      font-weight: 900;
+      letter-spacing: 0.02em;
     }
 
     .brand-sub {
-      font-size: 12px;
-      color: var(--text-secondary);
-      margin: 0;
+      margin: 1px 0 0;
+      font-size: 11px;
+      color: var(--ink-secondary);
+      font-weight: 500;
     }
 
-    .nav-links {
+    .nav-pills {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
       flex-wrap: wrap;
+      background: var(--bg-elevated);
+      padding: 4px;
+      border-radius: var(--radius-pill);
+      border: 1px solid var(--line-subtle);
     }
 
-    .nav-btn {
+    .nav-pill {
       text-decoration: none;
       font-size: 12px;
       font-weight: 700;
-      padding: 7px 12px;
-      border-radius: 999px;
-      border: 1px solid var(--border-hairline);
-      background: var(--bg-surface);
-      color: var(--text-primary);
-      cursor: pointer;
+      color: var(--ink-secondary);
+      padding: 6px 13px;
+      border-radius: var(--radius-pill);
+      transition: all 0.16s ease;
     }
 
-    .nav-btn.primary {
-      background: var(--accent);
-      border-color: var(--accent);
+    .nav-pill:hover {
+      color: var(--ink-primary);
+      background: rgba(255, 255, 255, 0.65);
+    }
+
+    .nav-pill.active {
+      background: var(--ink-primary);
+      color: #ffffff;
+      box-shadow: 0 2px 8px rgba(15, 23, 42, 0.18);
+    }
+
+    .container {
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 20px 18px 56px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .hero-card {
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 55%, #1e1b4b 100%);
+      color: #ffffff;
+      border-radius: var(--radius-xl);
+      padding: 22px 24px;
+      box-shadow: var(--shadow-md);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .hero-title {
+      margin: 0;
+      font-size: 20px;
+      font-weight: 900;
+      letter-spacing: -0.01em;
+    }
+
+    .hero-desc {
+      margin: 5px 0 0;
+      font-size: 13px;
+      color: rgba(248, 250, 252, 0.78);
+    }
+
+    .hero-stats {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .stat-chip {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      backdrop-filter: blur(8px);
+      border-radius: var(--radius-lg);
+      padding: 8px 14px;
+      min-width: 96px;
+    }
+
+    .stat-label {
+      display: block;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: rgba(248, 250, 252, 0.7);
+      font-weight: 700;
+    }
+
+    .stat-value {
+      font-size: 16px;
+      font-weight: 900;
       color: #ffffff;
     }
 
-    .main-wrap {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
-
-    .panel {
+    .surface-card {
       background: var(--bg-surface);
-      border: 1px solid var(--border-hairline);
-      border-radius: var(--radius);
-      padding: 14px;
+      border: 1px solid var(--line-subtle);
+      border-radius: var(--radius-xl);
+      padding: 18px;
+      box-shadow: var(--shadow-sm);
     }
 
-    .toolbar-grid {
+    .filter-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 10px;
+      gap: 12px;
       align-items: end;
     }
 
-    label {
+    .field-label {
       display: block;
       font-size: 11px;
       font-weight: 800;
-      color: var(--text-secondary);
-      margin-bottom: 4px;
+      color: var(--ink-secondary);
+      margin-bottom: 5px;
+      letter-spacing: 0.02em;
     }
 
-    input, select, button {
-      font-family: inherit;
-      font-size: 13px;
-      border-radius: 8px;
-      border: 1px solid var(--border-hairline);
-      padding: 8px 10px;
-      background: var(--bg-surface);
-      color: var(--text-primary);
-    }
-
-    input, select {
+    .input-control,
+    .select-control {
       width: 100%;
+      border: 1px solid var(--line-strong);
+      background: var(--bg-canvas);
+      color: var(--ink-primary);
+      border-radius: var(--radius-md);
+      padding: 9px 12px;
+      font-size: 13px;
+      font-family: inherit;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
     }
 
-    .pill-btn {
-      font-weight: 700;
-      cursor: pointer;
-      background: var(--bg-subtle);
-    }
-
-    .pill-btn.active {
-      background: var(--accent);
+    .input-control:focus,
+    .select-control:focus {
+      outline: none;
+      background: var(--bg-surface);
       border-color: var(--accent);
-      color: #ffffff;
+      box-shadow: 0 0 0 3px var(--accent-soft);
     }
 
-    .view-tabs {
+    .btn {
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 700;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--line-strong);
+      background: var(--bg-surface);
+      color: var(--ink-primary);
+      padding: 9px 13px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      text-decoration: none;
+    }
+
+    .btn:hover {
+      background: var(--bg-elevated);
+      transform: translateY(-1px);
+    }
+
+    .btn.active {
+      background: linear-gradient(135deg, var(--brand-start), var(--brand-end));
+      border-color: transparent;
+      color: #ffffff;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+    }
+
+    .filter-footer {
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px solid var(--line-subtle);
       display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      margin-top: 12px;
-      padding-top: 12px;
-      border-top: 1px solid var(--border-hairline);
       justify-content: space-between;
       align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
     }
 
-    .view-tab-group {
+    .segmented-group {
+      display: inline-flex;
+      background: var(--bg-elevated);
+      padding: 3px;
+      border-radius: var(--radius-pill);
+      border: 1px solid var(--line-subtle);
+      gap: 2px;
+    }
+
+    .seg-btn {
+      border: none;
+      background: transparent;
+      color: var(--ink-secondary);
+      font-size: 12px;
+      font-weight: 700;
+      padding: 6px 13px;
+      border-radius: var(--radius-pill);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .seg-btn.active {
+      background: var(--bg-surface);
+      color: var(--ink-primary);
+      box-shadow: 0 1px 4px rgba(15, 23, 42, 0.1);
+    }
+
+    .quick-areas {
       display: flex;
       gap: 6px;
       flex-wrap: wrap;
+      margin-top: 12px;
     }
 
-    .summary-text {
-      font-size: 12px;
-      color: var(--text-secondary);
+    .area-chip {
+      border: 1px solid var(--line-subtle);
+      background: var(--bg-canvas);
+      color: var(--ink-secondary);
+      font-size: 11px;
       font-weight: 700;
+      padding: 4px 11px;
+      border-radius: var(--radius-pill);
+      cursor: pointer;
+      transition: all 0.14s ease;
     }
 
-    .split-grid {
+    .area-chip:hover,
+    .area-chip.active {
+      background: var(--accent-soft);
+      border-color: rgba(37, 99, 235, 0.35);
+      color: var(--accent);
+    }
+
+    .workspace-grid {
       display: grid;
-      grid-template-columns: 1.35fr 1fr;
-      gap: 14px;
+      grid-template-columns: 1.38fr 1fr;
+      gap: 18px;
       align-items: start;
     }
 
-    @media (max-width: 900px) {
-      .split-grid {
+    @media (max-width: 920px) {
+      .workspace-grid {
         grid-template-columns: 1fr;
       }
     }
 
-    .cal-header {
+    .cal-top {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      gap: 8px;
-      margin-bottom: 10px;
+      gap: 10px;
+      margin-bottom: 14px;
       flex-wrap: wrap;
     }
 
-    .cal-month-label {
-      font-size: 15px;
+    .cal-heading {
+      margin: 0;
+      font-size: 16px;
       font-weight: 900;
+      letter-spacing: -0.01em;
     }
 
-    .cal-nav-group {
+    .cal-controls {
       display: flex;
       gap: 6px;
     }
 
-    .cal-grid {
+    .cal-matrix {
       display: grid;
-      grid-template-columns: repeat(7, 1fr);
+      grid-template-columns: repeat(7, minmax(0, 1fr));
       gap: 6px;
     }
 
-    .cal-dow {
+    .dow-cell {
       text-align: center;
       font-size: 11px;
       font-weight: 800;
-      color: var(--text-secondary);
+      color: var(--ink-muted);
       padding: 4px 0;
     }
 
-    .cal-cell {
-      min-height: 86px;
-      border: 1px solid var(--border-hairline);
-      border-radius: 8px;
-      padding: 6px;
+    .dow-cell.sun { color: #e11d48; }
+    .dow-cell.sat { color: #2563eb; }
+
+    .day-cell {
+      min-height: 92px;
+      border-radius: 12px;
+      border: 1px solid var(--line-subtle);
       background: var(--bg-surface);
+      padding: 6px;
       cursor: pointer;
       display: flex;
       flex-direction: column;
       gap: 4px;
+      transition: border-color 0.14s ease, transform 0.14s ease, background-color 0.14s ease;
+      min-width: 0;
     }
 
-    .cal-cell.muted {
-      background: var(--bg-subtle);
-      color: #94a3b8;
+    .day-cell:hover {
+      border-color: rgba(37, 99, 235, 0.4);
+      transform: translateY(-1px);
     }
 
-    .cal-cell.selected {
+    .day-cell.outside {
+      background: var(--bg-canvas);
+      color: var(--ink-muted);
+      opacity: 0.65;
+    }
+
+    .day-cell.selected {
       border-color: var(--accent);
-      background: var(--accent-soft);
+      background: linear-gradient(180deg, rgba(37, 99, 235, 0.08), rgba(79, 70, 229, 0.04));
+      box-shadow: inset 0 0 0 1px var(--accent);
     }
 
-    .cal-day-num {
+    .day-num {
       font-size: 12px;
       font-weight: 800;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 22px;
+      height: 22px;
+      border-radius: 999px;
     }
 
-    .cal-event-chip {
-      font-size: 11px;
+    .day-cell.selected .day-num {
+      background: var(--accent);
+      color: #ffffff;
+    }
+
+    .event-tag {
+      font-size: 10px;
       font-weight: 700;
       padding: 2px 6px;
       border-radius: 6px;
@@ -266,141 +456,176 @@
       text-overflow: ellipsis;
     }
 
-    .cal-event-chip.planned {
-      background: var(--ok-soft);
-      color: var(--ok);
+    .event-tag.is-planned {
+      background: var(--success-soft);
+      color: var(--success);
     }
 
-    #eventMap {
+    #mapCanvas {
       width: 100%;
-      height: 440px;
-      border-radius: 10px;
-      border: 1px solid var(--border-hairline);
+      height: 450px;
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--line-subtle);
+      overflow: hidden;
       z-index: 1;
     }
 
-    .list-box {
-      max-height: 440px;
+    .side-scroll {
+      max-height: 450px;
       overflow-y: auto;
       display: flex;
       flex-direction: column;
       gap: 10px;
+      padding-right: 2px;
     }
 
-    .event-card {
-      border: 1px solid var(--border-hairline);
-      border-radius: 10px;
-      padding: 12px;
+    .side-title {
+      margin: 0 0 12px;
+      font-size: 14px;
+      font-weight: 900;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .ev-item {
+      border: 1px solid var(--line-subtle);
+      border-radius: var(--radius-lg);
+      padding: 14px;
+      background: var(--bg-canvas);
+      transition: border-color 0.14s ease, background-color 0.14s ease;
+    }
+
+    .ev-item:hover {
       background: var(--bg-surface);
+      border-color: var(--line-strong);
     }
 
     .badge {
-      display: inline-block;
-      font-size: 11px;
+      display: inline-flex;
+      align-items: center;
+      font-size: 10px;
       font-weight: 800;
       padding: 2px 8px;
-      border-radius: 999px;
+      border-radius: var(--radius-pill);
       background: var(--accent-soft);
       color: var(--accent);
-      margin-right: 4px;
+      margin-right: 5px;
     }
 
-    .badge.planned {
-      background: var(--ok-soft);
-      color: var(--ok);
+    .badge.ok {
+      background: var(--success-soft);
+      color: var(--success);
     }
 
-    .badge.review {
-      background: var(--warn-soft);
-      color: var(--warn);
+    .badge.warn {
+      background: var(--amber-soft);
+      color: var(--amber);
     }
 
-    .event-title {
+    .ev-name {
       margin: 6px 0 4px;
       font-size: 14px;
       font-weight: 900;
+      line-height: 1.4;
     }
 
-    .event-meta {
+    .ev-sub {
       font-size: 12px;
-      color: var(--text-secondary);
+      color: var(--ink-secondary);
     }
 
-    .event-notes {
-      margin: 8px 0;
+    .ev-memo {
+      margin: 8px 0 0;
       font-size: 12px;
-      color: var(--text-primary);
+      color: var(--ink-primary);
       white-space: pre-wrap;
     }
 
-    .event-actions {
+    .ev-btns {
       display: flex;
       gap: 6px;
       flex-wrap: wrap;
-      margin-top: 8px;
+      margin-top: 10px;
     }
 
-    .event-actions button,
-    .event-actions a {
+    .ev-btns .btn {
+      padding: 5px 10px;
       font-size: 11px;
-      font-weight: 700;
-      padding: 5px 9px;
-      border-radius: 7px;
-      border: 1px solid var(--border-hairline);
-      background: var(--bg-subtle);
-      color: var(--text-primary);
-      text-decoration: none;
-      cursor: pointer;
+      border-radius: 8px;
     }
 
     .toast {
       position: fixed;
-      right: 16px;
-      bottom: 16px;
-      z-index: 50;
-      background: #0f172a;
+      left: 50%;
+      bottom: 20px;
+      transform: translate(-50%, 10px);
+      background: var(--ink-primary);
       color: #ffffff;
-      padding: 9px 14px;
-      border-radius: 999px;
       font-size: 12px;
       font-weight: 700;
+      padding: 9px 16px;
+      border-radius: var(--radius-pill);
+      box-shadow: var(--shadow-md);
       opacity: 0;
       pointer-events: none;
-      transition: opacity 0.2s ease;
+      transition: all 0.18s ease;
+      z-index: 60;
     }
 
-    .toast.show {
+    .toast.visible {
       opacity: 1;
+      transform: translate(-50%, 0);
     }
   </style>
 </head>
 <body>
-  <header class="app-header">
-    <div class="header-inner">
-      <div class="brand">
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand-group">
+        <div class="brand-mark">HB</div>
         <div>
           <p class="brand-title">HOROBEAT STUDIO</p>
-          <p class="brand-sub">イベントカレンダー＆地図ページ</p>
+          <p class="brand-sub">Event Schedule &amp; Map Explorer</p>
         </div>
       </div>
-      <nav class="nav-links">
-        <a href="./index.html" class="nav-btn">デッキビルダー</a>
-        <a href="./results.html" class="nav-btn">大会記録・環境</a>
-        <a href="./events.html" class="nav-btn primary">イベント（カレンダー・地図）</a>
+
+      <nav class="nav-pills" aria-label="ページ移動">
+        <a href="./index.html" class="nav-pill">ホーム</a>
+        <a href="./make.html" class="nav-pill">デッキ作成</a>
+        <a href="./results.html" class="nav-pill">入賞リスト</a>
+        <a href="./events.html" class="nav-pill active">イベント（カレンダー・地図）</a>
       </nav>
     </div>
   </header>
 
-  <main class="main-wrap">
-    <section class="panel">
-      <div class="toolbar-grid">
+  <main class="container">
+    <section class="hero-card">
+      <div>
+        <h1 class="hero-title">イベントカレンダー＆周辺マップ</h1>
+        <p class="hero-desc">日程と開催エリアを直感的にチェックし、近くの大会・体験会・店舗イベントを素早く見つけられます。</p>
+      </div>
+      <div class="hero-stats">
+        <div class="stat-chip">
+          <span class="stat-label">表示イベント</span>
+          <span class="stat-value" id="statShown">0</span>
+        </div>
+        <div class="stat-chip">
+          <span class="stat-label">参加予定</span>
+          <span class="stat-value" id="statPlanned">0</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="surface-card">
+      <div class="filter-grid">
         <div>
-          <label for="filterArea">駅・エリア・店舗</label>
-          <input id="filterArea" type="text" placeholder="例: 立川、新宿、秋葉原" />
+          <label class="field-label" for="areaInput">駅・エリア・店舗</label>
+          <input id="areaInput" class="input-control" type="text" placeholder="例: 立川、新宿、秋葉原" />
         </div>
         <div>
-          <label for="filterCategory">種別</label>
-          <select id="filterCategory">
+          <label class="field-label" for="categoryFilter">種別</label>
+          <select id="categoryFilter" class="select-control">
             <option value="">すべて</option>
             <option value="名人戦">名人戦</option>
             <option value="体験会">体験会</option>
@@ -410,58 +635,74 @@
           </select>
         </div>
         <div>
-          <label for="filterDate">基準日</label>
-          <input id="filterDate" type="date" value="2026-11-22" />
+          <label class="field-label" for="dateInput">基準日</label>
+          <input id="dateInput" class="input-control" type="date" value="2026-11-22" />
         </div>
-        <div style="display:flex;gap:6px;">
-          <button type="button" id="btnLocateMe" class="pill-btn" style="flex:1;">現在地周辺</button>
-          <button type="button" id="btnReloadEvents" class="pill-btn">再読込</button>
+        <div style="display:flex;gap:8px;">
+          <button type="button" id="locateBtn" class="btn active" style="flex:1;">現在地周辺</button>
+          <button type="button" id="reloadBtn" class="btn">更新</button>
         </div>
       </div>
 
-      <div class="view-tabs">
-        <div class="view-tab-group">
-          <button type="button" class="pill-btn active" data-view="both">カレンダー＋地図</button>
-          <button type="button" class="pill-btn" data-view="calendar">カレンダーのみ</button>
-          <button type="button" class="pill-btn" data-view="map">地図のみ</button>
+      <div class="quick-areas" id="quickAreas">
+        <button type="button" class="area-chip" data-area="">すべて</button>
+        <button type="button" class="area-chip" data-area="立川">立川</button>
+        <button type="button" class="area-chip" data-area="新宿">新宿</button>
+        <button type="button" class="area-chip" data-area="秋葉原">秋葉原</button>
+        <button type="button" class="area-chip" data-area="渋谷">渋谷</button>
+        <button type="button" class="area-chip" data-area="池袋">池袋</button>
+        <button type="button" class="area-chip" data-area="横浜">横浜</button>
+      </div>
+
+      <div class="filter-footer">
+        <div class="segmented-group" role="tablist">
+          <button type="button" class="seg-btn active" data-mode="both">両方表示</button>
+          <button type="button" class="seg-btn" data-mode="calendar">カレンダー</button>
+          <button type="button" class="seg-btn" data-mode="map">地図</button>
         </div>
-        <div id="summaryBar" class="summary-text">読込中...</div>
+        <div class="ev-sub" id="syncStatusText">データを準備中...</div>
       </div>
     </section>
 
-    <section id="calendarBlock" class="panel">
-      <div class="split-grid">
+    <section id="calendarPanel" class="surface-card">
+      <div class="workspace-grid">
         <div>
-          <div class="cal-header">
-            <div class="cal-nav-group">
-              <button type="button" id="btnPrevMonth" class="pill-btn">◀ 前月</button>
-              <button type="button" id="btnThisMonth" class="pill-btn">2026年11月</button>
-              <button type="button" id="btnNextMonth" class="pill-btn">翌月 ▶</button>
+          <div class="cal-top">
+            <h2 class="cal-heading" id="monthHeading">2026年11月</h2>
+            <div class="cal-controls">
+              <button type="button" id="prevMonthBtn" class="btn">◀ 前月</button>
+              <button type="button" id="nowMonthBtn" class="btn">2026年11月</button>
+              <button type="button" id="nextMonthBtn" class="btn">翌月 ▶</button>
             </div>
-            <div id="calMonthTitle" class="cal-month-label">2026年11月</div>
           </div>
-          <div id="calendarGrid" class="cal-grid"></div>
+          <div id="calendarMatrix" class="cal-matrix"></div>
         </div>
 
         <div>
-          <h2 id="selectedDayHeading" style="margin:0 0 10px;font-size:14px;font-weight:900;">2026-11-22 のイベント</h2>
-          <div id="selectedDayList" class="list-box"></div>
+          <div class="side-title">
+            <span id="dayPanelTitle">2026-11-22 のイベント</span>
+            <span class="ev-sub" id="dayPanelCount">0件</span>
+          </div>
+          <div id="dayEventsBox" class="side-scroll"></div>
         </div>
       </div>
     </section>
 
-    <section id="mapBlock" class="panel">
-      <div class="split-grid">
-        <div id="eventMap"></div>
+    <section id="mapPanel" class="surface-card">
+      <div class="workspace-grid">
+        <div id="mapCanvas"></div>
         <div>
-          <h2 style="margin:0 0 10px;font-size:14px;font-weight:900;">絞り込み中のイベント一覧</h2>
-          <div id="filteredEventsList" class="list-box"></div>
+          <div class="side-title">
+            <span>絞り込み中のイベント</span>
+            <span class="ev-sub" id="listPanelCount">0件</span>
+          </div>
+          <div id="filteredListBox" class="side-scroll"></div>
         </div>
       </div>
     </section>
   </main>
 
-  <div id="toast" class="toast"></div>
+  <div id="toastBar" class="toast"></div>
 
   <script
     src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
@@ -469,52 +710,53 @@
     crossorigin=""
   ></script>
   <script>
-    const STORAGE_KEY = "horobeat_events_page_state_v1";
-    const FALLBACK_EVENTS = [
+    const STORAGE_KEY = "horobeat_stylish_events_v1";
+
+    const SAMPLE_EVENTS = [
       {
-        id: "hb-evt-2026-11-22-tachikawa",
-        title: "ホロビート 公認店舗イベント（立川周辺）",
+        id: "hb-2026-11-22-tachikawa",
+        title: "ホロビート 公認店舗大会（立川エリア）",
         category: "店舗大会",
         date: "2026-11-22",
         time: "14:00",
         area: "立川",
-        venue: "立川駅周辺 取扱店",
+        venue: "立川駅周辺 公認取扱店",
         lat: 35.6982,
         lng: 139.4136,
-        status: "確認中",
+        status: "開催中",
         sourceUrl: "https://www.takaratomy.co.jp/products/horobeat-cardgame/event/",
         xSearchUrl: "https://x.com/search?q=%E3%83%9B%E3%83%AD%E3%83%93%E3%83%BC%E3%83%88%20%E7%AB%8B%E5%B7%9D%20%E5%A4%A7%E4%BC%9A&src=typed_query&f=live",
-        notes: "当日の開催・受付時間は各店舗の告知やX検索で確認してください。"
+        notes: "立川駅周辺の開催スケジュール。受付時間や参加枠は各店舗告知をご確認ください。"
       },
       {
-        id: "hb-evt-2026-11-25-shinjuku",
-        title: "ホロビート 体験会・交流枠（新宿周辺）",
+        id: "hb-2026-11-25-shinjuku",
+        title: "ホロビート お披露目体験会（新宿エリア）",
         category: "体験会",
         date: "2026-11-25",
         time: "13:00",
         area: "新宿",
-        venue: "新宿駅周辺 店舗",
+        venue: "新宿駅周辺 取扱店舗",
         lat: 35.6896,
         lng: 139.7006,
-        status: "確認中",
+        status: "開催中",
         sourceUrl: "https://www.takaratomy.co.jp/products/horobeat-cardgame/event/",
         xSearchUrl: "https://x.com/search?q=%E3%83%9B%E3%83%AD%E3%83%93%E3%83%BC%E3%83%88%20%E6%96%B0%E5%AE%BF%20%E4%BD%93%E9%A8%93%E4%BC%9A&src=typed_query&f=live",
-        notes: "新宿エリアのイベント候補です。"
+        notes: "体験会開催期間中の新宿エリア候補枠です。"
       },
       {
-        id: "hb-evt-2026-11-28-akihabara",
-        title: "ホロビート 店舗大会（秋葉原周辺）",
+        id: "hb-2026-11-28-akihabara",
+        title: "ホロビート 名人戦 店舗大会（秋葉原エリア）",
         category: "名人戦",
         date: "2026-11-28",
         time: "15:00",
         area: "秋葉原",
-        venue: "秋葉原駅周辺 取扱店",
+        venue: "秋葉原駅周辺 公認店",
         lat: 35.6984,
         lng: 139.7731,
-        status: "確認中",
+        status: "予定",
         sourceUrl: "https://www.c-labo.jp/tournament/filter/tcg:233/",
         xSearchUrl: "https://x.com/search?q=%E3%83%9B%E3%83%AD%E3%83%93%E3%83%BC%E3%83%88%20%E7%A7%8B%E8%91%89%E5%8E%9F%20%E5%90%8D%E4%BA%BA%E6%88%A6&src=typed_query&f=live",
-        notes: "秋葉原エリアのイベント候補です。"
+        notes: "秋葉原エリアの開催候補枠です。"
       }
     ];
 
@@ -529,23 +771,23 @@
       "名古屋": [35.1709, 136.8816]
     };
 
-    let eventsData = [];
-    let calYear = 2026;
-    let calMonth = 10; // 0-indexed: 10 = November
-    let selectedDay = "2026-11-22";
-    let viewMode = "both";
-    let map = null;
-    let markerGroup = null;
+    let events = [];
+    let year = 2026;
+    let month = 10; // 0-indexed (10 = Nov)
+    let activeDate = "2026-11-22";
+    let mode = "both";
+    let leafletMap = null;
+    let markers = null;
 
     const showToast = (msg) => {
-      const el = document.getElementById("toast");
+      const el = document.getElementById("toastBar");
       el.textContent = msg;
-      el.classList.add("show");
-      clearTimeout(showToast._t);
-      showToast._t = setTimeout(() => el.classList.remove("show"), 1800);
+      el.classList.add("visible");
+      clearTimeout(showToast._timer);
+      showToast._timer = setTimeout(() => el.classList.remove("visible"), 1800);
     };
 
-    const loadState = () => {
+    const readPrefs = () => {
       try {
         return JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
       } catch {
@@ -553,95 +795,97 @@
       }
     };
 
-    const saveState = (st) => {
+    const writePrefs = (prefs) => {
       try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(st));
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(prefs));
       } catch {}
     };
 
-    const esc = (s) =>
-      String(s ?? "")
+    const escapeHtml = (str) =>
+      String(str ?? "")
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;");
 
-    const getCoords = (ev) => {
+    const resolveCoords = (ev) => {
       if (typeof ev.lat === "number" && typeof ev.lng === "number") {
         return [ev.lat, ev.lng];
       }
-      const hay = `${ev.area || ""} ${ev.venue || ""} ${ev.title || ""}`;
-      for (const [k, pair] of Object.entries(AREA_COORDS)) {
-        if (hay.includes(k)) return pair;
+      const text = `${ev.area || ""} ${ev.venue || ""} ${ev.title || ""}`;
+      for (const [label, pair] of Object.entries(AREA_COORDS)) {
+        if (text.includes(label)) return pair;
       }
       return AREA_COORDS["立川"];
     };
 
     const getFiltered = () => {
-      const areaQ = document.getElementById("filterArea").value.trim().toLowerCase();
-      const catQ = document.getElementById("filterCategory").value;
-      const st = loadState();
-      const planned = new Set(st.plannedIds || []);
+      const areaQuery = document.getElementById("areaInput").value.trim().toLowerCase();
+      const categoryQuery = document.getElementById("categoryFilter").value;
+      const prefs = readPrefs();
+      const plannedSet = new Set(prefs.plannedIds || []);
 
-      return eventsData
+      return events
         .map((ev) => {
-          const [lat, lng] = getCoords(ev);
+          const [lat, lng] = resolveCoords(ev);
           return {
             ...ev,
             lat,
             lng,
-            planned: planned.has(ev.id) || ev.status === "参加予定"
+            planned: plannedSet.has(ev.id) || ev.status === "参加予定"
           };
         })
         .filter((ev) => {
-          if (catQ && ev.category !== catQ) return false;
-          if (areaQ) {
+          if (categoryQuery && ev.category !== categoryQuery) return false;
+          if (areaQuery) {
             const hay = `${ev.area || ""} ${ev.venue || ""} ${ev.title || ""} ${ev.notes || ""}`.toLowerCase();
-            if (!hay.includes(areaQ)) return false;
+            if (!hay.includes(areaQuery)) return false;
           }
           return true;
         });
     };
 
     window.togglePlanned = (id) => {
-      const st = loadState();
-      const set = new Set(st.plannedIds || []);
+      const prefs = readPrefs();
+      const set = new Set(prefs.plannedIds || []);
       if (set.has(id)) {
         set.delete(id);
         showToast("参加予定を解除しました");
       } else {
         set.add(id);
-        showToast("参加予定に登録しました");
+        showToast("参加予定に追加しました");
       }
-      st.plannedIds = Array.from(set);
-      saveState(st);
+      prefs.plannedIds = Array.from(set);
+      writePrefs(prefs);
       render();
     };
 
-    const renderCards = (targetEl, list) => {
+    const renderEventList = (el, list) => {
       if (!list.length) {
-        targetEl.innerHTML = `<div class="event-card"><div class="event-meta">表示できるイベントはありません。</div></div>`;
+        el.innerHTML = `<div class="ev-item"><div class="ev-sub">条件に一致するイベントはありません。</div></div>`;
         return;
       }
-      targetEl.innerHTML = list
+      el.innerHTML = list
         .map((ev) => {
           const xUrl =
             ev.xSearchUrl ||
             `https://x.com/search?q=${encodeURIComponent(`ホロビート ${ev.area || ""} ${ev.category || ""}`.trim())}&src=typed_query&f=live`;
           return `
-            <article class="event-card">
+            <article class="ev-item">
               <div>
-                <span class="badge">${esc(ev.category || "イベント")}</span>
-                <span class="badge ${ev.planned ? "planned" : "review"}">${ev.planned ? "参加予定" : esc(ev.status || "未確認")}</span>
+                <span class="badge">${escapeHtml(ev.category || "イベント")}</span>
+                <span class="badge ${ev.planned ? "ok" : "warn"}">${ev.planned ? "参加予定" : escapeHtml(ev.status || "確認中")}</span>
               </div>
-              <h3 class="event-title">${esc(ev.title || "名称未設定")}</h3>
-              <div class="event-meta">${esc(ev.date || "")} ${esc(ev.time || "")} ｜ ${esc(ev.area || "未指定")}（${esc(ev.venue || "-")}）</div>
-              ${ev.notes ? `<p class="event-notes">${esc(ev.notes)}</p>` : ""}
-              <div class="event-actions">
-                <button type="button" onclick="togglePlanned('${esc(ev.id)}')">${ev.planned ? "予定解除" : "参加予定"}</button>
-                <button type="button" onclick="focusMap(${ev.lat}, ${ev.lng})">地図で表示</button>
-                <a href="${esc(xUrl)}" target="_blank" rel="noopener noreferrer">Xで検索</a>
-                ${ev.sourceUrl ? `<a href="${esc(ev.sourceUrl)}" target="_blank" rel="noopener noreferrer">詳細元</a>` : ""}
+              <h3 class="ev-name">${escapeHtml(ev.title || "名称未設定")}</h3>
+              <div class="ev-sub">${escapeHtml(ev.date || "")} ${escapeHtml(ev.time || "")} ｜ ${escapeHtml(ev.area || "未指定")}（${escapeHtml(ev.venue || "-")}）</div>
+              ${ev.notes ? `<p class="ev-memo">${escapeHtml(ev.notes)}</p>` : ""}
+              <div class="ev-btns">
+                <button type="button" class="btn ${ev.planned ? "active" : ""}" onclick="togglePlanned('${escapeHtml(ev.id)}')">
+                  ${ev.planned ? "参加予定 ✓" : "参加予定にする"}
+                </button>
+                <button type="button" class="btn" onclick="focusEventLocation(${ev.lat}, ${ev.lng})">地図で見る</button>
+                <a class="btn" href="${escapeHtml(xUrl)}" target="_blank" rel="noopener noreferrer">X検索</a>
+                ${ev.sourceUrl ? `<a class="btn" href="${escapeHtml(ev.sourceUrl)}" target="_blank" rel="noopener noreferrer">詳細</a>` : ""}
               </div>
             </article>
           `;
@@ -650,135 +894,153 @@
     };
 
     const renderCalendar = (filtered) => {
-      document.getElementById("calMonthTitle").textContent = `${calYear}年${calMonth + 1}月`;
-      const grid = document.getElementById("calendarGrid");
-      const dows = ["日", "月", "火", "水", "木", "金", "土"];
-      const byDate = new Map();
+      document.getElementById("monthHeading").textContent = `${year}年${month + 1}月`;
+      const matrix = document.getElementById("calendarMatrix");
+      const dows = [
+        { label: "日", cls: "sun" },
+        { label: "月", cls: "" },
+        { label: "火", cls: "" },
+        { label: "水", cls: "" },
+        { label: "木", cls: "" },
+        { label: "金", cls: "" },
+        { label: "土", cls: "sat" }
+      ];
+
+      const mapByDate = new Map();
       filtered.forEach((ev) => {
         if (!ev.date) return;
-        if (!byDate.has(ev.date)) byDate.set(ev.date, []);
-        byDate.get(ev.date).push(ev);
+        if (!mapByDate.has(ev.date)) mapByDate.set(ev.date, []);
+        mapByDate.get(ev.date).push(ev);
       });
 
-      const firstDow = new Date(calYear, calMonth, 1).getDay();
-      const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
-      const prevDays = new Date(calYear, calMonth, 0).getDate();
+      const firstDow = new Date(year, month, 1).getDay();
+      const daysCount = new Date(year, month + 1, 0).getDate();
+      const prevDaysCount = new Date(year, month, 0).getDate();
       const pad = (n) => String(n).padStart(2, "0");
 
-      let html = dows.map((d) => `<div class="cal-dow">${d}</div>`).join("");
+      let html = dows.map((d) => `<div class="dow-cell ${d.cls}">${d.label}</div>`).join("");
 
       for (let i = firstDow - 1; i >= 0; i--) {
-        const dNum = prevDays - i;
-        const m = calMonth === 0 ? 12 : calMonth;
-        const y = calMonth === 0 ? calYear - 1 : calYear;
-        html += `<div class="cal-cell muted" data-iso="${y}-${pad(m)}-${pad(dNum)}"><div class="cal-day-num">${dNum}</div></div>`;
+        const dNum = prevDaysCount - i;
+        const m = month === 0 ? 12 : month;
+        const y = month === 0 ? year - 1 : year;
+        html += `<div class="day-cell outside" data-date="${y}-${pad(m)}-${pad(dNum)}"><span class="day-num">${dNum}</span></div>`;
       }
 
-      for (let d = 1; d <= daysInMonth; d++) {
-        const iso = `${calYear}-${pad(calMonth + 1)}-${pad(d)}`;
-        const dayEvs = byDate.get(iso) || [];
-        const selClass = iso === selectedDay ? "selected" : "";
-        const chips = dayEvs
+      for (let d = 1; d <= daysCount; d++) {
+        const iso = `${year}-${pad(month + 1)}-${pad(d)}`;
+        const dayList = mapByDate.get(iso) || [];
+        const sel = iso === activeDate ? "selected" : "";
+        const tags = dayList
           .slice(0, 3)
           .map(
             (ev) =>
-              `<div class="cal-event-chip ${ev.planned ? "planned" : ""}">${esc(ev.area ? `[${ev.area}] ` : "")}${esc(ev.title)}</div>`
+              `<div class="event-tag ${ev.planned ? "is-planned" : ""}">${escapeHtml(ev.area ? `[${ev.area}] ` : "")}${escapeHtml(ev.title)}</div>`
           )
           .join("");
         html += `
-          <div class="cal-cell ${selClass}" data-iso="${iso}">
-            <div class="cal-day-num">${d}</div>
-            ${chips}
+          <div class="day-cell ${sel}" data-date="${iso}">
+            <span class="day-num">${d}</span>
+            ${tags}
           </div>
         `;
       }
 
-      const used = firstDow + daysInMonth;
-      const tail = (7 - (used % 7)) % 7;
-      for (let t = 1; t <= tail; t++) {
-        const m = calMonth === 11 ? 1 : calMonth + 2;
-        const y = calMonth === 11 ? calYear + 1 : calYear;
-        html += `<div class="cal-cell muted" data-iso="${y}-${pad(m)}-${pad(t)}"><div class="cal-day-num">${t}</div></div>`;
+      const totalCells = firstDow + daysCount;
+      const tailCount = (7 - (totalCells % 7)) % 7;
+      for (let t = 1; t <= tailCount; t++) {
+        const m = month === 11 ? 1 : month + 2;
+        const y = month === 11 ? year + 1 : year;
+        html += `<div class="day-cell outside" data-date="${y}-${pad(m)}-${pad(t)}"><span class="day-num">${t}</span></div>`;
       }
 
-      grid.innerHTML = html;
-      grid.querySelectorAll(".cal-cell").forEach((el) => {
-        el.addEventListener("click", () => {
-          selectedDay = el.getAttribute("data-iso");
-          document.getElementById("filterDate").value = selectedDay;
+      matrix.innerHTML = html;
+      matrix.querySelectorAll(".day-cell").forEach((cell) => {
+        cell.addEventListener("click", () => {
+          activeDate = cell.getAttribute("data-date");
+          document.getElementById("dateInput").value = activeDate;
           render();
         });
       });
 
-      document.getElementById("selectedDayHeading").textContent = `${selectedDay} のイベント`;
-      renderCards(document.getElementById("selectedDayList"), byDate.get(selectedDay) || []);
+      const selectedList = mapByDate.get(activeDate) || [];
+      document.getElementById("dayPanelTitle").textContent = `${activeDate} のイベント`;
+      document.getElementById("dayPanelCount").textContent = `${selectedList.length}件`;
+      renderEventList(document.getElementById("dayEventsBox"), selectedList);
     };
 
-    const ensureMap = () => {
-      if (map || typeof L === "undefined") return;
-      map = L.map("eventMap").setView(AREA_COORDS["立川"], 10);
+    const ensureLeafletMap = () => {
+      if (leafletMap || typeof L === "undefined") return;
+      leafletMap = L.map("mapCanvas", { zoomControl: true }).setView(AREA_COORDS["立川"], 10);
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
         attribution: "&copy; OpenStreetMap contributors"
-      }).addTo(map);
-      markerGroup = L.layerGroup().addTo(map);
+      }).addTo(leafletMap);
+      markers = L.layerGroup().addTo(leafletMap);
     };
 
-    window.focusMap = (lat, lng) => {
-      if (viewMode === "calendar") applyViewMode("both");
-      ensureMap();
-      if (map) {
+    window.focusEventLocation = (lat, lng) => {
+      if (mode === "calendar") setViewMode("both");
+      ensureLeafletMap();
+      if (leafletMap) {
         setTimeout(() => {
-          map.invalidateSize();
-          map.setView([lat, lng], 13);
+          leafletMap.invalidateSize();
+          leafletMap.setView([lat, lng], 13);
         }, 80);
       }
     };
 
-    const renderMapAndList = (filtered) => {
-      renderCards(document.getElementById("filteredEventsList"), filtered);
-      ensureMap();
-      if (!map || !markerGroup) return;
+    const renderMapSection = (filtered) => {
+      document.getElementById("listPanelCount").textContent = `${filtered.length}件`;
+      renderEventList(document.getElementById("filteredListBox"), filtered);
+      ensureLeafletMap();
+      if (!leafletMap || !markers) return;
 
-      markerGroup.clearLayers();
-      const pts = [];
+      markers.clearLayers();
+      const coordsList = [];
       filtered.forEach((ev) => {
         if (typeof ev.lat === "number" && typeof ev.lng === "number") {
-          const m = L.marker([ev.lat, ev.lng]).addTo(markerGroup);
-          m.bindPopup(`<strong>${esc(ev.title)}</strong><br/>${esc(ev.date)} ${esc(ev.time || "")}<br/>${esc(ev.area || "")}`);
-          pts.push([ev.lat, ev.lng]);
+          const mk = L.marker([ev.lat, ev.lng]).addTo(markers);
+          mk.bindPopup(
+            `<strong>${escapeHtml(ev.title)}</strong><br/>${escapeHtml(ev.date)} ${escapeHtml(ev.time || "")}<br/>${escapeHtml(ev.area || "")}・${escapeHtml(ev.venue || "")}`
+          );
+          coordsList.push([ev.lat, ev.lng]);
         }
       });
 
       setTimeout(() => {
-        map.invalidateSize();
-        if (pts.length) {
-          map.fitBounds(pts, { padding: [24, 24], maxZoom: 13 });
+        leafletMap.invalidateSize();
+        if (coordsList.length) {
+          leafletMap.fitBounds(coordsList, { padding: [28, 28], maxZoom: 13 });
         }
       }, 60);
     };
 
-    const applyViewMode = (mode) => {
-      viewMode = mode;
-      document.querySelectorAll("[data-view]").forEach((btn) => {
-        btn.classList.toggle("active", btn.getAttribute("data-view") === mode);
+    const setViewMode = (nextMode) => {
+      mode = nextMode;
+      document.querySelectorAll(".seg-btn").forEach((btn) => {
+        btn.classList.toggle("active", btn.getAttribute("data-mode") === nextMode);
       });
-      const calBlock = document.getElementById("calendarBlock");
-      const mapBlock = document.getElementById("mapBlock");
-      calBlock.style.display = mode === "map" ? "none" : "block";
-      mapBlock.style.display = mode === "calendar" ? "none" : "block";
-      if (mode !== "calendar") {
-        renderMapAndList(getFiltered());
+      document.getElementById("calendarPanel").style.display = nextMode === "map" ? "none" : "block";
+      document.getElementById("mapPanel").style.display = nextMode === "calendar" ? "none" : "block";
+      if (nextMode !== "calendar") {
+        renderMapSection(getFiltered());
       }
     };
 
     const render = () => {
+      const currentArea = document.getElementById("areaInput").value.trim();
+      document.querySelectorAll(".area-chip").forEach((chip) => {
+        chip.classList.toggle("active", (chip.getAttribute("data-area") || "") === currentArea);
+      });
+
       const filtered = getFiltered();
       const plannedCount = filtered.filter((e) => e.planned).length;
-      document.getElementById("summaryBar").textContent =
-        `表示中 ${filtered.length} 件 / 全 ${eventsData.length} 件（参加予定 ${plannedCount} 件）`;
+      document.getElementById("statShown").textContent = String(filtered.length);
+      document.getElementById("statPlanned").textContent = String(plannedCount);
+
       renderCalendar(filtered);
-      if (viewMode !== "calendar") {
-        renderMapAndList(filtered);
+      if (mode !== "calendar") {
+        renderMapSection(filtered);
       }
     };
 
@@ -786,90 +1048,99 @@
       try {
         const res = await fetch("./data/events.json?_=" + Date.now());
         if (res.ok) {
-          const json = await res.json();
-          if (Array.isArray(json) && json.length) {
-            eventsData = json;
+          const data = await res.json();
+          if (Array.isArray(data) && data.length) {
+            events = data;
+            document.getElementById("syncStatusText").textContent = `data/events.json 同期済み（${events.length}件）`;
             render();
             return;
           }
         }
       } catch {}
-      eventsData = FALLBACK_EVENTS;
+      events = SAMPLE_EVENTS;
+      document.getElementById("syncStatusText").textContent = `サンプルデータ表示中（${events.length}件）`;
       render();
     };
 
-    document.querySelectorAll("[data-view]").forEach((btn) => {
-      btn.addEventListener("click", () => applyViewMode(btn.getAttribute("data-view")));
+    document.querySelectorAll(".seg-btn").forEach((btn) => {
+      btn.addEventListener("click", () => setViewMode(btn.getAttribute("data-mode")));
     });
 
-    document.getElementById("btnPrevMonth").addEventListener("click", () => {
-      calMonth -= 1;
-      if (calMonth < 0) {
-        calMonth = 11;
-        calYear -= 1;
+    document.querySelectorAll(".area-chip").forEach((chip) => {
+      chip.addEventListener("click", () => {
+        document.getElementById("areaInput").value = chip.getAttribute("data-area") || "";
+        render();
+      });
+    });
+
+    document.getElementById("prevMonthBtn").addEventListener("click", () => {
+      month -= 1;
+      if (month < 0) {
+        month = 11;
+        year -= 1;
       }
       render();
     });
 
-    document.getElementById("btnNextMonth").addEventListener("click", () => {
-      calMonth += 1;
-      if (calMonth > 11) {
-        calMonth = 0;
-        calYear += 1;
+    document.getElementById("nextMonthBtn").addEventListener("click", () => {
+      month += 1;
+      if (month > 11) {
+        month = 0;
+        year += 1;
       }
       render();
     });
 
-    document.getElementById("btnThisMonth").addEventListener("click", () => {
-      calYear = 2026;
-      calMonth = 10;
-      selectedDay = "2026-11-22";
-      document.getElementById("filterDate").value = selectedDay;
+    document.getElementById("nowMonthBtn").addEventListener("click", () => {
+      year = 2026;
+      month = 10;
+      activeDate = "2026-11-22";
+      document.getElementById("dateInput").value = activeDate;
       render();
     });
 
-    document.getElementById("filterDate").addEventListener("change", (e) => {
+    document.getElementById("dateInput").addEventListener("change", (e) => {
       if (!e.target.value) return;
-      selectedDay = e.target.value;
-      const [y, m] = selectedDay.split("-").map(Number);
+      activeDate = e.target.value;
+      const [y, m] = activeDate.split("-").map(Number);
       if (y && m) {
-        calYear = y;
-        calMonth = m - 1;
+        year = y;
+        month = m - 1;
       }
       render();
     });
 
-    document.getElementById("filterArea").addEventListener("input", render);
-    document.getElementById("filterCategory").addEventListener("change", render);
-    document.getElementById("btnReloadEvents").addEventListener("click", () => {
+    document.getElementById("areaInput").addEventListener("input", render);
+    document.getElementById("categoryFilter").addEventListener("change", render);
+
+    document.getElementById("reloadBtn").addEventListener("click", () => {
       loadEvents();
-      showToast("イベントデータを再読込しました");
+      showToast("イベント一覧を更新しました");
     });
 
-    document.getElementById("btnLocateMe").addEventListener("click", () => {
+    document.getElementById("locateBtn").addEventListener("click", () => {
       if (!navigator.geolocation) {
         showToast("現在地取得に対応していません");
         return;
       }
       navigator.geolocation.getCurrentPosition(
         (pos) => {
-          if (viewMode === "calendar") applyViewMode("both");
-          ensureMap();
-          if (map) {
+          if (mode === "calendar") setViewMode("both");
+          ensureLeafletMap();
+          if (leafletMap) {
             setTimeout(() => {
-              map.invalidateSize();
-              map.setView([pos.coords.latitude, pos.coords.longitude], 12);
+              leafletMap.invalidateSize();
+              leafletMap.setView([pos.coords.latitude, pos.coords.longitude], 12);
             }, 80);
           }
-          showToast("現在地周辺に移動しました");
+          showToast("現在地周辺を表示しました");
         },
         () => showToast("現在地を取得できませんでした")
       );
     });
 
-    applyViewMode("both");
+    setViewMode("both");
     loadEvents();
   </script>
 </body>
 </html>
-
