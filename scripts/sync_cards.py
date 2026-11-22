@@ -8,7 +8,7 @@ from playwright.sync_api import sync_playwright
 BASE_DIR = Path(__file__).resolve().parent.parent
 DATA_JSON = BASE_DIR / "data" / "cards.json"
 
-DEFAULT_OFFICIAL_URL = "[https://www.takaratomy.co.jp/products/horobeat-cardgame/cardlist/](https://www.takaratomy.co.jp/products/horobeat-cardgame/cardlist/)"
+DEFAULT_OFFICIAL_URL = "https://www.takaratomy.co.jp/products/horobeat-cardgame/cardlist/"
 
 FETCH_DETAIL_PAGES = os.environ.get("FETCH_DETAIL_PAGES", "0").strip().lower() in ("1", "true", "yes")
 
@@ -206,7 +206,7 @@ def extract_rows_from_frame(frame, page_url: str) -> list[dict]:
                 const srcset = img.getAttribute('srcset') || '';
                 let srcsetLast = '';
                 if (srcset.trim()) {
-                    const parts = srcset.split(',').map(s => s.trim().split(/\\s+/)[0]).filter(Boolean);
+                    const parts = srcset.split(',').map(s => s.trim().split(/\s+/)[0]).filter(Boolean);
                     if (parts.length > 0) {
                         srcsetLast = parts[parts.length - 1];
                     }
@@ -225,7 +225,7 @@ def extract_rows_from_frame(frame, page_url: str) -> list[dict]:
                     src: candidates[0] || '',
                     alt: (img.getAttribute('alt') || '').trim(),
                     title: (img.getAttribute('title') || '').trim(),
-                    text: text.replace(/\\s+/g, ' ').trim().slice(0, 800),
+                    text: text.replace(/\s+/g, ' ').trim().slice(0, 800),
                     href: href.trim(),
                     width: Math.max(rect.width || 0, img.naturalWidth || 0),
                     height: Math.max(rect.height || 0, img.naturalHeight || 0)
@@ -536,4 +536,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-```
