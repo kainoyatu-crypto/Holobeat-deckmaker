@@ -1,1146 +1,984 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>HOROBEAT STUDIO — イベントカレンダー＆地図</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet" />
-  <link
-    rel="stylesheet"
-    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
-    crossorigin=""
-  />
-  <style>
-    :root {
-      --bg-canvas: #f8fafc;
-      --bg-surface: #ffffff;
-      --bg-elevated: #f1f5f9;
-      --ink-primary: #0f172a;
-      --ink-secondary: #475569;
-      --ink-muted: #94a3b8;
-      --line-subtle: rgba(15, 23, 42, 0.08);
-      --line-strong: rgba(15, 23, 42, 0.14);
-      --brand-start: #2563eb;
-      --brand-end: #4f46e5;
-      --accent: #2563eb;
-      --accent-soft: rgba(37, 99, 235, 0.1);
-      --success: #059669;
-      --success-soft: rgba(5, 150, 105, 0.12);
-      --amber: #d97706;
-      --amber-soft: rgba(217, 119, 6, 0.12);
-      --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.04), 0 4px 12px rgba(15, 23, 42, 0.03);
-      --shadow-md: 0 10px 25px -5px rgba(15, 23, 42, 0.07), 0 4px 10px -6px rgba(15, 23, 42, 0.04);
-      --radius-xl: 20px;
-      --radius-lg: 14px;
-      --radius-md: 10px;
-      --radius-pill: 9999px;
-    }
-
-    * {
-      box-sizing: border-box;
-    }
-
-    html, body {
-      margin: 0;
-      padding: 0;
-      background: radial-gradient(circle at top right, rgba(79, 70, 229, 0.06), transparent 45%),
-                  radial-gradient(circle at top left, rgba(37, 99, 235, 0.07), transparent 40%),
-                  var(--bg-canvas);
-      color: var(--ink-primary);
-      font-family: "Inter", "Noto Sans JP", -apple-system, BlinkMacSystemFont, sans-serif;
-      line-height: 1.55;
-      -webkit-font-smoothing: antialiased;
-    }
-
-    .topbar {
-      position: sticky;
-      top: 0;
-      z-index: 40;
-      backdrop-filter: blur(14px);
-      -webkit-backdrop-filter: blur(14px);
-      background: rgba(255, 255, 255, 0.86);
-      border-bottom: 1px solid var(--line-subtle);
-    }
-
-    .topbar-inner {
-      max-width: 1240px;
-      margin: 0 auto;
-      padding: 12px 18px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 14px;
-      flex-wrap: wrap;
-    }
-
-    .brand-group {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .brand-mark {
-      width: 36px;
-      height: 36px;
-      border-radius: 11px;
-      background: linear-gradient(135deg, var(--brand-start), var(--brand-end));
-      display: grid;
-      place-items: center;
-      color: #ffffff;
-      font-weight: 900;
-      font-size: 15px;
-      letter-spacing: -0.03em;
-      box-shadow: 0 6px 14px rgba(37, 99, 235, 0.25);
-    }
-
-    .brand-title {
-      margin: 0;
-      font-size: 15px;
-      font-weight: 900;
-      letter-spacing: 0.02em;
-    }
-
-    .brand-sub {
-      margin: 1px 0 0;
-      font-size: 11px;
-      color: var(--ink-secondary);
-      font-weight: 500;
-    }
-
-    .nav-pills {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      flex-wrap: wrap;
-      background: var(--bg-elevated);
-      padding: 4px;
-      border-radius: var(--radius-pill);
-      border: 1px solid var(--line-subtle);
-    }
-
-    .nav-pill {
-      text-decoration: none;
-      font-size: 12px;
-      font-weight: 700;
-      color: var(--ink-secondary);
-      padding: 6px 13px;
-      border-radius: var(--radius-pill);
-      transition: all 0.16s ease;
-    }
-
-    .nav-pill:hover {
-      color: var(--ink-primary);
-      background: rgba(255, 255, 255, 0.65);
-    }
-
-    .nav-pill.active {
-      background: var(--ink-primary);
-      color: #ffffff;
-      box-shadow: 0 2px 8px rgba(15, 23, 42, 0.18);
-    }
-
-    .container {
-      max-width: 1240px;
-      margin: 0 auto;
-      padding: 20px 18px 56px;
-      display: flex;
-      flex-direction: column;
-      gap: 18px;
-    }
-
-    .hero-card {
-      background: linear-gradient(135deg, #0f172a 0%, #1e293b 55%, #1e1b4b 100%);
-      color: #ffffff;
-      border-radius: var(--radius-xl);
-      padding: 22px 24px;
-      box-shadow: var(--shadow-md);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 16px;
-      flex-wrap: wrap;
-    }
-
-    .hero-title {
-      margin: 0;
-      font-size: 20px;
-      font-weight: 900;
-      letter-spacing: -0.01em;
-    }
-
-    .hero-desc {
-      margin: 5px 0 0;
-      font-size: 13px;
-      color: rgba(248, 250, 252, 0.78);
-    }
-
-    .hero-stats {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-
-    .stat-chip {
-      background: rgba(255, 255, 255, 0.1);
-      border: 1px solid rgba(255, 255, 255, 0.14);
-      backdrop-filter: blur(8px);
-      border-radius: var(--radius-lg);
-      padding: 8px 14px;
-      min-width: 96px;
-    }
-
-    .stat-label {
-      display: block;
-      font-size: 10px;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      color: rgba(248, 250, 252, 0.7);
-      font-weight: 700;
-    }
-
-    .stat-value {
-      font-size: 16px;
-      font-weight: 900;
-      color: #ffffff;
-    }
-
-    .surface-card {
-      background: var(--bg-surface);
-      border: 1px solid var(--line-subtle);
-      border-radius: var(--radius-xl);
-      padding: 18px;
-      box-shadow: var(--shadow-sm);
-    }
-
-    .filter-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 12px;
-      align-items: end;
-    }
-
-    .field-label {
-      display: block;
-      font-size: 11px;
-      font-weight: 800;
-      color: var(--ink-secondary);
-      margin-bottom: 5px;
-      letter-spacing: 0.02em;
-    }
-
-    .input-control,
-    .select-control {
-      width: 100%;
-      border: 1px solid var(--line-strong);
-      background: var(--bg-canvas);
-      color: var(--ink-primary);
-      border-radius: var(--radius-md);
-      padding: 9px 12px;
-      font-size: 13px;
-      font-family: inherit;
-      transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
-    }
-
-    .input-control:focus,
-    .select-control:focus {
-      outline: none;
-      background: var(--bg-surface);
-      border-color: var(--accent);
-      box-shadow: 0 0 0 3px var(--accent-soft);
-    }
-
-    .btn {
-      font-family: inherit;
-      font-size: 12px;
-      font-weight: 700;
-      border-radius: var(--radius-md);
-      border: 1px solid var(--line-strong);
-      background: var(--bg-surface);
-      color: var(--ink-primary);
-      padding: 9px 13px;
-      cursor: pointer;
-      transition: all 0.15s ease;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      text-decoration: none;
-    }
-
-    .btn:hover {
-      background: var(--bg-elevated);
-      transform: translateY(-1px);
-    }
-
-    .btn.active {
-      background: linear-gradient(135deg, var(--brand-start), var(--brand-end));
-      border-color: transparent;
-      color: #ffffff;
-      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
-    }
-
-    .filter-footer {
-      margin-top: 14px;
-      padding-top: 14px;
-      border-top: 1px solid var(--line-subtle);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-
-    .segmented-group {
-      display: inline-flex;
-      background: var(--bg-elevated);
-      padding: 3px;
-      border-radius: var(--radius-pill);
-      border: 1px solid var(--line-subtle);
-      gap: 2px;
-    }
-
-    .seg-btn {
-      border: none;
-      background: transparent;
-      color: var(--ink-secondary);
-      font-size: 12px;
-      font-weight: 700;
-      padding: 6px 13px;
-      border-radius: var(--radius-pill);
-      cursor: pointer;
-      transition: all 0.15s ease;
-    }
-
-    .seg-btn.active {
-      background: var(--bg-surface);
-      color: var(--ink-primary);
-      box-shadow: 0 1px 4px rgba(15, 23, 42, 0.1);
-    }
-
-    .quick-areas {
-      display: flex;
-      gap: 6px;
-      flex-wrap: wrap;
-      margin-top: 12px;
-    }
-
-    .area-chip {
-      border: 1px solid var(--line-subtle);
-      background: var(--bg-canvas);
-      color: var(--ink-secondary);
-      font-size: 11px;
-      font-weight: 700;
-      padding: 4px 11px;
-      border-radius: var(--radius-pill);
-      cursor: pointer;
-      transition: all 0.14s ease;
-    }
-
-    .area-chip:hover,
-    .area-chip.active {
-      background: var(--accent-soft);
-      border-color: rgba(37, 99, 235, 0.35);
-      color: var(--accent);
-    }
-
-    .workspace-grid {
-      display: grid;
-      grid-template-columns: 1.38fr 1fr;
-      gap: 18px;
-      align-items: start;
-    }
-
-    @media (max-width: 920px) {
-      .workspace-grid {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    .cal-top {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 14px;
-      flex-wrap: wrap;
-    }
-
-    .cal-heading {
-      margin: 0;
-      font-size: 16px;
-      font-weight: 900;
-      letter-spacing: -0.01em;
-    }
-
-    .cal-controls {
-      display: flex;
-      gap: 6px;
-    }
-
-    .cal-matrix {
-      display: grid;
-      grid-template-columns: repeat(7, minmax(0, 1fr));
-      gap: 6px;
-    }
-
-    .dow-cell {
-      text-align: center;
-      font-size: 11px;
-      font-weight: 800;
-      color: var(--ink-muted);
-      padding: 4px 0;
-    }
-
-    .dow-cell.sun { color: #e11d48; }
-    .dow-cell.sat { color: #2563eb; }
-
-    .day-cell {
-      min-height: 92px;
-      border-radius: 12px;
-      border: 1px solid var(--line-subtle);
-      background: var(--bg-surface);
-      padding: 6px;
-      cursor: pointer;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-      transition: border-color 0.14s ease, transform 0.14s ease, background-color 0.14s ease;
-      min-width: 0;
-    }
-
-    .day-cell:hover {
-      border-color: rgba(37, 99, 235, 0.4);
-      transform: translateY(-1px);
-    }
-
-    .day-cell.outside {
-      background: var(--bg-canvas);
-      color: var(--ink-muted);
-      opacity: 0.65;
-    }
-
-    .day-cell.selected {
-      border-color: var(--accent);
-      background: linear-gradient(180deg, rgba(37, 99, 235, 0.08), rgba(79, 70, 229, 0.04));
-      box-shadow: inset 0 0 0 1px var(--accent);
-    }
-
-    .day-num {
-      font-size: 12px;
-      font-weight: 800;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 22px;
-      height: 22px;
-      border-radius: 999px;
-    }
-
-    .day-cell.selected .day-num {
-      background: var(--accent);
-      color: #ffffff;
-    }
-
-    .event-tag {
-      font-size: 10px;
-      font-weight: 700;
-      padding: 2px 6px;
-      border-radius: 6px;
-      background: var(--accent-soft);
-      color: var(--accent);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .event-tag.is-planned {
-      background: var(--success-soft);
-      color: var(--success);
-    }
-
-    #mapCanvas {
-      width: 100%;
-      height: 450px;
-      border-radius: var(--radius-lg);
-      border: 1px solid var(--line-subtle);
-      overflow: hidden;
-      z-index: 1;
-    }
-
-    .side-scroll {
-      max-height: 450px;
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      padding-right: 2px;
-    }
-
-    .side-title {
-      margin: 0 0 12px;
-      font-size: 14px;
-      font-weight: 900;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .ev-item {
-      border: 1px solid var(--line-subtle);
-      border-radius: var(--radius-lg);
-      padding: 14px;
-      background: var(--bg-canvas);
-      transition: border-color 0.14s ease, background-color 0.14s ease;
-    }
-
-    .ev-item:hover {
-      background: var(--bg-surface);
-      border-color: var(--line-strong);
-    }
-
-    .badge {
-      display: inline-flex;
-      align-items: center;
-      font-size: 10px;
-      font-weight: 800;
-      padding: 2px 8px;
-      border-radius: var(--radius-pill);
-      background: var(--accent-soft);
-      color: var(--accent);
-      margin-right: 5px;
-    }
-
-    .badge.ok {
-      background: var(--success-soft);
-      color: var(--success);
-    }
-
-    .badge.warn {
-      background: var(--amber-soft);
-      color: var(--amber);
-    }
-
-    .ev-name {
-      margin: 6px 0 4px;
-      font-size: 14px;
-      font-weight: 900;
-      line-height: 1.4;
-    }
-
-    .ev-sub {
-      font-size: 12px;
-      color: var(--ink-secondary);
-    }
-
-    .ev-memo {
-      margin: 8px 0 0;
-      font-size: 12px;
-      color: var(--ink-primary);
-      white-space: pre-wrap;
-    }
-
-    .ev-btns {
-      display: flex;
-      gap: 6px;
-      flex-wrap: wrap;
-      margin-top: 10px;
-    }
-
-    .ev-btns .btn {
-      padding: 5px 10px;
-      font-size: 11px;
-      border-radius: 8px;
-    }
-
-    .toast {
-      position: fixed;
-      left: 50%;
-      bottom: 20px;
-      transform: translate(-50%, 10px);
-      background: var(--ink-primary);
-      color: #ffffff;
-      font-size: 12px;
-      font-weight: 700;
-      padding: 9px 16px;
-      border-radius: var(--radius-pill);
-      box-shadow: var(--shadow-md);
-      opacity: 0;
-      pointer-events: none;
-      transition: all 0.18s ease;
-      z-index: 60;
-    }
-
-    .toast.visible {
-      opacity: 1;
-      transform: translate(-50%, 0);
-    }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>HOROBEAT STUDIO — イベントカレンダー＆地図</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet" />
+<link
+rel="stylesheet"
+href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+crossorigin=""
+/>
+<style>
+:root {
+--bg-canvas: #f8fafc;
+--bg-surface: #ffffff;
+--bg-elevated: #f1f5f9;
+--ink-primary: #0f172a;
+--ink-secondary: #475569;
+--ink-muted: #94a3b8;
+--line-subtle: rgba(15, 23, 42, 0.08);
+--line-strong: rgba(15, 23, 42, 0.14);
+--brand-start: #2563eb;
+--brand-end: #4f46e5;
+--accent: #2563eb;
+--accent-soft: rgba(37, 99, 235, 0.1);
+--success: #059669;
+--success-soft: rgba(5, 150, 105, 0.12);
+--amber: #d97706;
+--amber-soft: rgba(217, 119, 6, 0.12);
+--shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.04), 0 4px 12px rgba(15, 23, 42, 0.03);
+--shadow-md: 0 10px 25px -5px rgba(15, 23, 42, 0.07), 0 4px 10px -6px rgba(15, 23, 42, 0.04);
+--radius-xl: 20px;
+--radius-lg: 14px;
+--radius-md: 10px;
+--radius-pill: 9999px;
+}
+* { box-sizing: border-box; }
+html, body {
+margin: 0;
+padding: 0;
+background: radial-gradient(circle at top right, rgba(79, 70, 229, 0.06), transparent 45%),
+radial-gradient(circle at top left, rgba(37, 99, 235, 0.07), transparent 40%),
+var(--bg-canvas);
+color: var(--ink-primary);
+font-family: "Inter", "Noto Sans JP", -apple-system, BlinkMacSystemFont, sans-serif;
+line-height: 1.55;
+-webkit-font-smoothing: antialiased;
+}
+.topbar {
+position: sticky;
+top: 0;
+z-index: 40;
+backdrop-filter: blur(14px);
+-webkit-backdrop-filter: blur(14px);
+background: rgba(255, 255, 255, 0.86);
+border-bottom: 1px solid var(--line-subtle);
+}
+.topbar-inner {
+max-width: 1240px;
+margin: 0 auto;
+padding: 12px 18px;
+display: flex;
+align-items: center;
+justify-content: space-between;
+gap: 14px;
+flex-wrap: wrap;
+}
+.brand-group { display: flex; align-items: center; gap: 12px; }
+.brand-mark {
+width: 36px;
+height: 36px;
+border-radius: 11px;
+background: linear-gradient(135deg, var(--brand-start), var(--brand-end));
+display: grid;
+place-items: center;
+color: #ffffff;
+font-weight: 900;
+font-size: 15px;
+letter-spacing: -0.03em;
+box-shadow: 0 6px 14px rgba(37, 99, 235, 0.25);
+}
+.brand-title { margin: 0; font-size: 15px; font-weight: 900; letter-spacing: 0.02em; }
+.brand-sub { margin: 1px 0 0; font-size: 11px; color: var(--ink-secondary); font-weight: 500; }
+.nav-pills {
+display: flex;
+align-items: center;
+gap: 6px;
+flex-wrap: wrap;
+background: var(--bg-elevated);
+padding: 4px;
+border-radius: var(--radius-pill);
+border: 1px solid var(--line-subtle);
+}
+.nav-pill {
+text-decoration: none;
+font-size: 12px;
+font-weight: 700;
+color: var(--ink-secondary);
+padding: 6px 13px;
+border-radius: var(--radius-pill);
+transition: all 0.16s ease;
+}
+.nav-pill:hover { color: var(--ink-primary); background: rgba(255, 255, 255, 0.65); }
+.nav-pill.active {
+background: var(--ink-primary);
+color: #ffffff;
+box-shadow: 0 2px 8px rgba(15, 23, 42, 0.18);
+}
+.container {
+max-width: 1240px;
+margin: 0 auto;
+padding: 20px 18px 56px;
+display: flex;
+flex-direction: column;
+gap: 18px;
+}
+.hero-card {
+background: linear-gradient(135deg, #0f172a 0%, #1e293b 55%, #1e1b4b 100%);
+color: #ffffff;
+border-radius: var(--radius-xl);
+padding: 22px 24px;
+box-shadow: var(--shadow-md);
+display: flex;
+justify-content: space-between;
+align-items: center;
+gap: 16px;
+flex-wrap: wrap;
+}
+.hero-title { margin: 0; font-size: 20px; font-weight: 900; letter-spacing: -0.01em; }
+.hero-desc { margin: 5px 0 0; font-size: 13px; color: rgba(248, 250, 252, 0.78); }
+.hero-stats { display: flex; gap: 10px; flex-wrap: wrap; }
+.stat-chip {
+background: rgba(255, 255, 255, 0.1);
+border: 1px solid rgba(255, 255, 255, 0.14);
+backdrop-filter: blur(8px);
+border-radius: var(--radius-lg);
+padding: 8px 14px;
+min-width: 96px;
+}
+.stat-label {
+display: block;
+font-size: 10px;
+text-transform: uppercase;
+letter-spacing: 0.06em;
+color: rgba(248, 250, 252, 0.7);
+font-weight: 700;
+}
+.stat-value { font-size: 16px; font-weight: 900; color: #ffffff; }
+.surface-card {
+background: var(--bg-surface);
+border: 1px solid var(--line-subtle);
+border-radius: var(--radius-xl);
+padding: 18px;
+box-shadow: var(--shadow-sm);
+}
+.filter-grid {
+display: grid;
+grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+gap: 12px;
+align-items: end;
+}
+.field-label {
+display: block;
+font-size: 11px;
+font-weight: 800;
+color: var(--ink-secondary);
+margin-bottom: 5px;
+letter-spacing: 0.02em;
+}
+.input-control,
+.select-control {
+width: 100%;
+border: 1px solid var(--line-strong);
+background: var(--bg-canvas);
+color: var(--ink-primary);
+border-radius: var(--radius-md);
+padding: 9px 12px;
+font-size: 13px;
+font-family: inherit;
+transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+}
+.input-control:focus,
+.select-control:focus {
+outline: none;
+background: var(--bg-surface);
+border-color: var(--accent);
+box-shadow: 0 0 0 3px var(--accent-soft);
+}
+.btn {
+font-family: inherit;
+font-size: 12px;
+font-weight: 700;
+border-radius: var(--radius-md);
+border: 1px solid var(--line-strong);
+background: var(--bg-surface);
+color: var(--ink-primary);
+padding: 9px 13px;
+cursor: pointer;
+transition: all 0.15s ease;
+display: inline-flex;
+align-items: center;
+justify-content: center;
+gap: 6px;
+text-decoration: none;
+}
+.btn:hover { background: var(--bg-elevated); transform: translateY(-1px); }
+.btn.active {
+background: linear-gradient(135deg, var(--brand-start), var(--brand-end));
+border-color: transparent;
+color: #ffffff;
+box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+}
+.filter-footer {
+margin-top: 14px;
+padding-top: 14px;
+border-top: 1px solid var(--line-subtle);
+display: flex;
+justify-content: space-between;
+align-items: center;
+gap: 10px;
+flex-wrap: wrap;
+}
+.segmented-group {
+display: inline-flex;
+background: var(--bg-elevated);
+padding: 3px;
+border-radius: var(--radius-pill);
+border: 1px solid var(--line-subtle);
+gap: 2px;
+}
+.seg-btn {
+border: none;
+background: transparent;
+color: var(--ink-secondary);
+font-size: 12px;
+font-weight: 700;
+padding: 6px 13px;
+border-radius: var(--radius-pill);
+cursor: pointer;
+transition: all 0.15s ease;
+}
+.seg-btn.active {
+background: var(--bg-surface);
+color: var(--ink-primary);
+box-shadow: 0 1px 4px rgba(15, 23, 42, 0.1);
+}
+.quick-areas { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 12px; }
+.area-chip {
+border: 1px solid var(--line-subtle);
+background: var(--bg-canvas);
+color: var(--ink-secondary);
+font-size: 11px;
+font-weight: 700;
+padding: 4px 11px;
+border-radius: var(--radius-pill);
+cursor: pointer;
+transition: all 0.14s ease;
+}
+.area-chip:hover,
+.area-chip.active {
+background: var(--accent-soft);
+border-color: rgba(37, 99, 235, 0.35);
+color: var(--accent);
+}
+.workspace-grid {
+display: grid;
+grid-template-columns: 1.38fr 1fr;
+gap: 18px;
+align-items: start;
+}
+@media (max-width: 920px) {
+.workspace-grid { grid-template-columns: 1fr; }
+}
+.cal-top {
+display: flex;
+justify-content: space-between;
+align-items: center;
+gap: 10px;
+margin-bottom: 14px;
+flex-wrap: wrap;
+}
+.cal-heading { margin: 0; font-size: 16px; font-weight: 900; letter-spacing: -0.01em; }
+.cal-controls { display: flex; gap: 6px; }
+.cal-matrix { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
+.dow-cell {
+text-align: center;
+font-size: 11px;
+font-weight: 800;
+color: var(--ink-muted);
+padding: 4px 0;
+}
+.dow-cell.sun { color: #e11d48; }
+.dow-cell.sat { color: #2563eb; }
+.day-cell {
+min-height: 92px;
+border-radius: 12px;
+border: 1px solid var(--line-subtle);
+background: var(--bg-surface);
+padding: 6px;
+cursor: pointer;
+display: flex;
+flex-direction: column;
+gap: 4px;
+transition: border-color 0.14s ease, transform 0.14s ease, background-color 0.14s ease;
+min-width: 0;
+}
+.day-cell:hover { border-color: rgba(37, 99, 235, 0.4); transform: translateY(-1px); }
+.day-cell.outside { background: var(--bg-canvas); color: var(--ink-muted); opacity: 0.65; }
+.day-cell.selected {
+border-color: var(--accent);
+background: linear-gradient(180deg, rgba(37, 99, 235, 0.08), rgba(79, 70, 229, 0.04));
+box-shadow: inset 0 0 0 1px var(--accent);
+}
+.day-num {
+font-size: 12px;
+font-weight: 800;
+display: inline-flex;
+align-items: center;
+justify-content: center;
+width: 22px;
+height: 22px;
+border-radius: 999px;
+}
+.day-cell.selected .day-num { background: var(--accent); color: #ffffff; }
+.event-tag {
+font-size: 10px;
+font-weight: 700;
+padding: 2px 6px;
+border-radius: 6px;
+background: var(--accent-soft);
+color: var(--accent);
+white-space: nowrap;
+overflow: hidden;
+text-overflow: ellipsis;
+}
+.event-tag.is-planned { background: var(--success-soft); color: var(--success); }
+#mapCanvas {
+width: 100%;
+height: 450px;
+border-radius: var(--radius-lg);
+border: 1px solid var(--line-subtle);
+overflow: hidden;
+z-index: 1;
+}
+.side-scroll {
+max-height: 450px;
+overflow-y: auto;
+display: flex;
+flex-direction: column;
+gap: 10px;
+padding-right: 2px;
+}
+.side-title {
+margin: 0 0 12px;
+font-size: 14px;
+font-weight: 900;
+display: flex;
+align-items: center;
+justify-content: space-between;
+}
+.ev-item {
+border: 1px solid var(--line-subtle);
+border-radius: var(--radius-lg);
+padding: 14px;
+background: var(--bg-canvas);
+transition: border-color 0.14s ease, background-color 0.14s ease;
+}
+.ev-item:hover { background: var(--bg-surface); border-color: var(--line-strong); }
+.badge {
+display: inline-flex;
+align-items: center;
+font-size: 10px;
+font-weight: 800;
+padding: 2px 8px;
+border-radius: var(--radius-pill);
+background: var(--accent-soft);
+color: var(--accent);
+margin-right: 5px;
+}
+.badge.ok { background: var(--success-soft); color: var(--success); }
+.badge.warn { background: var(--amber-soft); color: var(--amber); }
+.ev-name { margin: 6px 0 4px; font-size: 14px; font-weight: 900; line-height: 1.4; }
+.ev-sub { font-size: 12px; color: var(--ink-secondary); }
+.ev-memo { margin: 8px 0 0; font-size: 12px; color: var(--ink-primary); white-space: pre-wrap; }
+.ev-btns { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+.ev-btns .btn { padding: 5px 10px; font-size: 11px; border-radius: 8px; }
+.toast {
+position: fixed;
+left: 50%;
+bottom: 20px;
+transform: translate(-50%, 10px);
+background: var(--ink-primary);
+color: #ffffff;
+font-size: 12px;
+font-weight: 700;
+padding: 9px 16px;
+border-radius: var(--radius-pill);
+box-shadow: var(--shadow-md);
+opacity: 0;
+pointer-events: none;
+transition: all 0.18s ease;
+z-index: 60;
+}
+.toast.visible { opacity: 1; transform: translate(-50%, 0); }
+</style>
 </head>
 <body>
-  <header class="topbar">
-    <div class="topbar-inner">
-      <div class="brand-group">
-        <div class="brand-mark">HB</div>
-        <div>
-          <p class="brand-title">HOROBEAT STUDIO</p>
-          <p class="brand-sub">Event Schedule &amp; Map Explorer</p>
-        </div>
-      </div>
-
-      <nav class="nav-pills" aria-label="ページ移動">
-        <a href="./index.html" class="nav-pill">ホーム</a>
-        <a href="./make.html" class="nav-pill">デッキ作成</a>
-        <a href="./results.html" class="nav-pill">入賞リスト</a>
-        <a href="./events.html" class="nav-pill active">イベント（カレンダー・地図）</a>
-      </nav>
-    </div>
-  </header>
-
-  <main class="container">
-    <section class="hero-card">
-      <div>
-        <h1 class="hero-title">イベントカレンダー＆周辺マップ</h1>
-        <p class="hero-desc">日程と開催エリアを直感的にチェックし、近くの大会・体験会・店舗イベントを素早く見つけられます。</p>
-      </div>
-      <div class="hero-stats">
-        <div class="stat-chip">
-          <span class="stat-label">表示イベント</span>
-          <span class="stat-value" id="statShown">0</span>
-        </div>
-        <div class="stat-chip">
-          <span class="stat-label">参加予定</span>
-          <span class="stat-value" id="statPlanned">0</span>
-        </div>
-      </div>
-    </section>
-
-    <section class="surface-card">
-      <div class="filter-grid">
-        <div>
-          <label class="field-label" for="areaInput">駅・エリア・店舗</label>
-          <input id="areaInput" class="input-control" type="text" placeholder="例: 立川、新宿、秋葉原" />
-        </div>
-        <div>
-          <label class="field-label" for="categoryFilter">種別</label>
-          <select id="categoryFilter" class="select-control">
-            <option value="">すべて</option>
-            <option value="名人戦">名人戦</option>
-            <option value="体験会">体験会</option>
-            <option value="店舗大会">店舗大会</option>
-            <option value="公式イベント">公式イベント</option>
-            <option value="X告知・レポート">X告知・レポート</option>
-          </select>
-        </div>
-        <div>
-          <label class="field-label" for="dateInput">基準日</label>
-          <input id="dateInput" class="input-control" type="date" value="2026-11-22" />
-        </div>
-        <div style="display:flex;gap:8px;">
-          <button type="button" id="locateBtn" class="btn active" style="flex:1;">現在地周辺</button>
-          <button type="button" id="reloadBtn" class="btn">更新</button>
-        </div>
-      </div>
-
-      <div class="quick-areas" id="quickAreas">
-        <button type="button" class="area-chip" data-area="">すべて</button>
-        <button type="button" class="area-chip" data-area="立川">立川</button>
-        <button type="button" class="area-chip" data-area="新宿">新宿</button>
-        <button type="button" class="area-chip" data-area="秋葉原">秋葉原</button>
-        <button type="button" class="area-chip" data-area="渋谷">渋谷</button>
-        <button type="button" class="area-chip" data-area="池袋">池袋</button>
-        <button type="button" class="area-chip" data-area="横浜">横浜</button>
-      </div>
-
-      <div class="filter-footer">
-        <div class="segmented-group" role="tablist">
-          <button type="button" class="seg-btn active" data-mode="both">両方表示</button>
-          <button type="button" class="seg-btn" data-mode="calendar">カレンダー</button>
-          <button type="button" class="seg-btn" data-mode="map">地図</button>
-        </div>
-        <div class="ev-sub" id="syncStatusText">データを準備中...</div>
-      </div>
-    </section>
-
-    <section id="calendarPanel" class="surface-card">
-      <div class="workspace-grid">
-        <div>
-          <div class="cal-top">
-            <h2 class="cal-heading" id="monthHeading">2026年11月</h2>
-            <div class="cal-controls">
-              <button type="button" id="prevMonthBtn" class="btn">◀ 前月</button>
-              <button type="button" id="nowMonthBtn" class="btn">2026年11月</button>
-              <button type="button" id="nextMonthBtn" class="btn">翌月 ▶</button>
-            </div>
-          </div>
-          <div id="calendarMatrix" class="cal-matrix"></div>
-        </div>
-
-        <div>
-          <div class="side-title">
-            <span id="dayPanelTitle">2026-11-22 のイベント</span>
-            <span class="ev-sub" id="dayPanelCount">0件</span>
-          </div>
-          <div id="dayEventsBox" class="side-scroll"></div>
-        </div>
-      </div>
-    </section>
-
-    <section id="mapPanel" class="surface-card">
-      <div class="workspace-grid">
-        <div id="mapCanvas"></div>
-        <div>
-          <div class="side-title">
-            <span>絞り込み中のイベント</span>
-            <span class="ev-sub" id="listPanelCount">0件</span>
-          </div>
-          <div id="filteredListBox" class="side-scroll"></div>
-        </div>
-      </div>
-    </section>
-  </main>
-
-  <div id="toastBar" class="toast"></div>
-
-  <script
-    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
-    crossorigin=""
-  ></script>
-  <script>
-    const STORAGE_KEY = "horobeat_stylish_events_v1";
-
-    const SAMPLE_EVENTS = [
-      {
-        id: "hb-2026-11-22-tachikawa",
-        title: "ホロビート 公認店舗大会（立川エリア）",
-        category: "店舗大会",
-        date: "2026-11-22",
-        time: "14:00",
-        area: "立川",
-        venue: "立川駅周辺 公認取扱店",
-        lat: 35.6982,
-        lng: 139.4136,
-        status: "開催中",
-        sourceUrl: "https://www.takaratomy.co.jp/products/horobeat-cardgame/event/",
-        xSearchUrl: "https://x.com/search?q=%E3%83%9B%E3%83%AD%E3%83%93%E3%83%BC%E3%83%88%20%E7%AB%8B%E5%B7%9D%20%E5%A4%A7%E4%BC%9A&src=typed_query&f=live",
-        notes: "立川駅周辺の開催スケジュール。受付時間や参加枠は各店舗告知をご確認ください。"
-      },
-      {
-        id: "hb-2026-11-25-shinjuku",
-        title: "ホロビート お披露目体験会（新宿エリア）",
-        category: "体験会",
-        date: "2026-11-25",
-        time: "13:00",
-        area: "新宿",
-        venue: "新宿駅周辺 取扱店舗",
-        lat: 35.6896,
-        lng: 139.7006,
-        status: "開催中",
-        sourceUrl: "https://www.takaratomy.co.jp/products/horobeat-cardgame/event/",
-        xSearchUrl: "https://x.com/search?q=%E3%83%9B%E3%83%AD%E3%83%93%E3%83%BC%E3%83%88%20%E6%96%B0%E5%AE%BF%20%E4%BD%93%E9%A8%93%E4%BC%9A&src=typed_query&f=live",
-        notes: "体験会開催期間中の新宿エリア候補枠です。"
-      },
-      {
-        id: "hb-2026-11-28-akihabara",
-        title: "ホロビート 名人戦 店舗大会（秋葉原エリア）",
-        category: "名人戦",
-        date: "2026-11-28",
-        time: "15:00",
-        area: "秋葉原",
-        venue: "秋葉原駅周辺 公認店",
-        lat: 35.6984,
-        lng: 139.7731,
-        status: "予定",
-        sourceUrl: "https://www.c-labo.jp/tournament/filter/tcg:233/",
-        xSearchUrl: "https://x.com/search?q=%E3%83%9B%E3%83%AD%E3%83%93%E3%83%BC%E3%83%88%20%E7%A7%8B%E8%91%89%E5%8E%9F%20%E5%90%8D%E4%BA%BA%E6%88%A6&src=typed_query&f=live",
-        notes: "秋葉原エリアの開催候補枠です。"
-      }
-    ];
-
-    const AREA_COORDS = {
-      "立川": [35.6982, 139.4136],
-      "新宿": [35.6896, 139.7006],
-      "秋葉原": [35.6984, 139.7731],
-      "渋谷": [35.6580, 139.7016],
-      "池袋": [35.7295, 139.7109],
-      "横浜": [35.4658, 139.6223],
-      "大阪": [34.7025, 135.4959],
-      "名古屋": [35.1709, 136.8816]
-    };
-
-    let events = [];
-    let year = 2026;
-    let month = 10; // 0-indexed (10 = Nov)
-    let activeDate = "2026-11-22";
-    let mode = "both";
-    let leafletMap = null;
-    let markers = null;
-
-    const showToast = (msg) => {
-      const el = document.getElementById("toastBar");
-      el.textContent = msg;
-      el.classList.add("visible");
-      clearTimeout(showToast._timer);
-      showToast._timer = setTimeout(() => el.classList.remove("visible"), 1800);
-    };
-
-    const readPrefs = () => {
-      try {
-        return JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
-      } catch {
-        return {};
-      }
-    };
-
-    const writePrefs = (prefs) => {
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(prefs));
-      } catch {}
-    };
-
-    const escapeHtml = (str) =>
-      String(str ?? "")
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;");
-
-    const resolveCoords = (ev) => {
-      if (typeof ev.lat === "number" && typeof ev.lng === "number") {
-        return [ev.lat, ev.lng];
-      }
-      const text = `${ev.area || ""} ${ev.venue || ""} ${ev.title || ""}`;
-      for (const [label, pair] of Object.entries(AREA_COORDS)) {
-        if (text.includes(label)) return pair;
-      }
-      return AREA_COORDS["立川"];
-    };
-
-    const getFiltered = () => {
-      const areaQuery = document.getElementById("areaInput").value.trim().toLowerCase();
-      const categoryQuery = document.getElementById("categoryFilter").value;
-      const prefs = readPrefs();
-      const plannedSet = new Set(prefs.plannedIds || []);
-
-      return events
-        .map((ev) => {
-          const [lat, lng] = resolveCoords(ev);
-          return {
-            ...ev,
-            lat,
-            lng,
-            planned: plannedSet.has(ev.id) || ev.status === "参加予定"
-          };
-        })
-        .filter((ev) => {
-          if (categoryQuery && ev.category !== categoryQuery) return false;
-          if (areaQuery) {
-            const hay = `${ev.area || ""} ${ev.venue || ""} ${ev.title || ""} ${ev.notes || ""}`.toLowerCase();
-            if (!hay.includes(areaQuery)) return false;
-          }
-          return true;
-        });
-    };
-
-    window.togglePlanned = (id) => {
-      const prefs = readPrefs();
-      const set = new Set(prefs.plannedIds || []);
-      if (set.has(id)) {
-        set.delete(id);
-        showToast("参加予定を解除しました");
-      } else {
-        set.add(id);
-        showToast("参加予定に追加しました");
-      }
-      prefs.plannedIds = Array.from(set);
-      writePrefs(prefs);
-      render();
-    };
-
-    const renderEventList = (el, list) => {
-      if (!list.length) {
-        el.innerHTML = `<div class="ev-item"><div class="ev-sub">条件に一致するイベントはありません。</div></div>`;
-        return;
-      }
-      el.innerHTML = list
-        .map((ev) => {
-          const xUrl =
-            ev.xSearchUrl ||
-            `https://x.com/search?q=${encodeURIComponent(`ホロビート ${ev.area || ""} ${ev.category || ""}`.trim())}&src=typed_query&f=live`;
-          return `
-            <article class="ev-item">
-              <div>
-                <span class="badge">${escapeHtml(ev.category || "イベント")}</span>
-                <span class="badge ${ev.planned ? "ok" : "warn"}">${ev.planned ? "参加予定" : escapeHtml(ev.status || "確認中")}</span>
-              </div>
-              <h3 class="ev-name">${escapeHtml(ev.title || "名称未設定")}</h3>
-              <div class="ev-sub">${escapeHtml(ev.date || "")} ${escapeHtml(ev.time || "")} ｜ ${escapeHtml(ev.area || "未指定")}（${escapeHtml(ev.venue || "-")}）</div>
-              ${ev.notes ? `<p class="ev-memo">${escapeHtml(ev.notes)}</p>` : ""}
-              <div class="ev-btns">
-                <button type="button" class="btn ${ev.planned ? "active" : ""}" onclick="togglePlanned('${escapeHtml(ev.id)}')">
-                  ${ev.planned ? "参加予定 ✓" : "参加予定にする"}
-                </button>
-                <button type="button" class="btn" onclick="focusEventLocation(${ev.lat}, ${ev.lng})">地図で見る</button>
-                <a class="btn" href="${escapeHtml(xUrl)}" target="_blank" rel="noopener noreferrer">X検索</a>
-                ${ev.sourceUrl ? `<a class="btn" href="${escapeHtml(ev.sourceUrl)}" target="_blank" rel="noopener noreferrer">詳細</a>` : ""}
-              </div>
-            </article>
-          `;
-        })
-        .join("");
-    };
-
-    const renderCalendar = (filtered) => {
-      document.getElementById("monthHeading").textContent = `${year}年${month + 1}月`;
-      const matrix = document.getElementById("calendarMatrix");
-      const dows = [
-        { label: "日", cls: "sun" },
-        { label: "月", cls: "" },
-        { label: "火", cls: "" },
-        { label: "水", cls: "" },
-        { label: "木", cls: "" },
-        { label: "金", cls: "" },
-        { label: "土", cls: "sat" }
-      ];
-
-      const mapByDate = new Map();
-      filtered.forEach((ev) => {
-        if (!ev.date) return;
-        if (!mapByDate.has(ev.date)) mapByDate.set(ev.date, []);
-        mapByDate.get(ev.date).push(ev);
-      });
-
-      const firstDow = new Date(year, month, 1).getDay();
-      const daysCount = new Date(year, month + 1, 0).getDate();
-      const prevDaysCount = new Date(year, month, 0).getDate();
-      const pad = (n) => String(n).padStart(2, "0");
-
-      let html = dows.map((d) => `<div class="dow-cell ${d.cls}">${d.label}</div>`).join("");
-
-      for (let i = firstDow - 1; i >= 0; i--) {
-        const dNum = prevDaysCount - i;
-        const m = month === 0 ? 12 : month;
-        const y = month === 0 ? year - 1 : year;
-        html += `<div class="day-cell outside" data-date="${y}-${pad(m)}-${pad(dNum)}"><span class="day-num">${dNum}</span></div>`;
-      }
-
-      for (let d = 1; d <= daysCount; d++) {
-        const iso = `${year}-${pad(month + 1)}-${pad(d)}`;
-        const dayList = mapByDate.get(iso) || [];
-        const sel = iso === activeDate ? "selected" : "";
-        const tags = dayList
-          .slice(0, 3)
-          .map(
-            (ev) =>
-              `<div class="event-tag ${ev.planned ? "is-planned" : ""}">${escapeHtml(ev.area ? `[${ev.area}] ` : "")}${escapeHtml(ev.title)}</div>`
-          )
-          .join("");
-        html += `
-          <div class="day-cell ${sel}" data-date="${iso}">
-            <span class="day-num">${d}</span>
-            ${tags}
-          </div>
-        `;
-      }
-
-      const totalCells = firstDow + daysCount;
-      const tailCount = (7 - (totalCells % 7)) % 7;
-      for (let t = 1; t <= tailCount; t++) {
-        const m = month === 11 ? 1 : month + 2;
-        const y = month === 11 ? year + 1 : year;
-        html += `<div class="day-cell outside" data-date="${y}-${pad(m)}-${pad(t)}"><span class="day-num">${t}</span></div>`;
-      }
-
-      matrix.innerHTML = html;
-      matrix.querySelectorAll(".day-cell").forEach((cell) => {
-        cell.addEventListener("click", () => {
-          activeDate = cell.getAttribute("data-date");
-          document.getElementById("dateInput").value = activeDate;
-          render();
-        });
-      });
-
-      const selectedList = mapByDate.get(activeDate) || [];
-      document.getElementById("dayPanelTitle").textContent = `${activeDate} のイベント`;
-      document.getElementById("dayPanelCount").textContent = `${selectedList.length}件`;
-      renderEventList(document.getElementById("dayEventsBox"), selectedList);
-    };
-
-    const ensureLeafletMap = () => {
-      if (leafletMap || typeof L === "undefined") return;
-      leafletMap = L.map("mapCanvas", { zoomControl: true }).setView(AREA_COORDS["立川"], 10);
-      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        attribution: "&copy; OpenStreetMap contributors"
-      }).addTo(leafletMap);
-      markers = L.layerGroup().addTo(leafletMap);
-    };
-
-    window.focusEventLocation = (lat, lng) => {
-      if (mode === "calendar") setViewMode("both");
-      ensureLeafletMap();
-      if (leafletMap) {
-        setTimeout(() => {
-          leafletMap.invalidateSize();
-          leafletMap.setView([lat, lng], 13);
-        }, 80);
-      }
-    };
-
-    const renderMapSection = (filtered) => {
-      document.getElementById("listPanelCount").textContent = `${filtered.length}件`;
-      renderEventList(document.getElementById("filteredListBox"), filtered);
-      ensureLeafletMap();
-      if (!leafletMap || !markers) return;
-
-      markers.clearLayers();
-      const coordsList = [];
-      filtered.forEach((ev) => {
-        if (typeof ev.lat === "number" && typeof ev.lng === "number") {
-          const mk = L.marker([ev.lat, ev.lng]).addTo(markers);
-          mk.bindPopup(
-            `<strong>${escapeHtml(ev.title)}</strong><br/>${escapeHtml(ev.date)} ${escapeHtml(ev.time || "")}<br/>${escapeHtml(ev.area || "")}・${escapeHtml(ev.venue || "")}`
-          );
-          coordsList.push([ev.lat, ev.lng]);
-        }
-      });
-
-      setTimeout(() => {
-        leafletMap.invalidateSize();
-        if (coordsList.length) {
-          leafletMap.fitBounds(coordsList, { padding: [28, 28], maxZoom: 13 });
-        }
-      }, 60);
-    };
-
-    const setViewMode = (nextMode) => {
-      mode = nextMode;
-      document.querySelectorAll(".seg-btn").forEach((btn) => {
-        btn.classList.toggle("active", btn.getAttribute("data-mode") === nextMode);
-      });
-      document.getElementById("calendarPanel").style.display = nextMode === "map" ? "none" : "block";
-      document.getElementById("mapPanel").style.display = nextMode === "calendar" ? "none" : "block";
-      if (nextMode !== "calendar") {
-        renderMapSection(getFiltered());
-      }
-    };
-
-    const render = () => {
-      const currentArea = document.getElementById("areaInput").value.trim();
-      document.querySelectorAll(".area-chip").forEach((chip) => {
-        chip.classList.toggle("active", (chip.getAttribute("data-area") || "") === currentArea);
-      });
-
-      const filtered = getFiltered();
-      const plannedCount = filtered.filter((e) => e.planned).length;
-      document.getElementById("statShown").textContent = String(filtered.length);
-      document.getElementById("statPlanned").textContent = String(plannedCount);
-
-      renderCalendar(filtered);
-      if (mode !== "calendar") {
-        renderMapSection(filtered);
-      }
-    };
-
-    const loadEvents = async () => {
-      try {
-        const res = await fetch("./data/events.json?_=" + Date.now());
-        if (res.ok) {
-          const data = await res.json();
-          if (Array.isArray(data) && data.length) {
-            events = data;
-            document.getElementById("syncStatusText").textContent = `data/events.json 同期済み（${events.length}件）`;
-            render();
-            return;
-          }
-        }
-      } catch {}
-      events = SAMPLE_EVENTS;
-      document.getElementById("syncStatusText").textContent = `サンプルデータ表示中（${events.length}件）`;
-      render();
-    };
-
-    document.querySelectorAll(".seg-btn").forEach((btn) => {
-      btn.addEventListener("click", () => setViewMode(btn.getAttribute("data-mode")));
-    });
-
-    document.querySelectorAll(".area-chip").forEach((chip) => {
-      chip.addEventListener("click", () => {
-        document.getElementById("areaInput").value = chip.getAttribute("data-area") || "";
-        render();
-      });
-    });
-
-    document.getElementById("prevMonthBtn").addEventListener("click", () => {
-      month -= 1;
-      if (month < 0) {
-        month = 11;
-        year -= 1;
-      }
-      render();
-    });
-
-    document.getElementById("nextMonthBtn").addEventListener("click", () => {
-      month += 1;
-      if (month > 11) {
-        month = 0;
-        year += 1;
-      }
-      render();
-    });
-
-    document.getElementById("nowMonthBtn").addEventListener("click", () => {
-      year = 2026;
-      month = 10;
-      activeDate = "2026-11-22";
-      document.getElementById("dateInput").value = activeDate;
-      render();
-    });
-
-    document.getElementById("dateInput").addEventListener("change", (e) => {
-      if (!e.target.value) return;
-      activeDate = e.target.value;
-      const [y, m] = activeDate.split("-").map(Number);
-      if (y && m) {
-        year = y;
-        month = m - 1;
-      }
-      render();
-    });
-
-    document.getElementById("areaInput").addEventListener("input", render);
-    document.getElementById("categoryFilter").addEventListener("change", render);
-
-    document.getElementById("reloadBtn").addEventListener("click", () => {
-      loadEvents();
-      showToast("イベント一覧を更新しました");
-    });
-
-    document.getElementById("locateBtn").addEventListener("click", () => {
-      if (!navigator.geolocation) {
-        showToast("現在地取得に対応していません");
-        return;
-      }
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          if (mode === "calendar") setViewMode("both");
-          ensureLeafletMap();
-          if (leafletMap) {
-            setTimeout(() => {
-              leafletMap.invalidateSize();
-              leafletMap.setView([pos.coords.latitude, pos.coords.longitude], 12);
-            }, 80);
-          }
-          showToast("現在地周辺を表示しました");
-        },
-        () => showToast("現在地を取得できませんでした")
-      );
-    });
-
-    setViewMode("both");
-    loadEvents();
-  </script>
+<header class="topbar">
+<div class="topbar-inner">
+<div class="brand-group">
+<div class="brand-mark">HB</div>
+<div>
+<p class="brand-title">HOROBEAT STUDIO</p>
+<p class="brand-sub">Event Schedule & Map Explorer</p>
+</div>
+</div>
+<nav class="nav-pills" aria-label="ページ移動">
+<a href="./index.html" class="nav-pill">ホーム</a>
+<a href="./make.html" class="nav-pill">デッキ作成</a>
+<a href="./results.html" class="nav-pill">入賞リスト</a>
+<a href="./calendar_map_events.html" class="nav-pill active">イベント（カレンダー・地図）</a>
+</nav>
+</div>
+</header>
+<main class="container">
+<section class="hero-card">
+<div>
+<h1 class="hero-title">イベントカレンダー＆周辺マップ</h1>
+<p class="hero-desc">Python同期データ（data/events.json）から体験会・名人戦・店舗大会の日程と開催エリアを確認できます。</p>
+</div>
+<div class="hero-stats">
+<div class="stat-chip">
+<span class="stat-label">表示イベント</span>
+<span class="stat-value" id="statShown">0</span>
+</div>
+<div class="stat-chip">
+<span class="stat-label">参加予定</span>
+<span class="stat-value" id="statPlanned">0</span>
+</div>
+</div>
+</section>
+<section class="surface-card">
+<div class="filter-grid">
+<div>
+<label class="field-label" for="areaInput">駅・エリア・店舗</label>
+<input id="areaInput" class="input-control" type="text" placeholder="例: 立川、新宿、秋葉原" />
+</div>
+<div>
+<label class="field-label" for="categoryFilter">種別</label>
+<select id="categoryFilter" class="select-control">
+<option value="">すべて</option>
+<option value="名人戦">名人戦</option>
+<option value="体験会">体験会</option>
+<option value="店舗大会">店舗大会</option>
+<option value="公式イベント">公式イベント</option>
+<option value="X告知・レポート">X告知・レポート</option>
+</select>
+</div>
+<div>
+<label class="field-label" for="dateInput">基準日</label>
+<input id="dateInput" class="input-control" type="date" value="2026-11-22" />
+</div>
+<div style="display:flex;gap:8px;">
+<button type="button" id="locateBtn" class="btn active" style="flex:1;">現在地周辺</button>
+<button type="button" id="reloadBtn" class="btn">更新</button>
+</div>
+</div>
+<div class="quick-areas" id="quickAreas">
+<button type="button" class="area-chip" data-area="">すべて</button>
+<button type="button" class="area-chip" data-area="立川">立川</button>
+<button type="button" class="area-chip" data-area="新宿">新宿</button>
+<button type="button" class="area-chip" data-area="秋葉原">秋葉原</button>
+<button type="button" class="area-chip" data-area="渋谷">渋谷</button>
+<button type="button" class="area-chip" data-area="池袋">池袋</button>
+<button type="button" class="area-chip" data-area="横浜">横浜</button>
+</div>
+<div class="filter-footer">
+<div class="segmented-group" role="tablist">
+<button type="button" class="seg-btn active" data-mode="both">両方表示</button>
+<button type="button" class="seg-btn" data-mode="calendar">カレンダー</button>
+<button type="button" class="seg-btn" data-mode="map">地図</button>
+</div>
+<div class="ev-sub" id="syncStatusText">データを準備中...</div>
+</div>
+</section>
+<section id="calendarPanel" class="surface-card">
+<div class="workspace-grid">
+<div>
+<div class="cal-top">
+<h2 class="cal-heading" id="monthHeading">2026年11月</h2>
+<div class="cal-controls">
+<button type="button" id="prevMonthBtn" class="btn">◀ 前月</button>
+<button type="button" id="nowMonthBtn" class="btn">2026年11月</button>
+<button type="button" id="nextMonthBtn" class="btn">翌月 ▶</button>
+</div>
+</div>
+<div id="calendarMatrix" class="cal-matrix"></div>
+</div>
+<div>
+<div class="side-title">
+<span id="dayPanelTitle">2026-11-22 のイベント</span>
+<span class="ev-sub" id="dayPanelCount">0件</span>
+</div>
+<div id="dayEventsBox" class="side-scroll"></div>
+</div>
+</div>
+</section>
+<section id="mapPanel" class="surface-card">
+<div class="workspace-grid">
+<div id="mapCanvas"></div>
+<div>
+<div class="side-title">
+<span>絞り込み中のイベント</span>
+<span class="ev-sub" id="listPanelCount">0件</span>
+</div>
+<div id="filteredListBox" class="side-scroll"></div>
+</div>
+</div>
+</section>
+</main>
+<div id="toastBar" class="toast"></div>
+<script
+src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+crossorigin=""
+const SAMPLE_EVENTS = [
+{
+id: "hb-2026-11-22-tachikawa",
+title: "ホロビート 公認店舗大会（立川エリア）",
+category: "店舗大会",
+date: "2026-11-22",
+time: "14:00",
+area: "立川",
+venue: "立川駅周辺 公認取扱店",
+lat: 35.6982,
+lng: 139.4136,
+status: "開催中",
+sourceUrl: "https://www.takaratomy.co.jp/products/horobeat-cardgame/news/hb-trialevent-otherstores-261015/",
+xSearchUrl: "https://x.com/search?q=%E3%83%9B%E3%83%AD%E3%83%93%E3%83%BC%E3%83%88%20%E7%AB%8B%E5%B7%9D%20%E5%A4%A7%E4%BC%9A&src=typed_query&f=live",
+notes: "立川駅周辺の開催スケジュール。受付時間や参加枠は各店舗告知をご確認ください。"
+},
+{
+id: "hb-2026-11-25-shinjuku",
+title: "ホロビート お披露目体験会（新宿エリア）",
+category: "体験会",
+date: "2026-11-25",
+time: "13:00",
+area: "新宿",
+venue: "新宿駅周辺 取扱店舗",
+lat: 35.6896,
+lng: 139.7006,
+status: "開催中",
+sourceUrl: "https://www.takaratomy.co.jp/products/horobeat-cardgame/news/hb-trialevent-otherstores-261015/",
+xSearchUrl: "https://x.com/search?q=%E3%83%9B%E3%83%AD%E3%83%93%E3%83%BC%E3%83%88%20%E6%96%B0%E5%AE%BF%20%E4%BD%93%E9%A8%93%E4%BC%9A&src=typed_query&f=live",
+notes: "体験会開催期間中の新宿エリア候補枠です。"
+},
+{
+id: "hb-2026-11-28-akihabara",
+title: "ホロビート 名人戦 店舗大会（秋葉原エリア）",
+category: "名人戦",
+date: "2026-11-28",
+time: "15:00",
+area: "秋葉原",
+venue: "秋葉原駅周辺 公認店",
+lat: 35.6984,
+lng: 139.7731,
+status: "予定",
+sourceUrl: "https://www.takaratomy.co.jp/products/horobeat-cardgame/event/hb-meijinsen-2611-2701/",
+xSearchUrl: "https://x.com/search?q=%E3%83%9B%E3%83%AD%E3%83%93%E3%83%BC%E3%83%88%20%E7%A7%8B%E8%91%89%E5%8E%9F%20%E5%90%8D%E4%BA%BA%E6%88%A6&src=typed_query&f=live",
+notes: "秋葉原エリアの開催候補枠です。"
+}
+];
+const AREA_COORDS = {
+"立川": [35.6982, 139.4136],
+"新宿": [35.6896, 139.7006],
+"秋葉原": [35.6984, 139.7731],
+"渋谷": [35.6580, 139.7016],
+"池袋": [35.7295, 139.7109],
+"横浜": [35.4658, 139.6223],
+"大阪": [34.7025, 135.4959],
+"名古屋": [35.1709, 136.8816]
+};
+let events = [];
+let year = 2026;
+let month = 10; // 0-indexed (10 = Nov)
+let activeDate = "2026-11-22";
+let mode = "both";
+let leafletMap = null;
+let markers = null;
+let userLocation = null;
+const showToast = (msg) => {
+const el = document.getElementById("toastBar");
+el.textContent = msg;
+el.classList.add("visible");
+clearTimeout(showToast._timer);
+showToast._timer = setTimeout(() => el.classList.remove("visible"), 1800);
+};
+const readPrefs = () => {
+try {
+return JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
+} catch {
+return {};
+}
+};
+const writePrefs = (prefs) => {
+try {
+localStorage.setItem(STORAGE_KEY, JSON.stringify(prefs));
+} catch {}
+};
+const escapeHtml = (str) =>
+String(str ?? "")
+.replace(/&/g, "&")
+.replace(/</g, "<")
+.replace(/>/g, ">")
+.replace(/"/g, """);
+const normalizeDate = (raw) => {
+if (!raw) return "";
+const m = String(raw).match(/(\d{4})-/-//);
+if (!m) return "";
+return ⁠${m[1]}-${String(m[2]).padStart(2, "0")}-${String(m[3]).padStart(2, "0")}⁠;
+};
+const resolveCoords = (ev) => {
+if (typeof ev.lat === "number" && typeof ev.lng === "number" && !Number.isNaN(ev.lat) && !Number.isNaN(ev.lng)) {
+return [ev.lat, ev.lng];
+}
+const text = ⁠${ev.area || ""} ${ev.venue || ""} ${ev.title || ""} ${ev.notes || ""}⁠;
+for (const [label, pair] of Object.entries(AREA_COORDS)) {
+if (text.includes(label)) return pair;
+}
+return AREA_COORDS["立川"];
+};
+const normalizeEventItem = (raw, index) => {
+const date = normalizeDate(raw.date || raw.postedAt || raw.eventDate || "");
+const area = raw.area || Object.keys(AREA_COORDS).find((k) =>
+⁠${raw.venue || ""} ${raw.title || ""} ${raw.notes || ""}⁠.includes(k)
+) || "";
+const [lat, lng] = resolveCoords({ ...raw, area });
+return {
+id: raw.id || ⁠ev-${index}-${date || "undated"}⁠,
+title: raw.title || raw.tournament || "名称未設定イベント",
+category: raw.category || (String(raw.title || "").includes("名人戦") ? "名人戦" : String(raw.title || "").includes("体験会") ? "体験会" : "店舗大会"),
+date,
+time: raw.time || "",
+area,
+venue: raw.venue || raw.shop || "開催店舗未指定",
+lat,
+lng,
+status: raw.status || "予定",
+sourceUrl: raw.sourceUrl || raw.url || "",
+xSearchUrl: raw.xSearchUrl || "",
+notes: raw.notes || raw.memo || ""
+};
+};
+const distanceKm = (lat1, lng1, lat2, lng2) => {
+const toRad = (d) => (d * Math.PI) / 180;
+const R = 6371;
+const dLat = toRad(lat2 - lat1);
+const dLng = toRad(lng2 - lng1);
+const a =
+Math.sin(dLat / 2)  2 +
+Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2)  2;
+return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+};
+const getFiltered = () => {
+const areaQuery = document.getElementById("areaInput").value.trim().toLowerCase();
+const categoryQuery = document.getElementById("categoryFilter").value;
+const prefs = readPrefs();
+const plannedSet = new Set(prefs.plannedIds || []);
+const list = events
+.map((ev, i) => {
+const norm = normalizeEventItem(ev, i);
+const dist = userLocation
+? distanceKm(userLocation.lat, userLocation.lng, norm.lat, norm.lng)
+: null;
+return {
+...norm,
+dist,
+planned: plannedSet.has(norm.id) || norm.status === "参加予定"
+};
+})
+.filter((ev) => {
+if (categoryQuery && ev.category !== categoryQuery) return false;
+if (areaQuery) {
+const hay = ⁠${ev.area || ""} ${ev.venue || ""} ${ev.title || ""} ${ev.notes || ""}⁠.toLowerCase();
+if (!hay.includes(areaQuery)) return false;
+}
+return true;
+});
+if (userLocation) {
+list.sort((a, b) => (a.dist ?? 9999) - (b.dist ?? 9999));
+}
+return list;
+};
+window.togglePlanned = (id) => {
+const prefs = readPrefs();
+const set = new Set(prefs.plannedIds || []);
+if (set.has(id)) {
+set.delete(id);
+showToast("参加予定を解除しました");
+} else {
+set.add(id);
+showToast("参加予定に追加しました");
+}
+prefs.plannedIds = Array.from(set);
+writePrefs(prefs);
+render();
+};
+const renderEventList = (el, list) => {
+if (!list.length) {
+el.innerHTML = ⁠<div class="ev-item"><div class="ev-sub">条件に一致するイベントはありません。</div></div>⁠;
+return;
+}
+el.innerHTML = list
+.map((ev) => {
+const xUrl =
+ev.xSearchUrl ||
+⁠https://x.com/search?q=${encodeURIComponent(⁠ホロビート ${ev.area || ""} ${ev.venue || ""} {ev.date || ""}`.trim())}&src=typed_query&f=live`;
+￼
+￼
+￼
+￼
+￼
+￼
+￼
+￼
+￼
+${ev.notes ? `<p class="ev-memo">{escapeHtml(ev.notes)}</p>⁠: ""} <div class="ev-btns"> <button type="button" class="btn ${ev.planned ? "active" : ""}" onclick="togglePlanned('${escapeHtml(ev.id)}')"> ${ev.planned ? "参加予定 ✓" : "参加予定にする"} </button> <button type="button" class="btn" onclick="focusEventLocation(${ev.lat}, ${ev.lng})">地図で見る</button> <a class="btn" href="${escapeHtml(xUrl)}" target="_blank" rel="noopener noreferrer">X検索</a> ${ev.sourceUrl ?⁠<a class="btn" href="${escapeHtml(ev.sourceUrl)}" target="_blank" rel="noopener noreferrer">公式詳細</a>⁠: ""} </div> </article>⁠;
+})
+.join("");
+};
+const renderCalendar = (filtered) => {
+document.getElementById("monthHeading").textContent = ⁠${year}年${month + 1}月⁠;
+const matrix = document.getElementById("calendarMatrix");
+const dows = [
+{ label: "日", cls: "sun" },
+{ label: "月", cls: "" },
+{ label: "火", cls: "" },
+{ label: "水", cls: "" },
+{ label: "木", cls: "" },
+{ label: "金", cls: "" },
+{ label: "土", cls: "sat" }
+];
+const mapByDate = new Map();
+filtered.forEach((ev) => {
+if (!ev.date) return;
+if (!mapByDate.has(ev.date)) mapByDate.set(ev.date, []);
+mapByDate.get(ev.date).push(ev);
+});
+const firstDow = new Date(year, month, 1).getDay();
+const daysCount = new Date(year, month + 1, 0).getDate();
+const prevDaysCount = new Date(year, month, 0).getDate();
+const pad = (n) => String(n).padStart(2, "0");
+let html = dows.map((d) => ⁠<div class="dow-cell ${d.cls}">${d.label}</div>⁠).join("");
+for (let i = firstDow - 1; i >= 0; i--) {
+const dNum = prevDaysCount - i;
+const m = month === 0 ? 12 : month;
+const y = month === 0 ? year - 1 : year;
+html += ⁠<div class="day-cell outside" data-date="${y}-${pad(m)}-${pad(dNum)}"><span class="day-num">${dNum}</span></div>⁠;
+}
+for (let d = 1; d <= daysCount; d++) {
+const iso = ⁠${year}-${pad(month + 1)}-${pad(d)}⁠;
+const dayList = mapByDate.get(iso) || [];
+const sel = iso === activeDate ? "selected" : "";
+const tags = dayList
+.slice(0, 3)
+.map(
+(ev) =>
+⁠<div class="event-tag ${ev.planned ? "is-planned" : ""}">${escapeHtml(ev.time ? ⁠{ev.time} ` : "")}${escapeHtml(ev.area ? `[{ev.area}] ⁠ : "")}${escapeHtml(ev.venue || ev.title)}</div>⁠
+)
+.join("");
+html += ⁠<div class="day-cell ${sel}" data-date="${iso}"> <span class="day-num">${d}</span> ${tags} </div>⁠;
+}
+const totalCells = firstDow + daysCount;
+const tailCount = (7 - (totalCells % 7)) % 7;
+for (let t = 1; t <= tailCount; t++) {
+const m = month === 11 ? 1 : month + 2;
+const y = month === 11 ? year + 1 : year;
+html += ⁠<div class="day-cell outside" data-date="${y}-${pad(m)}-${pad(t)}"><span class="day-num">${t}</span></div>⁠;
+}
+matrix.innerHTML = html;
+matrix.querySelectorAll(".day-cell").forEach((cell) => {
+cell.addEventListener("click", () => {
+activeDate = cell.getAttribute("data-date");
+document.getElementById("dateInput").value = activeDate;
+const [y, m] = activeDate.split("-").map(Number);
+if (y && m) {
+year = y;
+month = m - 1;
+}
+render();
+});
+});
+const selectedList = mapByDate.get(activeDate) || [];
+document.getElementById("dayPanelTitle").textContent = ⁠${activeDate} のイベント⁠;
+document.getElementById("dayPanelCount").textContent = ⁠${selectedList.length}件⁠;
+renderEventList(document.getElementById("dayEventsBox"), selectedList);
+};
+const ensureLeafletMap = () => {
+if (leafletMap || typeof L === "undefined") return;
+leafletMap = L.map("mapCanvas", { zoomControl: true }).setView(AREA_COORDS["立川"], 11);
+L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+attribution: "© OpenStreetMap contributors"
+}).addTo(leafletMap);
+markers = L.layerGroup().addTo(leafletMap);
+};
+window.focusEventLocation = (lat, lng) => {
+if (mode === "calendar") setViewMode("both");
+ensureLeafletMap();
+if (leafletMap) {
+setTimeout(() => {
+leafletMap.invalidateSize();
+leafletMap.setView([lat, lng], 13);
+}, 80);
+}
+};
+const renderMapSection = (filtered) => {
+document.getElementById("listPanelCount").textContent = ⁠${filtered.length}件⁠;
+renderEventList(document.getElementById("filteredListBox"), filtered);
+ensureLeafletMap();
+if (!leafletMap || !markers) return;
+markers.clearLayers();
+const coordsList = [];
+filtered.forEach((ev) => {
+if (typeof ev.lat === "number" && typeof ev.lng === "number") {
+const mk = L.marker([ev.lat, ev.lng]).addTo(markers);
+mk.bindPopup(
+⁠<strong>${escapeHtml(ev.title)}</strong><br/>${escapeHtml(ev.date || "")} ${escapeHtml(ev.time || "")}<br/>${escapeHtml(ev.area || "")}・${escapeHtml(ev.venue || "")}⁠
+);
+coordsList.push([ev.lat, ev.lng]);
+}
+});
+const areaText = document.getElementById("areaInput").value.trim();
+setTimeout(() => {
+leafletMap.invalidateSize();
+if (areaText && AREA_COORDS[areaText]) {
+leafletMap.setView(AREA_COORDS[areaText], 12);
+} else if (coordsList.length) {
+leafletMap.fitBounds(coordsList, { padding: [28, 28], maxZoom: 13 });
+}
+}, 60);
+};
+const setViewMode = (nextMode) => {
+mode = nextMode;
+document.querySelectorAll(".seg-btn").forEach((btn) => {
+btn.classList.toggle("active", btn.getAttribute("data-mode") === nextMode);
+});
+document.getElementById("calendarPanel").style.display = nextMode === "map" ? "none" : "block";
+document.getElementById("mapPanel").style.display = nextMode === "calendar" ? "none" : "block";
+if (nextMode !== "calendar") {
+renderMapSection(getFiltered());
+}
+};
+const render = () => {
+const currentArea = document.getElementById("areaInput").value.trim();
+document.querySelectorAll(".area-chip").forEach((chip) => {
+chip.classList.toggle("active", (chip.getAttribute("data-area") || "") === currentArea);
+});
+const filtered = getFiltered();
+const plannedCount = filtered.filter((e) => e.planned).length;
+document.getElementById("statShown").textContent = String(filtered.length);
+document.getElementById("statPlanned").textContent = String(plannedCount);
+renderCalendar(filtered);
+if (mode !== "calendar") {
+renderMapSection(filtered);
+}
+};
+const fetchJsonIfExists = async (path) => {
+try {
+const res = await fetch(⁠${path}?_=${Date.now()}⁠);
+if (!res.ok) return null;
+const data = await res.json();
+return Array.isArray(data) ? data : Array.isArray(data?.events) ? data.events : null;
+} catch {
+return null;
+}
+};
+const loadEvents = async () => {
+const candidates = [
+"./data/events.json",
+"data/events.json",
+"../data/events.json"
+];
+for (const path of candidates) {
+const loaded = await fetchJsonIfExists(path);
+if (loaded && loaded.length) {
+events = loaded;
+const firstDated = loaded.map((x) => normalizeDate(x.date)).find(Boolean);
+if (firstDated && !loaded.some((x) => normalizeDate(x.date) === activeDate)) {
+activeDate = firstDated;
+document.getElementById("dateInput").value = activeDate;
+const [y, m] = activeDate.split("-").map(Number);
+if (y && m) {
+year = y;
+month = m - 1;
+}
+}
+document.getElementById("syncStatusText").textContent = ⁠${path} 同期済み（${events.length}件）⁠;
+render();
+return;
+}
+}
+events = SAMPLE_EVENTS;
+document.getElementById("syncStatusText").textContent = ⁠サンプル表示中（Pythonで data/events.json を生成すると実データに切替・${events.length}件）⁠;
+render();
+};
+document.querySelectorAll(".seg-btn").forEach((btn) => {
+btn.addEventListener("click", () => setViewMode(btn.getAttribute("data-mode")));
+});
+document.querySelectorAll(".area-chip").forEach((chip) => {
+chip.addEventListener("click", () => {
+document.getElementById("areaInput").value = chip.getAttribute("data-area") || "";
+render();
+});
+});
+document.getElementById("prevMonthBtn").addEventListener("click", () => {
+month -= 1;
+if (month < 0) {
+month = 11;
+year -= 1;
+}
+render();
+});
+document.getElementById("nextMonthBtn").addEventListener("click", () => {
+month += 1;
+if (month > 11) {
+month = 0;
+year += 1;
+}
+render();
+});
+document.getElementById("nowMonthBtn").addEventListener("click", () => {
+year = 2026;
+month = 10;
+activeDate = "2026-11-22";
+document.getElementById("dateInput").value = activeDate;
+render();
+});
+document.getElementById("dateInput").addEventListener("change", (e) => {
+if (!e.target.value) return;
+activeDate = e.target.value;
+const [y, m] = activeDate.split("-").map(Number);
+if (y && m) {
+year = y;
+month = m - 1;
+}
+render();
+});
+document.getElementById("areaInput").addEventListener("input", render);
+document.getElementById("categoryFilter").addEventListener("change", render);
+document.getElementById("reloadBtn").addEventListener("click", () => {
+loadEvents();
+showToast("イベント一覧を更新しました");
+});
+document.getElementById("locateBtn").addEventListener("click", () => {
+if (!navigator.geolocation) {
+showToast("現在地取得に対応していません");
+return;
+}
+navigator.geolocation.getCurrentPosition(
+(pos) => {
+userLocation = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+if (mode === "calendar") setViewMode("both");
+ensureLeafletMap();
+render();
+if (leafletMap) {
+setTimeout(() => {
+leafletMap.invalidateSize();
+leafletMap.setView([userLocation.lat, userLocation.lng], 12);
+}, 80);
+}
+showToast("現在地周辺を表示し、近い順に並べ替えました");
+},
+() => showToast("現在地を取得できませんでした")
+);
+});
+setViewMode("both");
+loadEvents();
+</script>
 </body>
 </html>
