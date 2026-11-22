@@ -19,7 +19,7 @@
 --border-hairline: rgba(17, 19, 24, 0.15);
 --card-ratio: 63 / 88;
 }
-￼ {
+*, *::before, *::after {
 box-sizing: border-box;
 -webkit-tap-highlight-color: transparent;
 -webkit-touch-callout: none;
@@ -38,7 +38,7 @@ html, body {
 margin: 0;
 padding: 0;
 width: 100%;
-height: 100dvh;
+height: 100%;
 overflow: hidden;
 background: var(--bg-base);
 color: var(--text-primary);
@@ -46,20 +46,25 @@ font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Noto Sans JP",
 touch-action: manipulation;
 }
 .studio {
+position: fixed;
+top: 0;
+left: 50%;
+transform: translate3d(-50%, 0, 0);
 display: flex;
 flex-direction: column;
+width: 100%;
 height: 100dvh;
 max-width: 700px;
 margin: 0 auto;
 padding-top: env(safe-area-inset-top);
 padding-bottom: env(safe-area-inset-bottom);
 background: var(--bg-surface);
+will-change: height, transform;
 }
 .title-top-spacer {
-height: 60px;
-flex: 0 0 60px;
-width: 100%;
-background: var(--bg-surface);
+display: none;
+height: 0;
+flex: 0 0 0;
 }
 .top-bar {
 display: flex;
@@ -77,14 +82,6 @@ align-items: center;
 gap: 5px;
 min-width: 0;
 flex: 1 1 auto;
-}
-.logo-link {
-text-decoration: none;
-color: inherit;
-min-width: 0;
-overflow: hidden;
-text-overflow: ellipsis;
-white-space: nowrap;
 }
 .logo-mark {
 font-family: "Playfair Display", Georgia, serif;
@@ -188,11 +185,12 @@ color: var(--accent-rose);
 flex: 1 1 auto;
 min-height: 0;
 background: var(--bg-base);
-padding: 6px 10px;
+padding: 5px 10px 6px;
 overflow-y: auto;
+overflow-x: hidden;
 display: flex;
 flex-direction: column;
-gap: 5px;
+gap: 4px;
 }
 .deck-guide-bar {
 font-size: 11px;
@@ -201,19 +199,38 @@ color: var(--text-primary);
 line-height: 1.35;
 padding: 0 2px;
 }
+.deck-unified-card {
+background: var(--bg-surface);
+border: 1px solid var(--border-hairline);
+border-radius: 10px;
+overflow: hidden;
+display: flex;
+flex-direction: column;
+flex-shrink: 0;
+width: 100%;
+}
 .deck-grid {
 display: grid;
-grid-template-columns: repeat(10, 1fr);
+grid-template-columns: repeat(10, minmax(0, 1fr));
 gap: 3px;
 align-content: start;
-background: var(--bg-surface);
+background: transparent;
 padding: 5px;
-border-radius: 10px;
-border: 1px solid var(--border-hairline);
+border: none;
+border-radius: 0;
 overflow: hidden;
+flex-shrink: 0;
+position: relative;
+z-index: 1;
 box-shadow: none;
+width: 100%;
+}
+.deck-grid::before,
+.deck-grid::after {
+content: none;
 }
 .slot-tile {
+min-width: 0;
 aspect-ratio: var(--card-ratio);
 border-radius: 3px;
 overflow: hidden;
@@ -221,7 +238,7 @@ background: #f4f5f7;
 position: relative;
 cursor: pointer;
 border: 1px solid rgba(17, 19, 24, 0.16);
-touch-action: none;
+touch-action: manipulation;
 box-shadow: none;
 }
 .slot-tile.ghost {
@@ -252,88 +269,96 @@ text-align: center;
 overflow: hidden;
 }
 .deck-utility-panel {
-flex: 1 1 auto;
-min-height: 0;
-background: var(--bg-base);
+flex: 0 0 auto;
+background: transparent;
 padding: 0;
 display: flex;
 flex-direction: column;
-justify-content: flex-end;
-gap: 6px;
-overflow: hidden;
+overflow: visible;
 position: relative;
-z-index: 1;
+z-index: 2;
+border-top: 1px solid var(--border-hairline);
 }
-.util-box {
+.sketch-panel {
 width: 100%;
-height: 54px;
-flex: 0 0 54px;
-background: var(--bg-surface);
-border: 1px solid var(--border-hairline);
-border-radius: 8px;
-padding: 6px 8px;
-overflow: hidden;
-box-shadow: none;
+flex-shrink: 0;
+background: transparent;
+border: none;
+border-radius: 0;
+padding: 6px 9px;
 display: flex;
 flex-direction: column;
-justify-content: space-between;
+gap: 4px;
 }
-.util-row-label {
-font-size: 10px;
-font-weight: 800;
-color: var(--text-secondary);
-margin-bottom: 3px;
-line-height: 1.15;
-flex-shrink: 0;
-}
-.mini-chips-row {
+.sketch-line {
 display: flex;
-flex-wrap: nowrap;
-gap: 5px;
 align-items: center;
+gap: 6px;
+min-height: 24px;
 overflow-x: auto;
 overflow-y: hidden;
 scrollbar-width: none;
-min-height: 24px;
+flex-wrap: nowrap;
 }
-.mini-chips-row::-webkit-scrollbar { display: none; }
+.sketch-line::-webkit-scrollbar { display: none; }
+.sketch-prefix {
+font-size: 11px;
+font-weight: 900;
+color: var(--text-secondary);
+white-space: nowrap;
+flex-shrink: 0;
+}
 .mini-tag {
 background: var(--bg-base);
 border: 1px solid var(--border-hairline);
 color: var(--text-primary);
 border-radius: 7px;
-padding: 3px 8px;
+padding: 2px 7px;
 font-size: 11px;
 font-weight: 700;
 cursor: pointer;
 white-space: nowrap;
 flex: 0 0 auto;
+line-height: 1.35;
 }
 .mini-tag.active {
 background: #111318;
 color: #ffffff;
 border-color: #111318;
 }
-.mini-tag.civ-tag {
-background: #ecfdf5;
-border-color: rgba(5, 150, 105, 0.28);
-color: #064e3b;
+.mini-tag.color-tag {
+background: #f8fafc;
+border-color: rgba(17, 19, 24, 0.22);
+color: #111318;
 }
-.mini-tag.civ-tag.active {
+.mini-tag.color-tag.active {
 background: #059669;
 color: #ffffff;
 border-color: #059669;
 }
-.focus-card-bar {
-width: 100%;
-height: 40px;
-flex: 0 0 40px;
+.sketch-focus-row {
 display: flex;
 align-items: center;
 justify-content: space-between;
 gap: 8px;
+padding-top: 4px;
+border-top: 1px dashed var(--border-hairline);
+min-height: 28px;
+}
+.focus-name {
 font-size: 12px;
-padding: 6px 10px;
+font-weight: 900;
+color: var(--text-primary);
+overflow: hidden;
+text-overflow: ellipsis;
+white-space: nowrap;
+flex: 1;
+}
+.focus-controls {
+display: flex;
+align-items: center;
+gap: 5px;
+flex-shrink: 0;
 }
 .focus-name {
 font-weight: 900;
@@ -382,11 +407,13 @@ gap: 8px;
 overflow-x: auto;
 padding: 0 12px;
 scrollbar-width: none;
+touch-action: pan-x;
 }
 .dock-scroll::-webkit-scrollbar { display: none; }
 .dock-card {
-flex: 0 0 auto;
+flex: 0 0 76px;
 width: 76px;
+height: 106px;
 aspect-ratio: var(--card-ratio);
 border-radius: 7px;
 overflow: hidden;
@@ -396,7 +423,7 @@ box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 position: relative;
 cursor: pointer;
 transition: transform 0.1s ease;
-touch-action: manipulation;
+touch-action: pan-x;
 }
 .dock-card:active {
 transform: scale(0.95);
@@ -477,8 +504,8 @@ cursor: pointer;
 }
 .sub-btn {
 height: 42px;
-padding: 0 12px;
-border-radius: 12px;
+padding: 0 13px;
+border-radius: 999px;
 border: 1.5px solid var(--border-hairline);
 background: var(--bg-elevated);
 color: var(--text-primary);
@@ -778,6 +805,85 @@ transition: opacity 0.2s;
 z-index: 200;
 }
 .toast.show { opacity: 1; }
+
+.vbar-chart-wrap {
+display: flex;
+flex-direction: column;
+height: 52dvh;
+min-height: 260px;
+width: 100%;
+padding: 8px 6px 4px;
+}
+.vbar-columns {
+flex: 1 1 auto;
+min-height: 0;
+display: flex;
+align-items: flex-end;
+justify-content: space-around;
+gap: 10px;
+padding: 22px 8px 10px;
+border-bottom: 2px solid var(--text-primary);
+}
+.vbar-col {
+flex: 1 1 0;
+max-width: 84px;
+height: 100%;
+display: flex;
+flex-direction: column;
+align-items: center;
+justify-content: flex-end;
+gap: 4px;
+}
+.vbar-count {
+font-size: 11px;
+font-weight: 900;
+color: var(--text-primary);
+line-height: 1.1;
+}
+.vbar-stack {
+width: 72%;
+min-width: 22px;
+max-width: 48px;
+display: flex;
+flex-direction: column-reverse;
+border: 1.5px solid #111318;
+border-radius: 4px 4px 0 0;
+overflow: hidden;
+background: var(--bg-base);
+}
+.vbar-seg {
+width: 100%;
+}
+.vbar-axis-row {
+display: flex;
+flex-direction: column;
+gap: 4px;
+padding-top: 8px;
+}
+.vbar-axis-title {
+font-size: 11px;
+font-weight: 900;
+color: var(--text-secondary);
+white-space: nowrap;
+text-align: center;
+}
+.vbar-xlabels {
+width: 100%;
+display: flex;
+align-items: center;
+justify-content: space-around;
+gap: 10px;
+padding: 0 8px;
+}
+.vbar-xlabel {
+flex: 1 1 0;
+max-width: 84px;
+text-align: center;
+font-size: 12px;
+font-weight: 900;
+color: var(--text-primary);
+}
+
 </style>
 </head>
 <body oncontextmenu="return false;">
@@ -785,12 +891,12 @@ z-index: 200;
 <div class="title-top-spacer" aria-hidden="true"></div>
 <header class="top-bar">
 <div class="logo-area">
-<a href="./index.html" id="titleBackToTop" class="logo-link"><span class="logo-mark">HOROBEAT STUDIO</span></a>
+<span class="logo-mark">HOROBEAT STUDIO</span>
 <button class="help-dot" id="btnAbout" title="使い方・免責">?</button>
 </div>
 <div class="top-actions">
 <button class="pill-btn" id="btnDecks">保存</button>
-<button class="pill-btn" id="btnStats">分布</button>
+<button class="pill-btn" id="btnStats">分析</button>
 <button class="pill-btn primary" id="btnShare">出力</button>
 <button class="pill-btn danger" id="btnClear">削除</button>
 </div>
@@ -808,13 +914,19 @@ z-index: 200;
 <div class="deck-guide-bar">
 タップ・下スワイプで1枚削除 / 長押しで拡大・レアリティ設定
 </div>
+<div class="deck-unified-card">
 <div class="deck-grid" id="deckGrid"></div>
 <div class="deck-utility-panel">
-<div class="util-box" id="civBox">
-<div class="util-row-label">文明</div>
-<div class="mini-chips-row" id="civQuickChips"></div>
+<div class="sketch-panel" id="sketchInfoBox">
+<div class="sketch-line" id="tagQuickLine">
+<span class="sketch-prefix">タグ：</span>
+<div class="mini-chips-row" id="tagQuickChips"></div>
 </div>
-<div class="util-box focus-card-bar" id="cardNameBar" aria-live="polite">
+<div class="sketch-line" id="colorQuickLine">
+<span class="sketch-prefix">色：</span>
+<div class="mini-chips-row" id="colorQuickChips"></div>
+</div>
+<div class="sketch-focus-row" id="cardNameBar" aria-live="polite">
 <span class="focus-name" id="focusCardLabel">カード未選択</span>
 <div class="focus-controls">
 <button class="step-btn" id="btnFocusMinus" title="1枚減らす">-</button>
@@ -824,10 +936,12 @@ z-index: 200;
 </div>
 </div>
 </div>
+</div>
+</div>
 </main>
 <section class="dock-section">
 <div class="dock-header">
-<span>タップ・上スワイプで追加 / 長押し・詳細でレアリティ設定</span>
+<span>カードリスト（タップ・上スワイプで追加）</span>
 <span id="poolCountLabel">0件</span>
 </div>
 <div class="dock-scroll" id="dockScroll"></div>
@@ -948,12 +1062,9 @@ z-index: 200;
 <button class="sheet-close" data-close="aboutOverlay">×</button>
 </div>
 <div style="font-size:13px;color:var(--text-secondary);line-height:1.7;">
-<p style="margin-top:0;color:var(--text-primary);"><strong>操作方法：</strong>
-
-・タップ・上スワイプで追加
-
-・長押し・詳細で拡大表示、レアリティ変更
-
+<p style="margin-top:0;color:var(--text-primary);"><strong>操作方法：</strong><br />
+・タップ・上スワイプで追加<br />
+・長押し・詳細で拡大表示、レアリティ変更<br />
 ・デッキ内のカードはタップ・下スワイプで1枚削除、長押しで拡大・レアリティ変更</p>
 <p style="margin-bottom:0;">※ 本サイトは『ホロビートカードゲーム』の非公式ファンメイド・デッキ構築支援ツールです。掲載されているカード情報・画像の権利は各権利者に帰属します。</p>
 </div>
@@ -966,12 +1077,14 @@ const GRID_SLOTS_10X5 = 50;
 const LONG_PRESS_MS = 260;
 const SAVE_KEY = "horobeat_studio_deck_v1";
 const SLOTS_KEY = "horobeat_studio_slots_v1";
+const TAGS_KEY = "horobeat_studio_custom_tags_v1";
+let customTagsByCard = {};
 let cards = [];
 let zone = "main";
 let deckData = { main: {}, sub: {}, variants: { main: {}, sub: {} } };
 let focusedCardId = null;
 let detailCopyIndex = 0;
-let state = { q: "", rarity: "ALL", color: "ALL", civ: "ALL", type: "ALL", img: "ALL", sort: "id" };
+let state = { q: "", rarity: "ALL", color: "ALL", civ: "ALL", type: "ALL", tag: "ALL", img: "ALL", sort: "id" };
 function pickCardId(raw) {
 return String(
 raw?.id ??
@@ -1027,7 +1140,7 @@ if (extracted) return extracted;
 return "";
 }
 const s = String(val)
-.replace(/[【】[]（）()]/g, "")
+.replace(/[【】\[\]（）()]/g, "")
 .trim();
 if (!s) return "";
 if (["undefined", "null", "nan", "none", "unknown", "不明", "未設定", "-"].includes(s.toLowerCase())) {
@@ -1037,7 +1150,7 @@ return s;
 }
 function inferFromBracketPrefix(raw, kind) {
 const nameStr = String(raw?.name ?? raw?.title ?? raw?.cardName ?? "").trim();
-const match = nameStr.match(/^[【[]】]/);
+const match = nameStr.match(/^[【\[]([^】\]]+)[】\]]/);
 if (!match) return "";
 const token = match[1].trim();
 if (kind === "color" && /^(赤|青|緑|黄|紫|白|黒|無|多色|虹|火|水|自然|光|闇)/.test(token)) {
@@ -1092,7 +1205,7 @@ return "無";
 }
 function normalizeCardItem(raw, fallbackIndex = 0) {
 if (!raw || typeof raw !== "object") return null;
-const id = pickCardId(raw) || ⁠CARD_${fallbackIndex + 1}⁠;
+const id = pickCardId(raw) || `CARD_${fallbackIndex + 1}`;
 const cardNumber = String(
 raw.cardNumber ?? raw.card_no ?? raw.number ?? raw.no ?? raw.code ?? raw.id ?? id
 ).trim();
@@ -1145,25 +1258,31 @@ const base = card.id;
 const n = (seenIds.get(base) || 0) + 1;
 seenIds.set(base, n);
 if (n > 1) {
-return { ...card, id: ⁠${base}__${n}⁠ };
+return { ...card, id: `${base}__${n}` };
 }
 return card;
 });
 }
 async function loadCardsOnly() {
+if (window.HOROBEAT_CARDS) {
+const fromWin = extractCardsFromPayload(window.HOROBEAT_CARDS);
+if (fromWin.length > 0) return fromWin;
+}
 const urls = [
 "./data/cards.json",
 "data/cards.json",
 "./cards.json",
 "cards.json",
-"../data/cards.json"
+"../data/cards.json",
+"./assets/cards.json",
+"./json/cards.json"
 ];
 let lastErr = null;
 for (const url of urls) {
 try {
 const res = await fetch(url, { cache: "no-store" });
 if (!res.ok) {
-lastErr = new Error(⁠${url} (HTTP ${res.status})⁠);
+lastErr = new Error(`${url} (HTTP ${res.status})`);
 continue;
 }
 const text = await res.text();
@@ -1172,7 +1291,7 @@ const parsed = extractCardsFromPayload(json);
 if (parsed.length > 0) {
 return parsed;
 }
-lastErr = new Error(⁠${url} (0件)⁠);
+lastErr = new Error(`${url} (0件)`);
 } catch (err) {
 lastErr = err;
 }
@@ -1186,9 +1305,9 @@ const r = String(card.rarity).trim().toUpperCase();
 if (r === "NORMAL" || r === "NORM") return "N";
 return r;
 }
-const hay = ⁠${card.id || ""} ${card.cardNumber || ""} ${card.type || ""} ${card.text || ""}⁠.toUpperCase();
+const hay = `${card.id || ""} ${card.cardNumber || ""} ${card.type || ""} ${card.text || ""}`.toUpperCase();
 for (const r of ["SEC", "DR", "SR", "RR", "R", "UC", "C", "PR", "N"]) {
-const re = new RegExp(⁠(^|[^A-Z])${r}([^A-Z]|$)⁠);
+const re = new RegExp(`(^|[^A-Z])${r}([^A-Z]|$)`);
 if (re.test(hay)) return r;
 }
 return "N";
@@ -1196,7 +1315,7 @@ return "N";
 function isNormalVariant(card) {
 const r = detectRarity(card);
 if (r === "N" || r === "C") return true;
-const hay = ⁠${card?.id || ""} ${card?.cardNumber || ""} ${card?.name || ""}⁠.toLowerCase();
+const hay = `${card?.id || ""} ${card?.cardNumber || ""} ${card?.name || ""}`.toLowerCase();
 return hay.includes("normal") || hay.includes("ノーマル");
 }
 function displayCardNumber(card) {
@@ -1205,11 +1324,11 @@ return card.cardNumber || card.id || "";
 function getBaseCardKey(card) {
 if (!card) return "UNKNOWN";
 const no = String(card.cardNumber || "").trim().toUpperCase();
-if (no) return ⁠NO:${no}⁠;
+if (no) return `NO:${no}`;
 const rawId = String(card.id || "").trim().toUpperCase();
 const stripped = rawId.replace(/(_[A-Z0-9]+)?(__\d+)?$/i, "");
-if (stripped) return ⁠ID:${stripped}⁠;
-return ⁠NAME:${String(card.name || "").trim()}⁠;
+if (stripped) return `ID:${stripped}`;
+return `NAME:${String(card.name || "").trim()}`;
 }
 function getCardVariants(card) {
 const key = getBaseCardKey(card);
@@ -1221,15 +1340,40 @@ function getCanonicalCard(card) {
 const variants = getCardVariants(card);
 return variants.find(v => isNormalVariant(v)) || variants[0] || card;
 }
+let _poolCache = null;
+function invalidatePoolCache() {
+_poolCache = null;
+}
 function getUniquePoolCards() {
+if (_poolCache) return _poolCache;
 const byKey = new Map();
+const variantsByKey = new Map();
 cards.forEach(card => {
 const key = getBaseCardKey(card);
-if (!byKey.has(key)) {
-byKey.set(key, getCanonicalCard(card));
-}
+if (!variantsByKey.has(key)) variantsByKey.set(key, []);
+variantsByKey.get(key).push(card);
 });
-return Array.from(byKey.values());
+variantsByKey.forEach((vars, key) => {
+const canonical = vars.find(v => isNormalVariant(v)) || vars[0];
+const searchHay = vars
+.map(v => `${v.id || ""} ${v.cardNumber || ""} ${v.name || ""} ${v.civilization || ""} ${v.text || ""} ${detectRarity(v)}`)
+.join(" ")
+.toLowerCase();
+const raritiesSet = new Set(vars.map(v => detectRarity(v)));
+const tagsSet = new Set();
+vars.forEach(v => getCardTags(v).forEach(tg => tagsSet.add(tg)));
+const hasAnyImg = vars.some(v => Boolean(v.imageUrl));
+byKey.set(key, {
+card: canonical,
+variants: vars,
+searchHay,
+raritiesSet,
+tagsSet,
+hasAnyImg
+});
+});
+_poolCache = Array.from(byKey.values());
+return _poolCache;
 }
 function ensureVariantsArray(z, baseId, count) {
 if (!deckData.variants) deckData.variants = { main: {}, sub: {} };
@@ -1258,12 +1402,12 @@ deckData.variants[z][baseId] = arr;
 persist();
 render();
 }
-function toast(msg) {
+function toast(msg, durationMs = 1800) {
 const el = document.getElementById("toast");
 el.textContent = msg;
 el.classList.add("show");
 clearTimeout(toast._timer);
-toast._timer = setTimeout(() => el.classList.remove("show"), 1800);
+toast._timer = setTimeout(() => el.classList.remove("show"), durationMs);
 }
 function zoneTotal(z) {
 return Object.values(deckData[z] || {}).reduce((sum, n) => sum + Number(n || 0), 0);
@@ -1312,6 +1456,49 @@ const parsed = JSON.parse(saved);
 normalizeLoaded(parsed);
 }
 } catch (e) {}
+try {
+const rawTags = localStorage.getItem(TAGS_KEY);
+if (rawTags) {
+const parsedTags = JSON.parse(rawTags);
+if (parsedTags && typeof parsedTags === "object") {
+customTagsByCard = parsedTags;
+}
+}
+} catch (e) {}
+}
+function saveCustomTags() {
+try { localStorage.setItem(TAGS_KEY, JSON.stringify(customTagsByCard)); } catch (e) {}
+}
+function getCustomTagsForCard(card) {
+if (!card) return [];
+const key = getBaseCardKey(card);
+const arr = customTagsByCard?.[key];
+return Array.isArray(arr) ? arr.filter(Boolean) : [];
+}
+function addCustomTagToCard(card, rawTag) {
+if (!card) return;
+const tag = normalizeLabelValue(rawTag);
+if (!tag) return;
+const key = getBaseCardKey(card);
+const current = Array.isArray(customTagsByCard[key]) ? [...customTagsByCard[key]] : [];
+if (!current.includes(tag)) {
+current.push(tag);
+customTagsByCard[key] = current;
+saveCustomTags();
+invalidatePoolCache();
+render();
+}
+}
+function removeCustomTagFromCard(card, tagToRemove) {
+if (!card) return;
+const key = getBaseCardKey(card);
+const current = Array.isArray(customTagsByCard[key]) ? [...customTagsByCard[key]] : [];
+const next = current.filter(t => t !== tagToRemove);
+if (next.length > 0) customTagsByCard[key] = next;
+else delete customTagsByCard[key];
+if (state.tag === tagToRemove) state.tag = "ALL";
+saveCustomTags();
+render();
 }
 function addToDeck(id, preferredVariantId = null) {
 const map = new Map(cards.map(c => [c.id, c]));
@@ -1320,7 +1507,7 @@ const canonical = rawCard ? getCanonicalCard(rawCard) : { id };
 const targetId = canonical.id;
 focusedCardId = targetId;
 if (cardTotal(targetId) >= MAX_PER_CARD) {
-toast(⁠同名カードは最大${MAX_PER_CARD}枚までです⁠);
+toast(`同名カードは最大${MAX_PER_CARD}枚までです`);
 renderUtilityPanel();
 return;
 }
@@ -1350,7 +1537,7 @@ render();
 function makeFallback(card) {
 const div = document.createElement("div");
 div.className = "fallback-card";
-div.innerHTML = ⁠<span style="opacity:.7;">${displayCardNumber(card)}</span><span style="font-weight:800;">${card.name || ""}</span><span style="opacity:.7;">${card.cost ?? ""}</span>⁠;
+div.innerHTML = `<span style="opacity:.7;">${displayCardNumber(card)}</span><span style="font-weight:800;">${card.name || ""}</span><span style="opacity:.7;">${card.cost ?? ""}</span>`;
 return div;
 }
 function makeArt(card) {
@@ -1473,39 +1660,70 @@ removeFromDeck(baseCard.id);
 grid.appendChild(tile);
 }
 }
+function getCardTags(card) {
+if (!card) return [];
+const custom = getCustomTagsForCard(card);
+const rawTags = card.tags ?? card.keywords ?? card.role ?? card.tag ?? [];
+let list = [...custom];
+if (Array.isArray(rawTags)) list.push(...rawTags.map(t => normalizeLabelValue(t)).filter(Boolean));
+else if (typeof rawTags === "string" && rawTags.trim()) {
+list.push(...rawTags.split(/[,、/／・\s]+/).map(t => normalizeLabelValue(t)).filter(Boolean));
+}
+if (list.length === 0) {
+const hay = `${card.name || ""} ${card.type || ""} ${card.text || ""}`;
+if (/初動|ドロー|サーチ|手札補充|回収/.test(hay)) list.push("初動");
+if (/除去|破壊|バウンス|無効|妨害|盾|ブロッカー|トリガー/.test(hay)) list.push("防御/除去");
+if (/フィニッシャー|SA|スピードアタッカー|追加ターン|打点/.test(hay)) list.push("フィニッシャー");
+}
+return Array.from(new Set(list));
+}
 function renderUtilityPanel() {
 const map = new Map(cards.map(c => [c.id, c]));
-const civCounts = {};
+const tagCounts = {};
+const colorCounts = {};
 Object.entries(deckData[zone] || {}).forEach(([id, n]) => {
 const qty = Number(n || 0);
 if (qty <= 0) return;
 const c = map.get(id) || { id };
-const civ = c.civilization || "無";
-civCounts[civ] = (civCounts[civ] || 0) + qty;
+const col = c.color || "無";
+colorCounts[col] = (colorCounts[col] || 0) + qty;
+getCardTags(c).forEach(tg => {
+tagCounts[tg] = (tagCounts[tg] || 0) + qty;
 });
-const civRow = document.getElementById("civQuickChips");
-civRow.innerHTML = "";
-const civEntries = Object.entries(civCounts);
-if (civEntries.length === 0) {
-const emptyNote = document.createElement("span");
-emptyNote.style.fontSize = "11px";
-emptyNote.style.color = "var(--text-secondary)";
-emptyNote.style.whiteSpace = "nowrap";
-emptyNote.textContent = "デッキにカードを追加すると文明枚数が表示されます";
-civRow.appendChild(emptyNote);
-} else {
-civEntries.forEach(([civ, cnt]) => {
+});
+const tagRow = document.getElementById("tagQuickChips");
+tagRow.innerHTML = "";
+const allCustomTags = Object.values(customTagsByCard).flat().filter(Boolean);
+const defaultTags = ["初動", ...allCustomTags];
+const tagKeys = Array.from(new Set([...defaultTags, ...Object.keys(tagCounts)]));
+tagKeys.forEach(tg => {
+const cnt = tagCounts[tg] || 0;
 const btn = document.createElement("button");
 btn.type = "button";
-btn.className = "mini-tag civ-tag" + (state.civ === civ ? " active" : "");
-btn.textContent = ⁠${civ}: ${cnt}⁠;
+btn.className = "mini-tag" + (state.tag === tg ? " active" : "");
+btn.textContent = `${tg} ${cnt}枚`;
 btn.onclick = () => {
-state.civ = state.civ === civ ? "ALL" : civ;
+state.tag = state.tag === tg ? "ALL" : tg;
 render();
 };
-civRow.appendChild(btn);
+tagRow.appendChild(btn);
 });
-}
+const colorRow = document.getElementById("colorQuickChips");
+colorRow.innerHTML = "";
+const defaultColors = ["赤", "青", "緑"];
+const colorKeys = Array.from(new Set([...defaultColors, ...Object.keys(colorCounts)]));
+colorKeys.forEach(col => {
+const cnt = colorCounts[col] || 0;
+const btn = document.createElement("button");
+btn.type = "button";
+btn.className = "mini-tag color-tag" + (state.color === col ? " active" : "");
+btn.textContent = `${col} ${cnt}枚`;
+btn.onclick = () => {
+state.color = state.color === col ? "ALL" : col;
+render();
+};
+colorRow.appendChild(btn);
+});
 const focusCard = focusedCardId ? map.get(focusedCardId) : null;
 const focusLabel = document.getElementById("focusCardLabel");
 const focusCount = document.getElementById("focusCountLabel");
@@ -1513,42 +1731,41 @@ if (focusCard) {
 const cardName = focusCard.name || displayCardNumber(focusCard) || "名称未設定";
 focusLabel.textContent = cardName;
 focusLabel.title = cardName;
-focusCount.textContent = ⁠${cardTotal(focusCard.id)}/${MAX_PER_CARD}⁠;
+focusCount.textContent = `${cardTotal(focusCard.id)}/${MAX_PER_CARD}`;
 } else {
 focusLabel.textContent = "カード未選択";
 focusLabel.title = "カード未選択";
-focusCount.textContent = ⁠0/${MAX_PER_CARD}⁠;
+focusCount.textContent = `0/${MAX_PER_CARD}`;
 }
 }
 function filteredPool() {
 const q = state.q.trim().toLowerCase();
-return getUniquePoolCards()
-.filter(c => {
-const variants = getCardVariants(c);
-if (state.rarity !== "ALL" && !variants.some(v => detectRarity(v) === state.rarity)) return false;
+const entries = getUniquePoolCards().filter(entry => {
+const c = entry.card;
+if (state.rarity !== "ALL" && !entry.raritiesSet.has(state.rarity)) return false;
 if (state.color !== "ALL" && (c.color || "無") !== state.color) return false;
 if (state.civ !== "ALL" && (c.civilization || "無") !== state.civ) return false;
 if (state.type !== "ALL" && (c.type || "その他") !== state.type) return false;
-if (state.img === "HAS" && !variants.some(v => v.imageUrl)) return false;
-if (state.img === "NONE" && variants.some(v => v.imageUrl)) return false;
-if (q) {
-const allVarText = variants.map(v => ⁠${v.id || ""} ${v.cardNumber || ""} ${v.name || ""} ${v.civilization || ""} ${v.text || ""} ${detectRarity(v)}⁠).join(" ");
-if (!allVarText.toLowerCase().includes(q)) return false;
-}
+if (state.tag !== "ALL" && !entry.tagsSet.has(state.tag)) return false;
+if (state.img === "HAS" && !entry.hasAnyImg) return false;
+if (state.img === "NONE" && entry.hasAnyImg) return false;
+if (q && !entry.searchHay.includes(q)) return false;
 return true;
-})
-.sort((a, b) => {
-if (state.sort === "cost_asc") return Number(a.cost ?? 99) - Number(b.cost ?? 99);
-if (state.sort === "cost_desc") return Number(b.cost ?? -1) - Number(a.cost ?? -1);
-if (state.sort === "name") return String(a.name || "").localeCompare(String(b.name || ""), "ja");
-return String(displayCardNumber(a)).localeCompare(String(displayCardNumber(b)), "ja");
 });
+entries.sort((a, b) => {
+if (state.sort === "cost_asc") return Number(a.card.cost ?? 99) - Number(b.card.cost ?? 99);
+if (state.sort === "cost_desc") return Number(b.card.cost ?? -1) - Number(a.card.cost ?? -1);
+if (state.sort === "name") return String(a.card.name || "").localeCompare(String(b.card.name || ""), "ja");
+return String(displayCardNumber(a.card)).localeCompare(String(displayCardNumber(b.card)), "ja");
+});
+return entries.map(entry => entry.card);
 }
-function renderDock() {
+function renderDock(resetScroll = false) {
 const scroll = document.getElementById("dockScroll");
-scroll.innerHTML = "";
+const prevScrollLeft = scroll.scrollLeft;
 const pool = filteredPool();
-document.getElementById("poolCountLabel").textContent = ⁠${pool.length}件⁠;
+document.getElementById("poolCountLabel").textContent = `${pool.length}件`;
+const frag = document.createDocumentFragment();
 pool.forEach(card => {
 const el = document.createElement("div");
 el.className = "dock-card";
@@ -1570,8 +1787,9 @@ focusedCardId = card.id;
 openDetail(card, 0);
 });
 el.appendChild(infoBtn);
-let startX = 0, startY = 0, timer = null, didLong = false;
+let startX = 0, startY = 0, timer = null, didLong = false, suppressClickUntil = 0;
 el.addEventListener("touchstart", e => {
+if (!e.touches || !e.touches[0]) return;
 startX = e.touches[0].clientX;
 startY = e.touches[0].clientY;
 didLong = false;
@@ -1579,30 +1797,72 @@ focusedCardId = card.id;
 renderUtilityPanel();
 timer = setTimeout(() => {
 didLong = true;
+suppressClickUntil = Date.now() + 500;
 focusedCardId = card.id;
 openDetail(card, 0);
 }, LONG_PRESS_MS);
 }, { passive: true });
+let didSwipeUp = false;
+const isSwipeUpGesture = (dx, dySigned) => {
+const upDist = -dySigned;
+return upDist >= 6 && upDist >= dx * 0.25;
+};
 el.addEventListener("touchmove", e => {
+if (!e.touches || !e.touches[0]) return;
 const dx = Math.abs(e.touches[0].clientX - startX);
-const dy = Math.abs(e.touches[0].clientY - startY);
-if (dx > 12 || dy > 12) clearTimeout(timer);
-}, { passive: true });
+const dySigned = e.touches[0].clientY - startY;
+const dy = Math.abs(dySigned);
+if (dx > 14 || dy > 8) clearTimeout(timer);
+if (!didSwipeUp && isSwipeUpGesture(dx, dySigned)) {
+didSwipeUp = true;
+suppressClickUntil = Date.now() + 500;
+if (e.cancelable) e.preventDefault();
+addToDeck(card.id);
+}
+}, { passive: false });
 el.addEventListener("touchend", e => {
 clearTimeout(timer);
-if (didLong) return;
+if (didLong || didSwipeUp) {
+didLong = false;
+didSwipeUp = false;
+return;
+}
+if (!e.changedTouches || !e.changedTouches[0]) return;
 const dx = Math.abs(e.changedTouches[0].clientX - startX);
-const dy = e.changedTouches[0].clientY - startY;
-if (dy < -24 && dx < 30) {
+const dySigned = e.changedTouches[0].clientY - startY;
+const dy = Math.abs(dySigned);
+const isSwipeUp = isSwipeUpGesture(dx, dySigned);
+const isTap = dx < 12 && dy < 12;
+if (isSwipeUp || isTap) {
 e.preventDefault();
+suppressClickUntil = Date.now() + 500;
 addToDeck(card.id);
 }
 });
+el.addEventListener("touchcancel", () => {
+clearTimeout(timer);
+didLong = false;
+}, { passive: true });
 el.addEventListener("click", () => {
-if (!didLong) addToDeck(card.id);
+if (Date.now() < suppressClickUntil || didLong) {
+didLong = false;
+return;
+}
+addToDeck(card.id);
 });
-scroll.appendChild(el);
+frag.appendChild(el);
 });
+if (pool.length === 0) {
+const emptyBox = document.createElement("div");
+emptyBox.style.cssText = "padding:12px 14px;font-size:12px;color:#4b5563;line-height:1.5;white-space:normal;";
+emptyBox.textContent = cards.length === 0
+? "カードデータ（cards.json）が読み込まれていません。data/cards.json の配置とJSON形式を確認してください。"
+: "現在の検索・絞り込み条件に一致するカードがありません。";
+scroll.replaceChildren(emptyBox);
+return;
+}
+scroll.replaceChildren(frag);
+scroll.scrollLeft = resetScroll ? 0 : prevScrollLeft;
 }
 function renderMeta() {
 const total = zoneTotal(zone);
@@ -1611,7 +1871,7 @@ document.getElementById("zoneLabel").textContent = zone === "main" ? "MAIN" : "S
 document.getElementById("zoneCount").textContent = total;
 document.getElementById("zoneTarget").textContent = target;
 document.getElementById("counterReadout").classList.toggle("over", total > target);
-const filtered = state.rarity !== "ALL" || state.color !== "ALL" || state.civ !== "ALL" || state.type !== "ALL" || state.img !== "ALL";
+const filtered = state.rarity !== "ALL" || state.color !== "ALL" || state.civ !== "ALL" || state.type !== "ALL" || state.tag !== "ALL" || state.img !== "ALL";
 document.getElementById("btnOpenFilter").classList.toggle("active-filter", filtered);
 }
 function render() {
@@ -1675,13 +1935,34 @@ const copyIds = getDeckCopyIds(zone, baseId);
 detailCopyIndex = Math.max(0, Math.min(initialCopyIdx, Math.max(0, inZone - 1)));
 const activeVariantId = previewVariantId || (inZone > 0 ? (copyIds[detailCopyIndex] || baseId) : baseId);
 const activeCard = map.get(activeVariantId) || canonical;
-document.getElementById("detailTitle").textContent = ⁠${activeCard.name || canonical.name || ""} [${displayCardNumber(activeCard)}]⁠;
+document.getElementById("detailTitle").textContent = `${activeCard.name || canonical.name || ""} [${displayCardNumber(activeCard)}]`;
 let copySelectorHtml = "";
 if (inZone > 0) {
-copySelectorHtml = ⁠<div style="font-size:12px;font-weight:800;margin-bottom:5px;">デッキ内の枚数ごとにレアリティを選択</div><div class="copy-tabs-row">${copyIds.map((vid, idx) => { const vCard = map.get(vid) || canonical; const vRarity = detectRarity(vCard); return ⁠<button type="button" class="copy-tab ￼{idx}">￼{vRarity})</button>⁠; }).join("")}</div>⁠;
+copySelectorHtml = `<div style="font-size:12px;font-weight:800;margin-bottom:5px;">デッキ内の枚数ごとにレアリティを選択</div><div class="copy-tabs-row">${copyIds.map((vid, idx) => { const vCard = map.get(vid) || canonical; const vRarity = detectRarity(vCard); return `<button type="button" class="copy-tab ${idx === detailCopyIndex ? "active" : ""}" data-copy-idx="${idx}">${idx + 1}枚目 (${vRarity})</button>`; }).join("")}</div>`;
 }
-const variantStripHtml = ⁠<div style="font-size:12px;font-weight:800;margin-bottom:4px;">レアリティ変更（${variants.length}種）</div><div class="variant-strip">${variants.map((v, vIdx) => { const isSelected = v.id === activeCard.id; const rLabel = detectRarity(v); return ⁠<button type="button" class="variant-thumb ￼{v.id}">￼{rLabel}{variants.length > 1 ? ` #${vIdx + 1}` : ""}</span></button>`; }).join("")}</div>`;
-document.getElementById("detailBody").innerHTML = `${activeCard.imageUrl ? `<img class="preview-img" src="{activeCard.imageUrl}" alt="{activeCard.name || ""}" />` : ""}${copySelectorHtml}${variantStripHtml}<div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px;">レア: ${detectRarity(activeCard)} / 色: ${activeCard.color || "-"} / 種類: ${activeCard.type || "-"} / コスト: ${activeCard.cost ?? "-"}</div><p style="font-size:13px;line-height:1.6;margin:0 0 12px;">${activeCard.text || ""}</p><button class="sheet-btn" id="detailAdd">1枚追加（合計 ${cardTotal(baseId)} / ${MAX_PER_CARD}）</button>${inZone > 0 ? `<button class="sheet-btn secondary" id="detailRemove">現在の枠から1枚減らす（{inZone}枚中）</button>⁠ : ""}⁠;
+const variantStripHtml = `<div style="font-size:12px;font-weight:800;margin-bottom:4px;">レアリティ変更（${variants.length}種）</div><div class="variant-strip">${variants.map((v, vIdx) => { const isSelected = v.id === activeCard.id; const rLabel = detectRarity(v); return `<button type="button" class="variant-thumb ${isSelected ? "selected" : ""}" data-variant-id="${v.id}">${v.imageUrl ? `<img src="${v.imageUrl}" alt="${v.name || ""}" />` : ""}<span class="variant-label">${rLabel}${variants.length > 1 ? ` #${vIdx + 1}` : ""}</span></button>`; }).join("")}</div>`;
+const cardCustomTags = getCustomTagsForCard(canonical);
+const tagEditorHtml = `<div style="background:var(--bg-base);border:1px solid var(--border-hairline);border-radius:10px;padding:10px;margin-bottom:12px;"><div style="font-size:12px;font-weight:800;margin-bottom:6px;">マイタグ設定</div><div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;">${cardCustomTags.length ? cardCustomTags.map(tg => `<span class="chip selected" style="padding:4px 10px;display:inline-flex;align-items:center;gap:6px;">${tg}<button type="button" data-del-tag="${tg}" style="background:none;border:none;color:#fff;font-weight:900;cursor:pointer;padding:0;font-size:13px;line-height:1;">×</button></span>`).join("") : `<span style="font-size:11px;color:var(--text-secondary);">タグ未設定（下の入力欄から追加できます）</span>`}</div><div style="display:flex;gap:6px;"><input type="text" id="newCardTagInput" class="text-input" placeholder="タグ名を入力（例：初動・キー・メタ）" style="margin:0;flex:1;padding:7px 10px;font-size:12px;" /><button type="button" id="btnAddCardTag" class="pill-btn primary" style="padding:0 12px;font-size:12px;">追加</button></div></div>`;
+document.getElementById("detailBody").innerHTML = `${activeCard.imageUrl ? `<img class="preview-img" src="${activeCard.imageUrl}" alt="${activeCard.name || ""}" />` : ""}${copySelectorHtml}${variantStripHtml}<div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px;">レア: ${detectRarity(activeCard)} / 色: ${activeCard.color || "-"} / 種類: ${activeCard.type || "-"} / コスト: ${activeCard.cost ?? "-"}</div><p style="font-size:13px;line-height:1.6;margin:0 0 12px;">${activeCard.text || ""}</p>${tagEditorHtml}<button class="sheet-btn" id="detailAdd">1枚追加（合計 ${cardTotal(baseId)} / ${MAX_PER_CARD}）</button>${inZone > 0 ? `<button class="sheet-btn secondary" id="detailRemove">現在の枠から1枚減らす（${inZone}枚中）</button>` : ""}`;
+const addTagFn = () => {
+const inp = document.getElementById("newCardTagInput");
+if (!inp || !inp.value.trim()) return;
+addCustomTagToCard(canonical, inp.value.trim());
+openDetail(canonical, detailCopyIndex, activeCard.id);
+};
+document.getElementById("btnAddCardTag").onclick = addTagFn;
+document.getElementById("newCardTagInput").addEventListener("keydown", e => {
+if (e.key === "Enter") {
+e.preventDefault();
+addTagFn();
+}
+});
+document.querySelectorAll("#detailBody [data-del-tag]").forEach(btn => {
+btn.onclick = () => {
+removeCustomTagFromCard(canonical, btn.dataset.delTag);
+openDetail(canonical, detailCopyIndex, activeCard.id);
+};
+});
 document.querySelectorAll("#detailBody [data-copy-idx]").forEach(btn => {
 btn.onclick = () => {
 openDetail(canonical, Number(btn.dataset.copyIdx));
@@ -1713,31 +1994,54 @@ openDetail(canonical, Math.max(0, Math.min(detailCopyIndex, nextQty - 1)));
 }
 document.getElementById("detailOverlay").classList.add("open");
 }
+function civToBarColor(civLabel, colorLabel) {
+const srcText = `${civLabel || ""} ${colorLabel || ""}`;
+if (/赤|紅|炎|火/.test(srcText)) return "#e11d48";
+if (/青|蒼|水|海/.test(srcText)) return "#2563eb";
+if (/緑|翠|森|草|自然/.test(srcText)) return "#16a34a";
+if (/黄|金|光|雷/.test(srcText)) return "#eab308";
+if (/紫|闇|黒|影/.test(srcText)) return "#7c3aed";
+if (/白|銀|聖/.test(srcText)) return "#94a3b8";
+return "#4b5563";
+}
 function openStats() {
 const map = new Map(cards.map(c => [c.id, c]));
-const costMap = {};
-const colorMap = {};
-const civMap = {};
-const total = zoneTotal(zone);
+const costTotals = {};
+const costByColor = {};
 Object.entries(deckData[zone] || {}).forEach(([id, n]) => {
 const qty = Number(n || 0);
 if (qty <= 0) return;
 const c = map.get(id) || { id };
-const kCost = c.cost ?? "?";
-const kCol = c.color || "無";
-const kCiv = c.civilization || "無";
-costMap[kCost] = (costMap[kCost] || 0) + qty;
-colorMap[kCol] = (colorMap[kCol] || 0) + qty;
-civMap[kCiv] = (civMap[kCiv] || 0) + qty;
+const kCost = (c.cost === null || c.cost === undefined || c.cost === "") ? "?" : String(c.cost);
+const kCol = c.color || c.civilization || "無";
+const barCol = civToBarColor(c.civilization, kCol);
+costTotals[kCost] = (costTotals[kCost] || 0) + qty;
+if (!costByColor[kCost]) costByColor[kCost] = {};
+if (!costByColor[kCost][kCol]) costByColor[kCost][kCol] = { count: 0, color: barCol };
+costByColor[kCost][kCol].count += qty;
 });
-const maxCostCount = Math.max(1, ...Object.values(costMap));
-const costBars = Object.keys(costMap).sort((a, b) => Number(a) - Number(b)).map(k => {
-const pct = Math.round((costMap[k] / maxCostCount) * 100);
-return ⁠<div class="bar-row"><span style="width:52px;">コスト ${k}</span><div class="bar-track"><div class="bar-fill" style="width:${pct}%"></div></div><span style="width:38px;text-align:right;">${costMap[k]}枚</span></div>⁠;
-}).join("") || "<div style='color:var(--text-secondary);'>カードがありません</div>";
-const colorHtml = Object.entries(colorMap).map(([k, v]) => ⁠${k}: ${v}枚⁠).join(" / ") || "なし";
-const civHtml = Object.entries(civMap).map(([k, v]) => ⁠${k}: ${v}枚⁠).join(" / ") || "なし";
-document.getElementById("statsContent").innerHTML = ⁠<div style="margin-bottom:6px;"><strong>合計:</strong> ${total} / ${TARGET_COUNTS[zone]}枚</div><div style="margin-bottom:6px;"><strong>色内訳:</strong> ${colorHtml}</div><div style="margin-bottom:10px;"><strong>文明内訳:</strong> ${civHtml}</div><div style="font-weight:700;margin-bottom:6px;">コスト分布</div>${costBars}⁠;
+const maxCostCount = Math.max(1, ...Object.values(costTotals));
+const sortedCosts = Object.keys(costTotals).sort((a, b) => {
+const na = Number(a), nb = Number(b);
+if (!Number.isNaN(na) && !Number.isNaN(nb)) return na - nb;
+if (!Number.isNaN(na)) return -1;
+if (!Number.isNaN(nb)) return 1;
+return a.localeCompare(b, "ja");
+});
+const colsHtml = sortedCosts.map(k => {
+const totalForCost = costTotals[k];
+const stackPct = Math.max(8, Math.round((totalForCost / maxCostCount) * 100));
+const segEntries = Object.entries(costByColor[k] || {});
+const segsHtml = segEntries.map(([colName, info]) => {
+const segH = totalForCost > 0 ? (info.count / totalForCost) * 100 : 0;
+return `<div class="vbar-seg" title="${colName}: ${info.count}枚" style="height:${segH}%;background:${info.color};"></div>`;
+}).join("");
+return `<div class="vbar-col"><span class="vbar-count">${totalForCost}</span><div class="vbar-stack" style="height:${stackPct}%;">${segsHtml}</div></div>`;
+}).join("");
+const labelsHtml = sortedCosts.map(k => `<div class="vbar-xlabel">${k}</div>`).join("");
+document.getElementById("statsContent").innerHTML = sortedCosts.length
+? `<div class="vbar-chart-wrap"><div class="vbar-columns">${colsHtml}</div><div class="vbar-axis-row"><div class="vbar-xlabels">${labelsHtml}</div><span class="vbar-axis-title">コスト</span></div></div>`
+: `<div class="vbar-chart-wrap" style="align-items:center;justify-content:center;color:var(--text-secondary);">カードがありません</div>`;
 document.getElementById("statsOverlay").classList.add("open");
 }
 function getSlots() {
@@ -1750,7 +2054,7 @@ function renderSavedSlots() {
 const box = document.getElementById("savedSlotList");
 const list = getSlots();
 if (!list.length) {
-box.innerHTML = ⁠<div style="font-size:12px;color:var(--text-secondary);text-align:center;padding:16px 0;">保存済みデッキはまだありません</div>⁠;
+box.innerHTML = `<div style="font-size:12px;color:var(--text-secondary);text-align:center;padding:16px 0;">保存済みデッキはまだありません</div>`;
 return;
 }
 box.innerHTML = "";
@@ -1758,7 +2062,7 @@ list.forEach((slot, idx) => {
 const mCount = Object.values(slot.deck?.main || {}).reduce((a, b) => a + Number(b || 0), 0);
 const row = document.createElement("div");
 row.className = "saved-slot-item";
-row.innerHTML = ⁠<div style="min-width:0;"><div style="font-size:13px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${slot.name}</div><div style="font-size:11px;color:var(--text-secondary);">メイン ${mCount}枚 / ${slot.updatedAt || ""}</div></div><div style="display:flex;gap:5px;flex-shrink:0;"><button class="pill-btn primary" data-load="${idx}">読込</button><button class="pill-btn danger" data-del="${idx}">削除</button></div>⁠;
+row.innerHTML = `<div style="min-width:0;"><div style="font-size:13px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${slot.name}</div><div style="font-size:11px;color:var(--text-secondary);">メイン ${mCount}枚 / ${slot.updatedAt || ""}</div></div><div style="display:flex;gap:5px;flex-shrink:0;"><button class="pill-btn primary" data-load="${idx}">読込</button><button class="pill-btn danger" data-del="${idx}">削除</button></div>`;
 box.appendChild(row);
 });
 box.querySelectorAll("[data-load]").forEach(btn => {
@@ -1770,7 +2074,7 @@ if (!deckData.variants) deckData.variants = { main: {}, sub: {} };
 persist();
 render();
 document.getElementById("decksOverlay").classList.remove("open");
-toast(⁠「${target.name}」を読み込みました⁠);
+toast(`「${target.name}」を読み込みました`);
 };
 });
 box.querySelectorAll("[data-del]").forEach(btn => {
@@ -1786,18 +2090,18 @@ toast("削除しました");
 function openShare() {
 const map = new Map(cards.map(c => [c.id, c]));
 const title = document.getElementById("exportTitleInput").value.trim() || "HOROBEAT DECK";
-const out = [⁠【${title}】⁠];
+const out = [`【${title}】`];
 ["main", "sub"].forEach(z => {
 const entries = Object.entries(deckData[z] || {}).filter(([, n]) => Number(n) > 0);
 if (entries.length) {
-out.push(z === "main" ? ⁠\n■ メイン (${zoneTotal("main")}枚)⁠ : ⁠\n■ サブ (${zoneTotal("sub")}枚)⁠);
+out.push(z === "main" ? `\n■ メイン (${zoneTotal("main")}枚)` : `\n■ サブ (${zoneTotal("sub")}枚)`);
 entries.forEach(([id, n]) => {
 const c = map.get(id) || { id, name: id };
 const copyIds = getDeckCopyIds(z, id);
 const rarities = copyIds.map(vid => detectRarity(map.get(vid) || c));
 const uniqueRarities = [...new Set(rarities)].filter(r => r && r !== "その他");
-const rSuffix = uniqueRarities.length ? ⁠ [${uniqueRarities.join("/")}]⁠ : "";
-out.push(⁠${n} × ${c.name} (${displayCardNumber(c)})${rSuffix}⁠);
+const rSuffix = uniqueRarities.length ? ` [${uniqueRarities.join("/")}]` : "";
+out.push(`${n} × ${c.name} (${displayCardNumber(c)})${rSuffix}`);
 });
 }
 });
@@ -1822,11 +2126,11 @@ const line = rawLine.trim();
 if (!line) return;
 if (line.includes("サブ")) { currentTarget = "sub"; return; }
 if (line.includes("メイン")) { currentTarget = "main"; return; }
-const m = line.match(/^(\d+)\s*[x×]\s*(.+?)(?:\s*[(（\）]]+)[)\）]])?$/i);
+const m = line.match(/^(\d+)\s*[x×]\s*(.+?)(?:\s*[(（]([^()（）]+)[)）])?$/i);
 if (!m) return;
 const qty = Number(m[1]);
 if (!qty || qty <= 0) return;
-const namePart = m[2].replace(/\s*[[^]]+]\s*/g, "").trim();
+const namePart = m[2].replace(/\s*\[[^\]]+\]\s*/g, "").trim();
 const idPart = (m[3] || "").trim().toUpperCase();
 const resolvedId = (idPart && byId.get(idPart)) || byName.get(namePart);
 if (resolvedId) {
@@ -1844,11 +2148,20 @@ deckData = newDeck;
 persist();
 render();
 document.getElementById("shareOverlay").classList.remove("open");
-toast(⁠合計 ${importedCount}枚 を読み込みました⁠);
+toast(`合計 ${importedCount}枚 を読み込みました`);
 }
-function loadCardImageSafe(url, timeoutMs = 2500) {
+function resolveCardImgSrc(url) {
+if (!url) return "";
+try {
+return new URL(url, location.href).href;
+} catch (_) {
+return String(url).trim();
+}
+}
+function loadCardImageSafe(url, timeoutMs = 5000) {
 return new Promise(resolve => {
-if (!url) return resolve(null);
+const resolved = resolveCardImgSrc(url);
+if (!resolved) return resolve(null);
 let settled = false;
 const done = val => {
 if (!settled) {
@@ -1857,8 +2170,11 @@ resolve(val);
 }
 };
 const timer = setTimeout(() => done(null), timeoutMs);
+const tryLoad = (useCors) => {
 const img = new Image();
+if (useCors && !resolved.startsWith("data:") && !resolved.startsWith("blob:")) {
 img.crossOrigin = "anonymous";
+}
 img.onload = async () => {
 try {
 if (typeof img.decode === "function") await img.decode();
@@ -1867,10 +2183,16 @@ clearTimeout(timer);
 done((img.naturalWidth || img.width) > 0 ? img : null);
 };
 img.onerror = () => {
+if (useCors) {
+tryLoad(false);
+} else {
 clearTimeout(timer);
 done(null);
+}
 };
-img.src = url;
+img.src = resolved;
+};
+tryLoad(true);
 });
 }
 function drawCardPlaceholder(ctx, card, x, y, w, h) {
@@ -1900,54 +2222,77 @@ btn.disabled = true;
 const prevLabel = btn.textContent;
 btn.textContent = "画像を生成中...";
 try {
-const expandedEntries = getExpandedZoneCards("main");
-const expanded = expandedEntries.map(e => e.displayCard);
+const mainCards = getExpandedZoneCards("main").map(e => e.displayCard);
+const subCards = getExpandedZoneCards("sub").map(e => e.displayCard);
 const cols = 10;
-const minRows = 5;
-const rows = Math.max(minRows, Math.ceil(expanded.length / cols));
-const cardW = 128;
+const mainRows = Math.max(5, Math.ceil(mainCards.length / cols));
+const hasSub = subCards.length > 0;
+const subRows = hasSub ? Math.max(1, Math.ceil(subCards.length / cols)) : 0;
+const cardW = 140;
 const cardH = Math.round(cardW * (88 / 63));
 const gap = 8;
 const pad = 22;
-const headerH = 64;
+const headerH = 62;
+const subHeaderH = hasSub ? 42 : 0;
+const mainBoxH = pad * 2 + mainRows * cardH + (mainRows - 1) * gap;
+const subBoxH = hasSub ? (pad + subRows * cardH + (subRows - 1) * gap + pad) : 0;
 const canvas = document.createElement("canvas");
 canvas.width = pad * 2 + cols * cardW + (cols - 1) * gap;
-canvas.height = headerH + pad + rows * cardH + (rows - 1) * gap + pad;
+canvas.height = headerH + mainBoxH + (hasSub ? subHeaderH + subBoxH : pad);
 const ctx = canvas.getContext("2d");
 if (!ctx) throw new Error("Canvas context unavailable");
-ctx.fillStyle = "#ffffff";
+ctx.fillStyle = "#f4f5f7";
 ctx.fillRect(0, 0, canvas.width, canvas.height);
 const titleInput = document.getElementById("exportTitleInput");
 const title = (titleInput && titleInput.value.trim()) || "HOROBEAT DECK";
+ctx.fillStyle = "#ffffff";
+ctx.fillRect(0, 0, canvas.width, headerH);
 ctx.fillStyle = "#000000";
 ctx.font = "bold 24px sans-serif";
-ctx.fillText(title, pad, 41);
+ctx.fillText(title, pad, 40);
 ctx.fillStyle = "#4b5563";
 ctx.font = "bold 16px sans-serif";
 ctx.textAlign = "right";
-ctx.fillText(⁠MAIN ${zoneTotal("main")} / 50枚（10×5）⁠, canvas.width - pad, 41);
+ctx.fillText(`MAIN ${zoneTotal("main")} / 50枚${hasSub ? `  |  SUB ${zoneTotal("sub")}枚` : ""}`, canvas.width - pad, 40);
 ctx.textAlign = "left";
+const mainPanelY = headerH + 6;
+const mainPanelH = mainBoxH - 6;
+ctx.fillStyle = "#ffffff";
+ctx.fillRect(pad - 6, mainPanelY, canvas.width - (pad - 6) * 2, mainPanelH);
+ctx.strokeStyle = "rgba(17, 19, 24, 0.16)";
+ctx.lineWidth = 1;
+ctx.strokeRect(pad - 6 + 0.5, mainPanelY + 0.5, canvas.width - (pad - 6) * 2 - 1, mainPanelH - 1);
+const allTargetCards = [...mainCards, ...subCards];
 const loadedImgs = await Promise.all(
-expanded.map(card => loadCardImageSafe(card && card.imageUrl, 2500))
+allTargetCards.map(card => loadCardImageSafe(card && card.imageUrl, 3000))
 );
 let usedFallback = false;
-for (let idx = 0; idx < cols * rows; idx++) {
+const drawGridSection = (cardsList, imgsList, totalSlots, startX, startY, allowGhost) => {
+for (let idx = 0; idx < totalSlots; idx++) {
 const r = Math.floor(idx / cols);
 const c = idx % cols;
-const x = pad + c * (cardW + gap);
-const y = headerH + r * (cardH + gap);
-const card = expanded[idx];
+const x = startX + c * (cardW + gap);
+const y = startY + r * (cardH + gap);
+const card = cardsList[idx];
 if (!card) {
-drawCardPlaceholder(ctx, { name: "", id: "" }, x, y, cardW, cardH);
+if (allowGhost) {
+ctx.save();
+ctx.fillStyle = "#f8f9fb";
+ctx.fillRect(x, y, cardW, cardH);
+ctx.strokeStyle = "rgba(17, 19, 24, 0.16)";
+ctx.lineWidth = 1;
+ctx.strokeRect(x + 0.5, y + 0.5, cardW - 1, cardH - 1);
+ctx.restore();
+}
 continue;
 }
-const img = loadedImgs[idx];
+const img = imgsList[idx];
 let drewPhoto = false;
 if (img) {
 try {
 ctx.drawImage(img, x, y, cardW, cardH);
 drewPhoto = true;
-} catch () {
+} catch (_) {
 drewPhoto = false;
 }
 }
@@ -1956,50 +2301,126 @@ usedFallback = true;
 drawCardPlaceholder(ctx, card, x, y, cardW, cardH);
 }
 }
+};
+drawGridSection(mainCards, loadedImgs.slice(0, mainCards.length), cols * mainRows, pad, mainPanelY + 10, true);
+if (hasSub) {
+const subTitleY = mainPanelY + mainPanelH + 28;
+ctx.fillStyle = "#111318";
+ctx.font = "bold 17px sans-serif";
+ctx.fillText(`SUB / 調整枠 (${zoneTotal("sub")}枚)`, pad, subTitleY);
+const subPanelY = subTitleY + 10;
+ctx.fillStyle = "#ffffff";
+ctx.fillRect(pad - 6, subPanelY, canvas.width - (pad - 6) * 2, subRows * cardH + (subRows - 1) * gap + 20);
+ctx.strokeStyle = "rgba(17, 19, 24, 0.16)";
+ctx.lineWidth = 1;
+ctx.strokeRect(pad - 6 + 0.5, subPanelY + 0.5, canvas.width - (pad - 6) * 2 - 1, subRows * cardH + (subRows - 1) * gap + 19);
+drawGridSection(subCards, loadedImgs.slice(mainCards.length), subCards.length, pad, subPanelY + 10, false);
+}
 let dataUrl = "";
+let canvasTainted = false;
 try {
 dataUrl = canvas.toDataURL("image/png");
-} catch () {
-usedFallback = true;
-ctx.fillStyle = "#ffffff";
-ctx.fillRect(0, headerH + pad, canvas.width, canvas.height - headerH - pad);
-for (let idx = 0; idx < cols * rows; idx++) {
+} catch (_) {
+canvasTainted = true;
+}
+if (canvasTainted) {
+// Keep the visually rendered canvas intact, and build a clean fallback PNG for download/preview
+const cleanCanvas = document.createElement("canvas");
+cleanCanvas.width = canvas.width;
+cleanCanvas.height = canvas.height;
+const cctx = cleanCanvas.getContext("2d");
+if (cctx) {
+cctx.fillStyle = "#f4f5f7";
+cctx.fillRect(0, 0, cleanCanvas.width, cleanCanvas.height);
+cctx.fillStyle = "#ffffff";
+cctx.fillRect(0, 0, cleanCanvas.width, headerH);
+cctx.fillStyle = "#000000";
+cctx.font = "bold 24px sans-serif";
+cctx.fillText(title, pad, 40);
+cctx.fillStyle = "#4b5563";
+cctx.font = "bold 16px sans-serif";
+cctx.textAlign = "right";
+cctx.fillText(`MAIN ${zoneTotal("main")} / 50枚${hasSub ? `  |  SUB ${zoneTotal("sub")}枚` : ""}`, cleanCanvas.width - pad, 40);
+cctx.textAlign = "left";
+const safeImgs = loadedImgs.map(im => {
+if (!im) return null;
+try {
+const probe = document.createElement("canvas");
+probe.width = 1; probe.height = 1;
+const pctx = probe.getContext("2d");
+pctx.drawImage(im, 0, 0, 1, 1);
+probe.toDataURL("image/png");
+return im;
+} catch (_) {
+return null;
+}
+});
+cctx.fillStyle = "#ffffff";
+cctx.fillRect(pad - 6, mainPanelY, cleanCanvas.width - (pad - 6) * 2, mainPanelH);
+cctx.strokeStyle = "rgba(17, 19, 24, 0.16)";
+cctx.lineWidth = 1;
+cctx.strokeRect(pad - 6 + 0.5, mainPanelY + 0.5, cleanCanvas.width - (pad - 6) * 2 - 1, mainPanelH - 1);
+for (let idx = 0; idx < cols * mainRows; idx++) {
 const r = Math.floor(idx / cols);
 const c = idx % cols;
 const x = pad + c * (cardW + gap);
-const y = headerH + r * (cardH + gap);
-drawCardPlaceholder(ctx, expanded[idx] || { name: "", id: "" }, x, y, cardW, cardH);
+const y = mainPanelY + 10 + r * (cardH + gap);
+const card = mainCards[idx];
+if (!card) {
+cctx.fillStyle = "#f8f9fb";
+cctx.fillRect(x, y, cardW, cardH);
+cctx.strokeStyle = "rgba(17, 19, 24, 0.16)";
+cctx.strokeRect(x + 0.5, y + 0.5, cardW - 1, cardH - 1);
+} else if (safeImgs[idx]) {
+cctx.drawImage(safeImgs[idx], x, y, cardW, cardH);
+} else {
+drawCardPlaceholder(cctx, card, x, y, cardW, cardH);
 }
-dataUrl = canvas.toDataURL("image/png");
+}
+try { dataUrl = cleanCanvas.toDataURL("image/png"); } catch (_) { dataUrl = ""; }
+}
 }
 const safeFileBase = (title.replace(/[^\w-一-龠ぁ-んァ-ヶ]/g, "_") || "deck").slice(0, 40);
-const noteText = usedFallback
-? "外部画像が読み込めなかった枠はカード枠で生成しました（長押し、またはボタンから保存）"
-: "画像を生成しました（長押し、またはボタンから保存）";
-wrap.innerHTML = ⁠<p style="font-size:12px;color:var(--text-secondary);margin:8px 0 4px;font-weight:700;">${noteText}</p><img class="generated-img" src="${dataUrl}" alt="デッキレシピ画像" /><a class="sheet-btn" href="${dataUrl}" download="${safeFileBase}_10x5.png" style="display:block;text-align:center;text-decoration:none;">PNG画像をダウンロード</a>⁠;
+const noteText = canvasTainted
+? "外部サーバーのCORS制限のため一部画像は表示用プレビューに描画されています（長押しまたは保存ボタンをご利用ください）"
+: (usedFallback
+? "画像が読み込めなかった枠はカード枠で生成しました（長押し、またはボタンから保存）"
+: "デッキリスト画像を生成しました（長押し、またはボタンから保存）");
+wrap.innerHTML = "";
+const pEl = document.createElement("p");
+pEl.style.cssText = "font-size:12px;color:var(--text-secondary);margin:8px 0 4px;font-weight:700;";
+pEl.textContent = noteText;
+wrap.appendChild(pEl);
+if (canvasTainted) {
+canvas.className = "generated-img";
+canvas.style.width = "100%";
+canvas.style.height = "auto";
+wrap.appendChild(canvas);
+if (dataUrl) {
+const dlLink = document.createElement("a");
+dlLink.className = "sheet-btn";
+dlLink.href = dataUrl;
+dlLink.download = `${safeFileBase}_decklist.png`;
+dlLink.style.cssText = "display:block;text-align:center;text-decoration:none;";
+dlLink.textContent = "PNG画像をダウンロード";
+wrap.appendChild(dlLink);
+}
+} else {
+wrap.innerHTML += `<img class="generated-img" src="${dataUrl}" alt="デッキリスト画像" /><a class="sheet-btn" href="${dataUrl}" download="${safeFileBase}_decklist.png" style="display:block;text-align:center;text-decoration:none;">PNG画像をダウンロード</a>`;
+}
 wrap.scrollIntoView({ behavior: "smooth", block: "nearest" });
-toast("デッキ画像を生成しました");
+toast("デッキリスト画像を生成しました");
 } catch (err) {
 const reason = (err && err.message) ? err.message : String(err);
 console.error("generateDeckImage error:", err);
-toast(⁠エラー: ${reason}⁠);
+toast(`エラー: ${reason}`);
 } finally {
 btn.disabled = false;
 btn.textContent = prevLabel || "デッキ画像を生成（10×5 / PNG保存用）";
 }
 }
 function bind() {
-let lastTouchEnd = 0;
-document.addEventListener("touchend", e => {
-const now = Date.now();
-if (now - lastTouchEnd <= 300) {
-e.preventDefault();
-}
-lastTouchEnd = now;
-}, { passive: false });
-document.addEventListener("gesturestart", e => e.preventDefault(), { passive: false });
-document.addEventListener("gesturechange", e => e.preventDefault(), { passive: false });
-document.addEventListener("gestureend", e => e.preventDefault(), { passive: false });
+
 document.querySelectorAll(".seg-tab").forEach(btn => {
 btn.onclick = () => {
 document.querySelectorAll(".seg-tab").forEach(b => b.classList.remove("active"));
@@ -2046,24 +2467,43 @@ renderSavedSlots();
 document.getElementById("decksOverlay").classList.add("open");
 };
 document.getElementById("btnSaveSlot").onclick = () => {
-const name = document.getElementById("deckNameInput").value.trim() || ⁠デッキ ${getSlots().length + 1}⁠;
+const name = document.getElementById("deckNameInput").value.trim() || `デッキ ${getSlots().length + 1}`;
 const list = getSlots();
 const now = new Date();
-const stamp = ⁠${now.getMonth() + 1}/${now.getDate()} ${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}⁠;
+const stamp = `${now.getMonth() + 1}/${now.getDate()} ${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
 list.unshift({ name, updatedAt: stamp, deck: JSON.parse(JSON.stringify(deckData)) });
 setSlots(list.slice(0, 20));
 document.getElementById("deckNameInput").value = "";
 renderSavedSlots();
 toast("デッキを保存しました");
 };
-document.getElementById("searchInput").addEventListener("input", e => {
+let _searchRaf = null;
+let _isComposingSearch = false;
+const searchInputEl = document.getElementById("searchInput");
+function scheduleDockFilter() {
+if (_searchRaf) cancelAnimationFrame(_searchRaf);
+_searchRaf = requestAnimationFrame(() => {
+_searchRaf = null;
+renderDock(true);
+});
+}
+searchInputEl.addEventListener("compositionstart", () => {
+_isComposingSearch = true;
+});
+searchInputEl.addEventListener("compositionend", e => {
+_isComposingSearch = false;
 state.q = e.target.value;
-renderDock();
+scheduleDockFilter();
+});
+searchInputEl.addEventListener("input", e => {
+state.q = e.target.value;
+if (_isComposingSearch) return;
+scheduleDockFilter();
 });
 document.getElementById("btnClearSearch").onclick = () => {
 state.q = "";
 document.getElementById("searchInput").value = "";
-renderDock();
+renderDock(true);
 };
 document.getElementById("btnOpenFilter").onclick = () => {
 buildFilterOptions();
@@ -2081,6 +2521,7 @@ state.rarity = "ALL";
 state.color = "ALL";
 state.civ = "ALL";
 state.type = "ALL";
+state.tag = "ALL";
 state.img = "ALL";
 buildFilterOptions();
 render();
@@ -2093,7 +2534,7 @@ chip.onclick = () => {
 document.querySelectorAll("#sortChipList .chip").forEach(c => c.classList.remove("selected"));
 chip.classList.add("selected");
 state.sort = chip.dataset.sort;
-renderDock();
+renderDock(true);
 document.getElementById("sortOverlay").classList.remove("open");
 };
 });
@@ -2104,7 +2545,7 @@ toast("レシピをコピーしました");
 };
 document.getElementById("btnCopyLink").onclick = async () => {
 const b64 = btoa(unescape(encodeURIComponent(JSON.stringify(deckData))));
-const link = ⁠${location.origin}${location.pathname}?deck=${encodeURIComponent(b64)}⁠;
+const link = `${location.origin}${location.pathname}?deck=${encodeURIComponent(b64)}`;
 await navigator.clipboard.writeText(link);
 toast("共有URLをコピーしました");
 };
@@ -2118,14 +2559,96 @@ document.querySelectorAll(".overlay").forEach(ov => {
 ov.addEventListener("click", e => { if (e.target === ov) ov.classList.remove("open"); });
 });
 }
+function setupViewportKeyboardSync() {
+const studioEl = document.querySelector(".studio");
+if (!studioEl) return;
+const vv = window.visualViewport;
+let rafId = null;
+let lastH = -1;
+let lastTop = -1;
+let trackUntil = 0;
+let stableFrames = 0;
+
+const applyViewport = (now = performance.now()) => {
+if (window.scrollX !== 0 || window.scrollY !== 0) {
+window.scrollTo(0, 0);
+}
+if (!vv) {
+studioEl.style.height = "100dvh";
+studioEl.style.transform = "translate3d(-50%, 0, 0)";
+rafId = null;
+return;
+}
+const h = Math.round(vv.height);
+const top = Math.round(vv.offsetTop);
+if (h !== lastH || top !== lastTop) {
+lastH = h;
+lastTop = top;
+studioEl.style.height = `${h}px`;
+studioEl.style.transform = `translate3d(-50%, ${top}px, 0)`;
+stableFrames = 0;
+} else {
+stableFrames += 1;
+}
+
+if (now < trackUntil && stableFrames < 6) {
+rafId = requestAnimationFrame(applyViewport);
+} else {
+rafId = null;
+}
+};
+
+const kickTracking = (durationMs = 450) => {
+trackUntil = Math.max(trackUntil, performance.now() + durationMs);
+stableFrames = 0;
+if (rafId === null) {
+rafId = requestAnimationFrame(applyViewport);
+}
+};
+
+if (vv) {
+vv.addEventListener("resize", () => kickTracking(450), { passive: true });
+vv.addEventListener("scroll", () => kickTracking(450), { passive: true });
+}
+window.addEventListener("resize", () => kickTracking(450), { passive: true });
+window.addEventListener("scroll", () => {
+if (window.scrollX !== 0 || window.scrollY !== 0) {
+window.scrollTo(0, 0);
+}
+kickTracking(250);
+}, { passive: true });
+
+const searchEl = document.getElementById("searchInput");
+if (searchEl) {
+searchEl.addEventListener("focus", () => kickTracking(500));
+searchEl.addEventListener("blur", () => kickTracking(500));
+searchEl.addEventListener("keydown", e => {
+if (e.key === "Enter") {
+searchEl.blur();
+kickTracking(500);
+}
+});
+}
+document.addEventListener("pointerdown", e => {
+if (searchEl && document.activeElement === searchEl && !e.target.closest(".search-wrap")) {
+kickTracking(500);
+}
+}, { passive: true });
+
+applyViewport();
+}
 async function boot() {
+setupViewportKeyboardSync();
 bind();
 restore();
 try {
 cards = await loadCardsOnly();
+invalidatePoolCache();
 } catch (e) {
 cards = [];
-toast("カードデータの読み込みに失敗しました");
+const reason = e && e.message ? e.message : "cards.json未検出";
+toast(`カード読込エラー: ${reason}`, 3200);
+console.error("Card load failed:", e);
 }
 render();
 }
